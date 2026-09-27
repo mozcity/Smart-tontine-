@@ -2,38 +2,42 @@ import { router, type Href } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import { useAuth } from '@/lib/auth';
 import { useApi } from '@/lib/useApi';
-import { fcfa } from '@/lib/format';
+import { fcfa, shortDate } from '@/lib/format';
 import { HistoryRow } from '@/components/HistoryRow';
 import { Card, Empty, H2, Row, Screen, Segmented, colors } from '@/components/ui';
 
 interface Wallet { balance: number; totalSavings: number; netWorth: number }
 interface History { entries: { id: string; type: string; description: string; amount: number; created_at: string }[]; pending: { id: string; amount: number }[] }
 interface News { id: string; title: string; summary: string }
+interface TontineItem { id: string; name: string; status: string; contribution_amount: number; current_round: { number: number; due_date: string; beneficiary_id: string; paid: boolean } | null }
 
 const SHORTCUTS: { label: string; glyph: string; href: Href; isNew?: boolean }[] = [
   { label: 'Transfert', glyph: '💸', href: '/transfert' },
   { label: 'Retrait', glyph: '🏧', href: '/retrait' },
+  { label: 'Tontine', glyph: '🔄', href: '/tontines', isNew: true },
   { label: 'Challenge', glyph: '🚀', href: '/challenges' },
-  { label: 'Cagnotte', glyph: '🐷', href: '/cagnottes', isNew: true },
 ];
 
 const SECTIONS = [
   { value: 'portefeuille', label: 'Portefeuille' },
   { value: 'projet', label: 'Projet' },
   { value: 'ecaisse', label: 'E-caisse' },
-  { value: 'contrats', label: 'Contrats' },
+  { value: 'cagnotte', label: 'Cagnotte' },
 ] as const;
-const SECTION_ROUTES: Record<string, Href> = { projet: '/projets', ecaisse: '/ecaisse', contrats: '/contrats' };
+const SECTION_ROUTES: Record<string, Href> = { projet: '/projets', ecaisse: '/ecaisse', cagnotte: '/cagnottes' };
 
 export default function Home() {
   const { me } = useAuth();
   const wallet = useApi<Wallet>('/wallet');
   const history = useApi<History>('/wallet/history?limit=5');
   const news = useApi<News[]>('/me/news');
+  const tontines = useApi<TontineItem[]>('/tontines');
+  const credit = useApi<{ score: number }>('/credit/offers');
+  const due = tontines.data?.filter((t) => t.status === 'active' && t.current_round && !t.current_round.paid) ?? [];
   const firstName = me?.full_name?.split(' ')[0] ?? '';
 
   return (
-    <Screen onRefresh={() => { void wallet.reload(); void history.reload(); }} refreshing={wallet.loading && !!wallet.data}>
+    <Screen onRefresh={() => { void wallet.reload(); void history.reload(); void tontines.reload(); }} refreshing={wallet.loading && !!wallet.data}>
       <Row style={{ justifyContent: 'space-between' }}>
         <Text style={{ fontSize: 22, fontWeight: '900', color: colors.brand }}>⚡ SMARTFIN</Text>
         <Pressable onPress={() => router.push('/support')} accessibilityLabel="Aide et support"><Text style={{ fontSize: 22 }}>💬</Text></Pressable>
@@ -55,6 +59,27 @@ export default function Home() {
           <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>Dépôt</Text>
         </Pressable>
       </Row>
+
+      {due.map((t) => (
+        <Pressable key={t.id} onPress={() => router.push({ pathname: '/tontine/[id]', params: { id: t.id } })}>
+          <Card style={{ flexDirection: 'row', alignItems: 'center', borderColor: colors.green, borderWidth: 2 }}>
+            <Text style={{ fontSize: 28 }}>🔄</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontWeight: '700', color: colors.ink }}>Cotisation « {t.name} »</Text>
+              <Text style={{ fontSize: 12, color: colors.ink2 }}>Tour {t.current_round!.number} · avant le {shortDate(t.current_round!.due_date)}</Text>
+            </View>
+            <Text style={{ fontWeight: '800', color: colors.green }}>{fcfa(t.contribution_amount)}</Text>
+          </Card>
+        </Pressable>
+      ))}
+      {credit.data && (
+        <Pressable onPress={() => router.push('/credit')}>
+          <Card style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10 }}>
+            <Text style={{ flex: 1, color: colors.ink2 }}>Mon score SMARTFIN</Text>
+            <Text style={{ fontWeight: '800', color: colors.brand }}>{credit.data.score} / 1000 ›</Text>
+          </Card>
+        </Pressable>
+      )}
 
       <Row style={{ justifyContent: 'space-between' }}>
         {SHORTCUTS.map((sc) => (

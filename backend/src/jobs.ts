@@ -3,10 +3,18 @@ import { closeEcaisse } from './modules/ecaisse.js';
 import { chargePlus } from './modules/account.js';
 import { notify } from './services/notify.js';
 import { pricing } from './pricing.js';
+import { closeOverdueRounds } from './modules/tontine.js';
+import { collectDueInstallments } from './modules/credit.js';
 
 /** Tâches périodiques (toutes les heures). En production : un worker dédié ou un cron. */
 export async function runJobs() {
-  const results = { ecaissesReleased: 0, plansRenewed: 0, plansExpired: 0, challengesExpired: 0 };
+  const results = { ecaissesReleased: 0, plansRenewed: 0, plansExpired: 0, challengesExpired: 0, tontineRoundsClosed: 0,
+    credit: { autoDebited: 0, penalized: 0, defaulted: 0 } };
+
+  // Tontines : tours échus au-delà du délai de grâce → cautions mobilisées et pot versé.
+  results.tontineRoundsClosed = await closeOverdueRounds();
+  // Microcrédit : prélèvements automatiques, pénalités, passage en défaut.
+  results.credit = await collectDueInstallments();
 
   // E-caisses arrivées à échéance : l'argent revient automatiquement, « sans y penser ».
   for (const { id } of await many(pool, "SELECT id FROM ecaisses WHERE status = 'locked' AND unlock_at <= now()")) {

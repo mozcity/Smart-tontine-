@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { api } from '@/lib/api';
 import { useApi } from '@/lib/useApi';
 import { fcfa, parseAmount } from '@/lib/format';
-import { Button, Card, Empty, Field, H1, H2, P, Row, Screen, Segmented, colors, notifyError } from '@/components/ui';
+import { Button, Card, Empty, Field, H2, P, Row, Screen, Segmented, colors, notifyError } from '@/components/ui';
 
 interface Item { id: string; name: string; balance: number; members: number; role: string; target_amount: number | null }
 
@@ -24,7 +24,6 @@ export default function Cagnottes() {
 
   return (
     <Screen onRefresh={list.reload}>
-      <H1>Cagnotte+</H1>
       <P>Épargne à plusieurs, avec double validation et suivi en temps réel. Idéal pour les tontines modernes !</P>
       {list.data?.length === 0 && <Empty text="Tu ne fais partie d'aucune cagnotte." />}
       {list.data?.map((c) => (

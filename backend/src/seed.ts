@@ -3,6 +3,8 @@ import { pool, withTx, one } from './db.js';
 import { migrate } from './migrate.js';
 import { referralCode } from './lib/crypto.js';
 import { createAccount, post, systemAccount, walletOf } from './services/ledger.js';
+import { createApp } from './app.js';
+import type { AddressInfo } from 'node:net';
 
 await migrate();
 
@@ -33,9 +35,48 @@ const clovis = await user('+2250700000001', 'Clovis Kouadio', 'customer', 'faceb
 const awa = await user('+2250700000002', 'Awa Traoré', 'customer', 'parrainage');
 await user('+2250700000003', 'Moussa Diallo', 'customer', 'tiktok');
 await user('+2250700000004', 'Fatou Koné', 'customer', 'ambassadeur');
-await deposit(clovis, 200_000);
-await deposit(awa, 75_000);
+const moussa = await one(pool, "SELECT id FROM users WHERE phone = '+2250700000003'");
+const fatou = await one(pool, "SELECT id FROM users WHERE phone = '+2250700000004'");
+const seeded = await one(pool, 'SELECT count(*)::int AS n FROM tontines');
+if (seeded.n === 0) {
+  await deposit(clovis, 200_000);
+  await deposit(awa, 75_000);
+  await deposit(moussa.id, 60_000);
+  await deposit(fatou.id, 60_000);
+  await pool.query("UPDATE users SET kyc_level = 1 WHERE phone IN ('+2250700000001', '+2250700000002')");
+  await demoTontine();
+}
 await pool.query("INSERT INTO support_tickets (user_id, subject, body) VALUES ($1, 'Dépôt Wave non reçu', 'J''ai payé 5 000 F par Wave mais je ne vois rien.')", [awa]);
+
+async function demoTontine() {
+  // Parcours réel via l'API (en mémoire) : tontine mensuelle à 4, tour 1 versé, avance pour le 4e membre.
+  const server = createApp().listen(0);
+  const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  const call = async (path: string, body: unknown, token?: string, method = 'POST') => {
+    const r = await fetch(base + path, { method, headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) }, body: method === 'GET' ? undefined : JSON.stringify(body) });
+    const data = await r.json();
+    if (!r.ok) throw new Error(`${path} : ${data.message}`);
+    return data;
+  };
+  const login = async (phone: string) => {
+    const { devCode } = await call('/auth/otp/request', { phone });
+    const { token } = await call('/auth/otp/verify', { phone, code: devCode });
+    await call('/auth/me/pin', { pin: '1234' }, token, 'PUT');
+    return token as string;
+  };
+  const phones = ['+2250700000001', '+2250700000002', '+2250700000003', '+2250700000004'];
+  const tokens = await Promise.all(phones.map(login));
+  const t = await call('/tontines', { name: 'Tontine des collègues', contributionAmount: 25_000, frequency: 'monthly', maxMembers: 4, orderMode: 'fixed',
+    description: 'Cotisation le 5 de chaque mois' }, tokens[0]);
+  for (const tk of tokens.slice(1)) await call(`/tontines/${t.id}/join`, {}, tk);
+  const ids = (await one(pool, 'SELECT array_agg(id ORDER BY phone) AS ids FROM users WHERE phone = ANY($1)', [phones])).ids;
+  await call(`/tontines/${t.id}/start`, { order: ids }, tokens[0]);
+  for (const tk of tokens) await call(`/tontines/${t.id}/rounds/1/contribute`, {}, tk);
+  const offers = await call('/credit/offers', null, tokens[3], 'GET');
+  const offer = offers.advances[0];
+  if (offer?.eligible) await call('/credit/advances', { roundId: offer.roundId, amount: 30_000, pin: '1234' }, tokens[3]);
+  server.close();
+}
 
 console.log('Données de démo créées. Admin :', admin, '(+2250748553268 — connexion par OTP)');
 await pool.end();

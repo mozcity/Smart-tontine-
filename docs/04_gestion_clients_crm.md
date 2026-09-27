@@ -18,7 +18,29 @@ La vue SQL `customer_overview` (migration `002_crm_views.sql`) calcule pour chaq
 
 La fiche client du back-office affiche : indicateurs, produits détenus (e-caisses, cagnottes, projets, contrats), 30 dernières transactions, tickets, **notes CRM** de l'équipe, parcours (événements analytiques : inscription, dépôt, création de produits…), et les actions KYC / suspension.
 
-## 4.3 Segmentation automatique
+## 4.3 Onglet « Tontines & crédit »
+
+- **Tontines** : en cours, en recrutement et terminées ; membres engagés ; cotisations collectées ; impayés couverts par caution ; cotisations en retard ; **tours échus non versés**.
+- **Portefeuille de crédit** : encours, dont avances ; **PAR30** (encours avec plus de 30 jours de retard, alerte au-delà de 5 %) ; défauts ; taux de remboursement à l'heure ; total décaissé ; intérêts reversés au SFD.
+- **Liste des crédits** avec reste dû, prochaine échéance et score à l'octroi.
+- La **fiche client** affiche le score SMARTFIN et le détail de ses facteurs, les tontines (position, statut, caution) et les crédits.
+
+## 4.4 Recouvrement (processus automatisé + humain)
+
+| Jour | Action | Canal |
+|---|---|---|
+| J-1 | Rappel d'échéance (cotisation ou crédit) | Notification app / SMS |
+| J0 | **Prélèvement automatique** du crédit si le jeton est suffisamment approvisionné | Automatique (job) |
+| J+3 | Pénalité (2 % crédit ; 5 % cotisation, au profit du bénéficiaire) ; **tour de tontine clôturé, caution mobilisée** | Automatique + notification |
+| J+7 | Appel du conseiller, solution amiable (report, rééchelonnement avec le SFD) | Téléphone / WhatsApp |
+| J+30 | Entrée dans le PAR30 ; organisateur de tontine informé si le client est membre | Back-office |
+| J+90 | **Défaut** : score ramené à 0, crédit bloqué, dossier transmis au SFD (et au BIC selon la convention) | Back-office |
+
+Déjà automatisé dans l'API (job horaire) : prélèvement à J0, pénalités et clôture des tours à J+3, passage en défaut à J+90. **À mettre en place** : rappels J-1 (SMS/push), outil d'appel des conseillers, rééchelonnement.
+
+Principes : pas de harcèlement, pas de publication du nom d'un défaillant hors de sa tontine, rééchelonnement proposé avant le défaut.
+
+## 4.5 Segmentation automatique
 
 | Segment | Règle | Action type |
 |---|---|---|
@@ -29,17 +51,17 @@ La fiche client du back-office affiche : indicateurs, produits détenus (e-caiss
 | `dormant` | Aucune activité depuis 30 jours | Réactivation, nouveau challenge |
 | `vip` | Patrimoine SMARTFIN ≥ 500 000 F | Relation personnalisée, KYC niveau 2 |
 
-## 4.4 Cycle de vie client
+## 4.6 Cycle de vie client
 
 ```
-Inscription (OTP) ─► 1er dépôt ─► 1er produit d'épargne ─► habitude mensuelle ─► SMARTFIN+ / parrain
-      │                  │                   │                        │
-   J+3 relance       notification        challenge suggéré       dormant > 30 j ─► réactivation
+Inscription ─► 1er dépôt ─► rejoint une tontine ─► cotise à l'heure ─► score ≥ 550 ─► avance / microcrédit ─► organisateur / parrain
+     │              │                │                    │                                     │
+ J+3 relance   notification     rappels J-1         score visible                     remboursement → score ↑
 ```
 
-Chaque étape est tracée dans `user_events` (`signup`, `deposit_completed`, `ecaisse_created`, `cagnotte_created`, `challenge_joined`, `plus_subscribed`…), ce qui permet de mesurer l'entonnoir et les cohortes.
+Chaque étape est tracée dans `user_events` (`signup`, `deposit_completed`, `tontine_created`, `tontine_joined`, `tontine_contribution`, `tontine_payout`, `advance_granted`, `microcredit_granted`, `ecaisse_created`, `plus_subscribed`…), ce qui permet de mesurer l'entonnoir et les cohortes.
 
-## 4.5 Service client
+## 4.7 Service client
 
 | Canal | Outil | Délai cible |
 |---|---|---|
@@ -47,11 +69,11 @@ Chaque étape est tracée dans `user_events` (`signup`, `deposit_completed`, `ec
 | WhatsApp | +225 07 48 55 32 68 (WhatsApp Business ; ticket créé par l'agent avec canal `whatsapp`) | < 2 h ouvrées |
 | E-mail | contact@smartfin.app | < 24 h |
 
-**Scripts prioritaires** (à préparer dans la base de connaissances) : dépôt non crédité, retrait en attente, code PIN oublié, contestation d'un retrait de cagnotte, relèvement de plafond (KYC).
+**Scripts prioritaires** (à préparer dans la base de connaissances) : dépôt non crédité, cotisation non prise en compte, contestation de l'ordre de passage, caution mobilisée, refus de crédit (expliquer le score), difficulté de remboursement, code PIN oublié, relèvement de plafond (KYC).
 
 **Incidents d'argent** : tout retrait dont l'issue opérateur est inconnue apparaît dans *Finance → Retraits à rapprocher* ; l'admin confirme ou rembourse en un clic (écriture d'annulation tracée dans le grand livre).
 
-## 4.6 KYC progressif et plafonds
+## 4.8 KYC progressif et plafonds
 
 | Niveau | Exigences | Solde max | Entrées / mois |
 |---|---|---:|---:|
@@ -61,13 +83,14 @@ Chaque étape est tracée dans `user_events` (`signup`, `deposit_completed`, `ec
 
 Plafonds paramétrés dans `pricing.ts`. L'API applique aujourd'hui le plafond de **solde** au moment du dépôt ; le plafond d'**entrées mensuelles** reste à implémenter. Valeurs **à aligner sur les exigences de la banque/EME partenaire et de la BCEAO** avant le lancement.
 
-## 4.7 Indicateurs CRM suivis
+## 4.9 Indicateurs CRM suivis
 
 Nombre de clients, nouveaux 7/30 jours, actifs 30 jours (MAU), encours, dépôts 30 jours, revenus 30 jours, abonnés SMARTFIN+, tickets ouverts, répartition par segment et par canal, produits actifs, courbes quotidiennes d'inscriptions et de dépôts.
 
-## 4.8 Évolutions prévues
+## 4.10 Évolutions prévues
 
 - Envoi réel des campagnes SMS / WhatsApp (Orange SMS API, WhatsApp Business API) et e-mail (Resend) — aujourd'hui le canal `push` est livré, les autres enregistrent la cible.
 - Notifications push natives (Expo Notifications).
-- Score de santé financière client (régularité d'épargne, contrats remboursés) → base des offres partenaires.
+- Consultation et alimentation du **bureau d'information sur le crédit (BIC)** via le SFD partenaire.
+- Proposition automatique de rééchelonnement au premier retard.
 - Export des cohortes vers un outil BI (Metabase sur une réplique en lecture de PostgreSQL).

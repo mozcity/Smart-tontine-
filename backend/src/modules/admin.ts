@@ -5,6 +5,7 @@ import { notFound } from '../lib/errors.js';
 import { currentUser, requireRole } from '../lib/auth.js';
 import { notify } from '../services/notify.js';
 import { reverseWithdrawal } from './wallet.js';
+import { creditScore } from '../services/credit.js';
 
 // Back-office : CRM (client 360, segments, notes), support, campagnes, finance & rapprochement.
 // Accessible aux rôles « support » (lecture + tickets) et « admin » (tout).
@@ -91,7 +92,15 @@ router.get('/customers/:id', async (req, res) => {
     many(pool, 'SELECT p.name, p.status, p.target_amount, a.balance FROM projets p JOIN accounts a ON a.id = p.account_id WHERE p.user_id = $1', [id]),
     many(pool, 'SELECT title, kind, status, principal FROM contrats WHERE $1 IN (creator_id, counterparty_id)', [id]),
   ]);
-  res.json({ customer, transactions, notes, tickets, events, products: { ecaisses, cagnottes, projets, contrats } });
+  const [score, loans, tontines] = await Promise.all([
+    creditScore(pool, id),
+    many(pool, `SELECT l.id, l.product, l.purpose, l.principal, l.interest, l.status, l.created_at,
+                  (SELECT COALESCE(sum(principal + interest + penalty), 0)::bigint FROM loan_installments WHERE loan_id = l.id AND paid_at IS NULL) AS outstanding
+                FROM loans l WHERE l.user_id = $1 ORDER BY l.created_at DESC`, [id]),
+    many(pool, `SELECT t.name, t.status, t.contribution_amount, m.position, m.status AS member_status, m.guarantee_status
+                FROM tontine_members m JOIN tontines t ON t.id = m.tontine_id WHERE m.user_id = $1`, [id]),
+  ]);
+  res.json({ customer, transactions, notes, tickets, events, score, loans, products: { tontines, ecaisses, cagnottes, projets, contrats } });
 });
 
 router.post('/customers/:id/notes', async (req, res) => {
@@ -112,6 +121,55 @@ router.patch('/customers/:id', requireRole('admin'), async (req, res) => {
   if (!r.rowCount) throw notFound('Client');
   if (body.kycLevel) await notify(pool, req.params.id as string, 'Identité vérifiée ✅', 'Tes plafonds ont été relevés');
   res.json({ ok: true });
+});
+
+// ───── Microfinance : portefeuille de crédit et tontines ─────
+router.get('/credit', async (_req, res) => {
+  const portfolio = await one(pool,
+    `WITH o AS (
+       SELECT l.id, l.product, l.status,
+              COALESCE(sum(i.principal) FILTER (WHERE i.paid_at IS NULL), 0)::bigint AS principal_due,
+              COALESCE(max(CURRENT_DATE - i.due_date) FILTER (WHERE i.paid_at IS NULL AND i.due_date < CURRENT_DATE), 0) AS days_late
+       FROM loans l JOIN loan_installments i ON i.loan_id = l.id GROUP BY l.id)
+     SELECT count(*) FILTER (WHERE status = 'active')::int AS active_loans,
+            COALESCE(sum(principal_due) FILTER (WHERE status = 'active'), 0)::bigint AS outstanding,
+            COALESCE(sum(principal_due) FILTER (WHERE status = 'active' AND product = 'avance_tontine'), 0)::bigint AS outstanding_advances,
+            COALESCE(sum(principal_due) FILTER (WHERE status = 'active' AND days_late > 30), 0)::bigint AS par30,
+            COALESCE(sum(principal_due) FILTER (WHERE status = 'defaulted'), 0)::bigint AS defaulted
+     FROM o`);
+  const totals = await one(pool,
+    `SELECT COALESCE(sum(principal), 0)::bigint AS disbursed, count(*)::int AS loans,
+            count(*) FILTER (WHERE status = 'repaid')::int AS repaid
+     FROM loans`);
+  const onTime = await one(pool,
+    `SELECT count(*) FILTER (WHERE paid_at IS NOT NULL AND paid_at::date <= due_date)::int AS on_time,
+            count(*) FILTER (WHERE paid_at IS NOT NULL OR due_date < CURRENT_DATE)::int AS due
+     FROM loan_installments`);
+  const income = await one(pool,
+    `SELECT COALESCE(sum(e.amount) FILTER (WHERE a.code = 'SYS_CREDIT_INCOME'), 0)::bigint AS partner_interest
+     FROM ledger_entries e JOIN accounts a ON a.id = e.account_id`);
+  const tontines = await one(pool,
+    `SELECT count(*) FILTER (WHERE status = 'active')::int AS active,
+            count(*) FILTER (WHERE status = 'recruiting')::int AS recruiting,
+            count(*) FILTER (WHERE status = 'completed')::int AS completed,
+            (SELECT count(*)::int FROM tontine_members m JOIN tontines t ON t.id = m.tontine_id WHERE t.status IN ('active', 'recruiting')) AS members,
+            (SELECT COALESCE(sum(amount + penalty), 0)::bigint FROM tontine_contributions) AS collected,
+            (SELECT count(*)::int FROM tontine_contributions WHERE source = 'guarantee') AS covered_defaults,
+            (SELECT count(*)::int FROM tontine_contributions WHERE late AND source = 'wallet') AS late_contributions,
+            (SELECT count(*)::int FROM tontine_contributions) AS contributions
+     FROM tontines`);
+  const loans = await many(pool,
+    `SELECT l.id, l.product, l.purpose, l.principal, l.status, l.score_at_grant, l.created_at, u.full_name, u.phone,
+            (SELECT COALESCE(sum(principal + interest + penalty), 0)::bigint FROM loan_installments WHERE loan_id = l.id AND paid_at IS NULL) AS outstanding,
+            (SELECT min(due_date) FROM loan_installments WHERE loan_id = l.id AND paid_at IS NULL) AS next_due
+     FROM loans l JOIN users u ON u.id = l.user_id ORDER BY l.status = 'active' DESC, next_due NULLS LAST LIMIT 100`);
+  const overdueRounds = await many(pool,
+    `SELECT t.name, r.number, r.due_date,
+            (SELECT count(*)::int FROM tontine_members m WHERE m.tontine_id = t.id) -
+            (SELECT count(*)::int FROM tontine_contributions c WHERE c.round_id = r.id) AS missing
+     FROM tontine_rounds r JOIN tontines t ON t.id = r.tontine_id
+     WHERE r.status = 'open' AND r.due_date < CURRENT_DATE ORDER BY r.due_date`);
+  res.json({ portfolio, totals, onTimeRate: onTime.due ? onTime.on_time / onTime.due : null, income, tontines, loans, overdueRounds });
 });
 
 // ───── Support ─────

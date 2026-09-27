@@ -3,6 +3,8 @@ import { config } from './config.js';
 
 // BIGINT (montants FCFA) -> number. Sûr jusqu'à 9 × 10^15 FCFA.
 pg.types.setTypeParser(20, (v) => Number(v));
+// DATE -> 'AAAA-MM-JJ' tel quel (évite les décalages de fuseau horaire).
+pg.types.setTypeParser(1082, (v) => v);
 
 export const pool = new pg.Pool({ connectionString: config.databaseUrl, max: 10 });
 

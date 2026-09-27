@@ -10,8 +10,9 @@ export default function TabsLayout() {
   return (
     <Tabs screenOptions={{ headerShown: false, tabBarActiveTintColor: colors.brand, tabBarInactiveTintColor: colors.muted, tabBarLabelStyle: { fontWeight: '600' } }}>
       <Tabs.Screen name="index" options={{ title: 'Synthèse', tabBarIcon: icon('🏠') }} />
+      <Tabs.Screen name="tontines" options={{ title: 'Tontines', tabBarIcon: icon('🔄') }} />
+      <Tabs.Screen name="credit" options={{ title: 'Crédit', tabBarIcon: icon('💰') }} />
       <Tabs.Screen name="budget" options={{ title: 'Budget', tabBarIcon: icon('📊') }} />
-      <Tabs.Screen name="cagnottes" options={{ title: 'Cagnotte', tabBarIcon: icon('🐷') }} />
       <Tabs.Screen name="profil" options={{ title: 'Profil', tabBarIcon: icon('👤') }} />
     </Tabs>
   );

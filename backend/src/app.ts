@@ -17,6 +17,8 @@ import { router as contrats } from './modules/contrats.js';
 import { router as account } from './modules/account.js';
 import { router as admin } from './modules/admin.js';
 import { router as webhooks } from './modules/webhooks.js';
+import { router as tontines } from './modules/tontine.js';
+import { router as credit } from './modules/credit.js';
 
 export function createApp() {
   const app = express();
@@ -33,6 +35,8 @@ export function createApp() {
   app.use('/webhooks', webhooks);
   app.use('/wallet', requireAuth, wallet);
   app.use('/ecaisses', requireAuth, ecaisse);
+  app.use('/tontines', requireAuth, tontines);
+  app.use('/credit', requireAuth, credit);
   app.use('/cagnottes', requireAuth, cagnotte);
   app.use('/budget', requireAuth, budget);
   app.use('/projets', requireAuth, projets);

@@ -5,10 +5,11 @@
 ```
  ┌──────────────────────┐     HTTPS/JSON      ┌─────────────────────────────────────┐
  │ App mobile (Expo/RN) │ ──────────────────► │ API SMARTFIN (Node.js / Express 5)  │
- │ Android · iOS · Web  │                     │  auth · wallet · e-caisse · cagnotte│
- └──────────────────────┘                     │  budget · projets · challenges      │
+ │ Android · iOS · Web  │                     │  auth · wallet · TONTINE · CRÉDIT   │
+ └──────────────────────┘                     │  score · e-caisse · cagnotte        │
+                                              │  budget · projets · challenges      │
  ┌──────────────────────┐                     │  contrats · support · admin (CRM)   │
- │ Back-office CRM web  │ ──────────────────► │  jobs horaires (déblocages, abonn.) │
+ │ Back-office CRM web  │ ──────────────────► │  jobs : tours échus, recouvrement…  │
  │ /admin               │                     └───────┬───────────────┬─────────────┘
  └──────────────────────┘                             │               │
                                                       ▼               ▼
@@ -18,6 +19,7 @@
                                      │ partie double       │◄─┤ webhooks signés HMAC      │
                                      └─────────────────────┘  └───────────────────────────┘
                                                                SMS OTP · KYC · push
+                                                               SFD partenaire (ligne de crédit) · BIC
 ```
 
 | Composant | Dossier | Technologie |
@@ -31,7 +33,7 @@
 
 ## 5.2 Le cœur : un grand livre en partie double
 
-Chaque « poche » d'argent est un **compte** (`accounts`) : portefeuille, e-caisse, cagnotte, projet, challenge, et trois comptes système (`SYS_FLOAT` = fonds chez les opérateurs, `SYS_FEES` = revenus, `SYS_REWARDS` = budget récompenses). Chaque mouvement est une **transaction** composée d'**écritures** dont la somme est **toujours nulle** (`services/ledger.ts`).
+Chaque « poche » d'argent est un **compte** (`accounts`) : portefeuille, **tontine** (cotisations + cautions), e-caisse, cagnotte, projet, challenge, et cinq comptes système : `SYS_FLOAT` (fonds chez les opérateurs), `SYS_FEES` (revenus SMARTFIN), `SYS_REWARDS` (récompenses), **`SYS_CREDIT`** (ligne de crédit du SFD partenaire, négative à hauteur de l'encours prêté) et **`SYS_CREDIT_INCOME`** (intérêts revenant au SFD). Chaque mouvement est une **transaction** composée d'**écritures** dont la somme est **toujours nulle** (`services/ledger.ts`).
 
 Garanties :
 - aucun franc créé ni perdu : `SUM(accounts.balance) = 0` en permanence, vérifiable dans *Finance → Contrôle du grand livre* ;
@@ -46,6 +48,12 @@ Garanties :
 |---|---|
 | **Dépôt** | App → `POST /wallet/deposits` → transaction `pending` + URL de paiement → le client paie sur Wave/OM → webhook signé `POST /webhooks/payments` → crédit du portefeuille, notification, bonus parrain éventuel |
 | **Retrait** | PIN vérifié → débit immédiat (montant + frais) → ordre de paiement opérateur → si échec : écriture d'annulation automatique ; si issue inconnue : file « à rapprocher » dans le back-office |
+| **Tontine — adhésion** | Caution : portefeuille → compte de la tontine (rendue en fin de cycle si non utilisée) |
+| **Tontine — démarrage** | Ordre fixé ou **tirage au sort** (Fisher-Yates, aléa cryptographique) ; calendrier des tours généré |
+| **Tontine — tour** | Chaque cotisation : portefeuille → tontine (+ 5 % si retard). Dernière cotisation reçue ⇒ **versement automatique** : pot − 1 % de commission − avance éventuelle − reconstitution de caution → bénéficiaire |
+| **Tontine — impayé** | Job horaire : tour échu + 3 jours ⇒ cautions des retardataires converties en cotisations, membres marqués défaillants, pot versé |
+| **Avance sur tontine** | Offre calculée (≤ 50 % du pot, membre à jour) ; `SYS_CREDIT` → portefeuille ; remboursée **sur le pot** : principal → `SYS_CREDIT`, intérêts ventilés 40 % `SYS_FEES` / 60 % `SYS_CREDIT_INCOME` |
+| **Microcrédit** | Score ≥ 550 + KYC 1 ; échéancier sur capital restant dû ; `SYS_CREDIT` → portefeuille ; échéances prélevées automatiquement, pénalité J+3, défaut J+90 |
 | **E-caisse** | Portefeuille → compte e-caisse ; job horaire : retour automatique à l'échéance ; rupture anticipée : 2 % vers `SYS_FEES` |
 | **Cagnotte+** | Cotisations → compte de la cagnotte ; retrait = demande d'un admin (1re validation) + validation d'un 2e admin → versement au bénéficiaire |
 | **Contrat** | Signature de la contrepartie (PIN) → prêt versé ; chaque échéance payée débiteur → créancier |
@@ -56,6 +64,8 @@ Garanties :
 |---|---|
 | Auth | `POST /auth/otp/request`, `POST /auth/otp/verify`, `GET/PATCH /auth/me`, `PUT /auth/me/pin` |
 | Portefeuille | `GET /wallet`, `GET /wallet/history`, `POST /wallet/deposits`, `GET /wallet/withdrawals/quote`, `POST /wallet/withdrawals`, `POST /wallet/transfers` |
+| **Tontines** | `GET/POST /tontines`, `GET /tontines/:id`, `GET /tontines/:id/preview`, `POST /tontines/:id/join|leave|start`, `POST /tontines/:id/rounds/:number/contribute|close` |
+| **Crédit** | `GET /credit/offers` (score + offres), `GET /credit/simulate`, `POST /credit/advances`, `GET/POST /credit/loans`, `POST /credit/loans/:id/repay` |
 | E-caisse | `GET/POST /ecaisses`, `POST /ecaisses/:id/topup|release|break` |
 | Cagnotte+ | `GET/POST /cagnottes`, `GET /cagnottes/:id`, `POST /cagnottes/:id/members|contribute|withdrawals`, `POST /cagnottes/withdrawals/:wid/decision` |
 | Budget | `GET /budget/categories`, `PUT /budget/plans/:month`, `POST/DELETE /budget/entries`, `GET /budget/summary` |
@@ -63,14 +73,16 @@ Garanties :
 | Challenges | `GET /challenges`, `GET /challenges/leaderboard`, `POST /challenges/:code/join`, `POST /challenges/participations/:id/save|withdraw` |
 | Contrats | `GET/POST /contrats`, `GET /contrats/:id`, `POST /contrats/:id/sign|cancel`, `POST /contrats/:id/echeances/:eid/pay` |
 | Compte | `GET /me/notifications`, `GET /me/news`, `POST /me/plan/subscribe|cancel`, `GET/POST /me/support/tickets` |
-| Back-office | `/admin/api/kpis`, `customers`, `customers/:id`, `notes`, `tickets`, `campaigns`, `news`, `ledger/check`, `withdrawals/to-reconcile` |
+| Back-office | `/admin/api/kpis`, `credit`, `customers`, `customers/:id`, `notes`, `tickets`, `campaigns`, `news`, `ledger/check`, `withdrawals/to-reconcile` |
 | Public | `GET /health`, `GET /pricing`, `POST /webhooks/payments` |
 
 ## 5.5 Sécurité
 
 Déjà en place :
 - OTP à 6 chiffres haché (scrypt), expiration 5 min, 5 essais max, 5 demandes / 15 min par numéro ;
-- **code PIN obligatoire** pour toute sortie d'argent (retrait, transfert, rupture d'e-caisse, signature et remboursement de contrat) ;
+- **code PIN obligatoire** pour toute sortie d'argent et tout engagement (retrait, transfert, rupture d'e-caisse, contrat, **avance, microcrédit, remboursement**) ;
+- **taux d'usure vérifié dans le code** avant tout octroi de crédit ; échéancier sur capital restant dû (pas d'intérêt « flat ») ;
+- une seule avance active par tour de tontine (index unique en base) ;
 - JWT signé, statut et rôle relus en base à chaque requête (une suspension est immédiate) ;
 - jeton stocké dans le Keychain/Keystore (`expo-secure-store`) ;
 - webhooks vérifiés par HMAC-SHA256 en temps constant ;
@@ -101,9 +113,9 @@ Déjà en place :
 cd backend
 cp .env.example .env              # variables par défaut : PostgreSQL local, paiements simulés
 npm install
-npm run seed                      # schéma + données de démo (admin : +2250748553268)
+npm run seed                      # schéma + démo : tontine à 4 en cours, avance sur tontine (admin : +2250748553268)
 npm run dev                       # http://localhost:4000 · back-office : http://localhost:4000/admin
-npm test                          # 18 tests de bout en bout (base smartfin_test)
+npm test                          # 25 tests de bout en bout (base smartfin_test)
 
 # Application mobile
 cd ../mobile

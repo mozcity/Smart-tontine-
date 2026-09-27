@@ -1,79 +1,141 @@
 # 1. Modèle économique SMARTFIN
 
-## 1.1 Proposition de valeur
+## 1.1 En une phrase
 
-> **« Gère ton argent sans stress, depuis ton téléphone. »**
+> **SMARTFIN est une tontine en ligne adossée à un modèle de microfinance : on cotise ensemble, on reçoit le pot à son tour, et la discipline de cotisation devient un score de crédit qui ouvre l'accès à l'avance sur tontine et au microcrédit.**
 
-SMARTFIN aide les jeunes actifs, commerçants et familles de l'UEMOA à **mettre de l'argent de côté et tenir leurs engagements**, là où le Mobile Money sert surtout à *dépenser et transférer*. SMARTFIN n'est pas un concurrent de Wave ou Orange Money : c'est la **couche d'épargne et de discipline financière** au-dessus d'eux.
+Promesse client : « Gère ton argent sans stress, depuis ton téléphone. »
 
-| Problème du client | Réponse SMARTFIN |
+## 1.2 Pourquoi la tontine, pourquoi en ligne
+
+La tontine (épargne rotative) est l'outil d'épargne le plus utilisé en Afrique de l'Ouest, bien avant les comptes bancaires. Elle repose sur la confiance, et c'est aussi sa faiblesse :
+
+| Problème de la tontine classique | Réponse SMARTFIN |
 |---|---|
-| « Dès que j'ai l'argent sur mon compte, je le dépense. » | **E-caisse** : épargne bloquée jusqu'à une date, pénalité de 2 % si on casse avant. |
-| « Notre tontine repose sur la confiance dans une seule personne. » | **Cagnotte+** : caisse commune, cotisations visibles, **double validation** de chaque retrait. |
-| « Je ne sais pas où passe mon argent en fin de mois. » | **Budget** : plafonds par catégorie, alertes à 80 % et 100 %. |
-| « Mon projet (voyage, loyer, commerce) n'avance pas. » | **Projets** : objectif chiffré, étapes, progression. |
-| « Épargner, c'est ennuyeux. » | **Challenges** : défis ludiques (52 semaines, 1 000 F/jour…), points, classement, récompenses. |
-| « J'ai prêté de l'argent à un proche, sans trace. » | **Contrats** : prêt signé des deux côtés, échéancier, remboursement en un clic. |
+| Le trésorier peut partir avec la caisse | L'argent est cantonné chez un établissement agréé ; personne ne le détient seul |
+| Un membre reçoit le pot puis arrête de cotiser | **Caution** bloquée à l'adhésion, mobilisée automatiquement ; statut « défaillant » visible ; score dégradé |
+| Litiges sur qui a payé quoi | Chaque cotisation est tracée au franc près, visible de tous les membres |
+| Ordre de passage contesté | **Tirage au sort cryptographique** ou ordre fixé à l'avance par le groupe |
+| Déplacements, collecte en espèces | Cotisation en un clic depuis Wave / Orange / MTN / Moov |
+| Besoin d'argent avant son tour | **Avance sur tontine** : une partie du futur pot tout de suite |
+| Aucune trace pour obtenir un crédit | L'historique de cotisation alimente un **score SMARTFIN** reconnu par le SFD partenaire |
 
-## 1.2 Segments de clientèle (par ordre de priorité)
+## 1.3 Les deux moteurs et les produits d'accompagnement
 
-1. **Jeunes actifs urbains 20-35 ans** (Abidjan d'abord) : salariés, freelances, étudiants en fin de cursus. Smartphone, Wave/Orange Money déjà utilisés, sensibles au ludique et au social.
-2. **Groupes de tontine** (collègues, associations, familles, diaspora) : la Cagnotte+ est leur produit d'entrée ; chaque groupe amène 5 à 30 membres (acquisition virale).
-3. **Petits commerçants et entrepreneurs** : épargne pour stock, projets, contrats de prêt avec fournisseurs/proches.
-4. **B2B2C (phase 2)** : entreprises qui proposent SMARTFIN en avantage salarié (épargne sur salaire), associations, mutuelles, églises.
+```
+                 ┌──────────────── MOTEUR 1 : TONTINE EN LIGNE ────────────────┐
+  Cotisations →  │ Tontine rotative (hebdo / mensuelle) · caution · tirage au sort│ → Pot versé au bénéficiaire
+                 │ Cagnotte+ (caisse commune, double validation)                  │   (commission 1 %)
+                 └──────────────────────────────┬────────────────────────────────┘
+                                                │ historique de cotisation
+                                                ▼
+                 ┌──────────────── MOTEUR 2 : MICROFINANCE ────────────────────┐
+                 │ Score SMARTFIN 0-1000                                        │
+                 │ Avance sur tontine (≤ 50 % du futur pot, remboursée sur le pot)│ → Part des intérêts (40 %)
+                 │ Microcrédit (10 000 – 500 000 F, 1 à 6 mois, 18 %/an)         │
+                 └──────────────────────────────────────────────────────────────┘
+  Produits d'accompagnement (rétention et score) : E-caisse · Projets · Challenges · Budget · Contrats entre proches
+```
 
-## 1.3 Business Model Canvas
+### Tontine rotative
+- Un organisateur fixe la cotisation, la fréquence (hebdomadaire ou mensuelle), le nombre de membres et le mode d'ordre (tirage au sort ou ordre fixé).
+- Chaque membre bloque une **caution** (par défaut = une cotisation) en rejoignant ; elle est rendue en fin de cycle.
+- À chaque tour, dès que tous les membres ont cotisé, le **pot est versé automatiquement** au bénéficiaire (moins 1 % de commission).
+- Retard : pénalité de 5 % de la cotisation, **reversée au bénéficiaire du tour**. Trois jours après l'échéance, les cautions des retardataires couvrent leur part et le pot est versé.
+- Un défaillant qui arrive à son tour voit sa caution **reconstituée sur son pot** : le groupe n'est jamais perdant.
+
+### Avance sur tontine
+- Un membre à jour dont le tour arrive plus tard peut recevoir **jusqu'à 50 % de son futur pot**.
+- Frais : 1,5 % par mois jusqu'au versement du pot (18 %/an, sous le taux d'usure).
+- **Remboursement automatique** prélevé sur le pot avant versement : risque très faible, adossé à la cotisation des autres membres.
+
+### Microcrédit
+- Accessible avec une identité vérifiée (KYC 1) et un **score ≥ 550**, soit environ 14 cotisations payées à l'heure.
+- Plafond croissant avec le score : 100 000 F à 550 points, jusqu'à 500 000 F.
+- Intérêts sur le capital restant dû (1,5 %/mois), sans frais de dossier. Échéances prélevées automatiquement sur le jeton ; pénalité de 2 % après 3 jours de retard ; défaut à 90 jours.
+
+### Score SMARTFIN (0 à 1 000)
+| Comportement | Points |
+|---|---|
+| Base | +300 |
+| Cotisation de tontine payée à l'heure | +15 chacune (max +300) |
+| Cotisation en retard | −20 chacune |
+| Cotisation impayée (caution utilisée) | −150 chacune |
+| Tontine menée jusqu'au bout | +50 chacune (max +100) |
+| E-caisse tenue jusqu'à l'échéance | +20 chacune (max +100) |
+| Épargne disponible ≥ 50 000 F | +50 |
+| Crédit remboursé | +40 chacun (max +200) |
+| Échéance de crédit en retard | −30 chacune |
+| Identité vérifiée | +50 |
+| Crédit en défaut | score ramené à 0 |
+
+Le détail du score est affiché au client (écran Crédit) et au conseiller (fiche client du back-office) : **le client sait exactement comment progresser**.
+
+## 1.4 Segments de clientèle
+
+1. **Groupes de tontine existants** (collègues, associations, familles, commerçantes des marchés, diaspora) : on digitalise leur tontine. Chaque organisateur amène 5 à 30 membres.
+2. **Jeunes actifs urbains 20-35 ans** : tontines entre amis, challenges d'épargne, premier crédit.
+3. **Petits commerçants et entrepreneurs** : tontine hebdomadaire + microcrédit de stock. C'est le cœur de cible de la microfinance.
+4. **B2B2C** (phase 2) : entreprises, mutuelles, coopératives, églises qui gèrent leur caisse commune sur SMARTFIN.
+
+## 1.5 Business Model Canvas
 
 | Bloc | Contenu |
 |---|---|
-| **Partenaires clés** | Banque ou établissement de monnaie électronique (EME) agréé BCEAO (compte de cantonnement) · agrégateur de paiement (CinetPay, PayDunya) puis contrats directs Wave / Orange / MTN / Moov · fournisseur KYC · IMF et assureurs (micro-crédit, micro-assurance) · influenceurs et ambassadeurs. |
-| **Activités clés** | Développement produit · conformité (KYC, LBC/FT) · acquisition et animation de communauté · support client · rapprochement financier quotidien. |
-| **Ressources clés** | Plateforme (API + app + back-office, livrée dans ce dépôt) · marque · licences/partenariats · base clients et données comportementales. |
-| **Proposition de valeur** | Épargne disciplinée, collective et ludique ; zéro frais pour déposer et épargner. |
-| **Relation client** | Self-service dans l'app · WhatsApp support · notifications et campagnes segmentées · programme de parrainage · communauté (challenges, classement). |
-| **Canaux** | TikTok, Facebook, Instagram, WhatsApp · ambassadeurs campus/marchés · parrainage · partenariats entreprises et associations · stores Google Play / App Store. |
-| **Segments** | Voir 1.2. |
-| **Structure de coûts** | Frais opérateurs Mobile Money (poste n°1) · salaires · marketing d'acquisition · cloud, SMS, KYC · banque partenaire · conformité et audit. |
-| **Sources de revenus** | Frais de retrait · frais Cagnotte+ · pénalités e-caisse · abonnement SMARTFIN+ · revenus du float · commissions partenaires. |
+| **Partenaires clés** | **SFD / IMF agréé** (finance et porte les crédits) · banque ou EME agréé BCEAO (compte de cantonnement) · agrégateur de paiement puis contrats directs Wave / Orange / MTN / Moov · **bureau d'information sur le crédit (BIC)** · assureur (micro-assurance décès/santé des membres) · fournisseur KYC |
+| **Activités clés** | Animation des tontines · scoring · octroi, versement et recouvrement des crédits · conformité (KYC, LBC/FT) · rapprochement quotidien |
+| **Ressources clés** | Plateforme (moteur de tontine, grand livre, scoring, back-office) · données de cotisation · marque · réseau d'organisatrices et organisateurs de tontines |
+| **Proposition de valeur** | Tontine sûre et transparente · crédit accessible sans garantie matérielle, grâce à la discipline d'épargne |
+| **Relation client** | Self-service · organisateurs de tontines (relais communautaires) · WhatsApp · rappels de cotisation et d'échéance |
+| **Canaux** | Organisateurs de tontines et ambassadeurs · parrainage · réseaux sociaux · marchés et associations · entreprises |
+| **Structure de coûts** | Frais opérateurs Mobile Money · salaires · acquisition · **coût du risque (garantie de première perte)** · bureau de crédit · cloud, SMS, KYC · partenaires agréés |
+| **Revenus** | Commission sur pots de tontine · part des intérêts de crédit · frais de retrait · float · SMARTFIN+ · frais Cagnotte+ et e-caisse · commissions d'assurance |
 
-## 1.4 Grille tarifaire
+## 1.6 Grille tarifaire (`backend/src/pricing.ts`)
 
-La grille est codée dans `backend/src/pricing.ts` (source unique pour l'API, l'app et le modèle financier).
-
-| Opération | Prix | Justification |
-|---|---|---|
-| Ouverture de compte, dépôt, épargne, budget, projets, challenges | **Gratuit** | Lever toute barrière à l'entrée d'argent. |
-| Transfert entre utilisateurs SMARTFIN | **Gratuit** | Effet réseau : chaque transfert fait venir un nouvel utilisateur. |
-| Retrait vers Mobile Money | **1,5 %** (min. 100 F, max. 7 500 F) | Couvre le coût d'encaissement payé à l'entrée. |
-| Retrait d'une Cagnotte+ vers un membre | **1 %** (min. 100 F, max. 10 000 F) | Service de confiance à forte valeur. |
-| Rupture anticipée d'une e-caisse | **2 %** (min. 200 F) | C'est la « friction » qui rend l'épargne efficace. |
-| Déblocage d'une e-caisse à l'échéance | Gratuit, automatique | — |
-| **SMARTFIN+** | **1 000 F / mois** | 3 retraits offerts/mois, challenges exclusifs, coach budget, support prioritaire. |
-| Parrainage | Parrain : **+500 F** au 1er dépôt ≥ 5 000 F du filleul | Acquisition à coût maîtrisé. |
-
-## 1.5 Moteurs de revenus (scénario central, voir `finance/`)
-
-En 2029 (année 3) : ~70 000 clients actifs, 20,9 Mds F de dépôts annuels, **373 M F de chiffre d'affaires** réparti ainsi :
-
-| Source | Part |
+| Opération | Prix |
 |---|---|
-| Frais de retrait | 34 % |
-| Revenus du float | 20 % |
-| Commissions partenaires | 19 % |
-| Abonnements SMARTFIN+ | 16 % |
-| Frais Cagnotte+ | 11 % |
-| Pénalités e-caisse | < 1 % |
+| Ouverture de compte, dépôt, cotisation de tontine, épargne, budget | **Gratuit** |
+| Transfert entre utilisateurs | Gratuit |
+| **Pot de tontine versé** | **1 %** du pot |
+| Cotisation en retard | 5 % de la cotisation, **au profit du bénéficiaire du tour** |
+| **Avance sur tontine** | 1,5 % par mois, déduite du pot |
+| **Microcrédit** | 1,5 % par mois sur capital restant dû (18 %/an), 40 % pour SMARTFIN et 60 % pour le SFD ; pénalité de retard 2 % |
+| Retrait vers Mobile Money | 1,5 % (min. 100 F, max. 7 500 F) |
+| Retrait Cagnotte+ | 1 % |
+| Rupture anticipée d'e-caisse | 2 % |
+| SMARTFIN+ | 1 000 F/mois (3 retraits offerts, support prioritaire) |
 
-## 1.6 Le point de vigilance n°1 : le coût d'entrée de l'argent
+**Garde-fou réglementaire codé** : l'API refuse tout produit dont le taux annuel dépasse le taux d'usure paramétré (24 %, à confirmer avec le SFD partenaire).
 
-Les dépôts sont gratuits pour le client, mais **SMARTFIN paie l'opérateur à chaque encaissement** (0,7 à 1 % selon les contrats). C'est le premier poste de coût : 167 M F en 2029, soit 45 % du chiffre d'affaires. D'où trois règles :
+## 1.7 D'où vient l'argent (scénario central 2029)
 
-1. **Négocier dès le premier jour** des contrats directs avec Wave, Orange Money, MTN et Moov (objectif : < 0,8 %). L'onglet *Sensibilité* du modèle montre qu'un point de coût d'encaissement vaut ~200 M F d'EBITDA en année 3.
-2. **Garder l'argent dans l'écosystème** : chaque franc qui reste en e-caisse, projet ou cagnotte génère du float et évite un retrait payant pour nous. Les transferts internes sont gratuits *et* ne coûtent rien.
-3. **Diversifier vers des revenus récurrents** : SMARTFIN+ et commissions partenaires (micro-assurance, micro-crédit adossé à l'historique d'épargne).
+~70 000 clients actifs dont 38 000 membres de tontines, 13,8 Mds F de pots versés, 1,1 Md F de crédits versés. **484 M F de chiffre d'affaires :**
 
-## 1.7 Avantages défendables
+| Source | M F | Part |
+|---|---:|---:|
+| Commissions sur pots de tontine | 138 | 29 % |
+| Frais de retrait | 127 | 26 % |
+| Revenus du float | 73 | 15 % |
+| Abonnements SMARTFIN+ | 59 | 12 % |
+| Frais Cagnotte+ | 42 | 9 % |
+| Commissions micro-assurance et partenaires | 28 | 6 % |
+| Part SMARTFIN des intérêts de crédit | 15 | 3 % |
+| Pénalités e-caisse | 2 | < 1 % |
 
-- **Données d'épargne** : l'historique de discipline (e-caisses tenues, contrats remboursés) est un score de crédit alternatif très recherché par les IMF → commissions partenaires.
-- **Effet réseau des Cagnottes+ et des contrats** : un produit qui ne fonctionne qu'à plusieurs.
-- **Confiance** : grand livre en partie double, double validation, transparence totale des cagnottes.
+**Lecture stratégique.** En phase partenaire, la microfinance rapporte peu en direct (40 % d'intérêts sur des prêts courts). Sa vraie valeur est ailleurs :
+1. **Rétention** : on ne quitte pas l'app qui porte son score et son crédit.
+2. **Discipline** : les membres cotisent à l'heure pour faire monter leur score, ce qui réduit les impayés de tontine.
+3. **Option stratégique** : avec un agrément SFD propre (année 3+), SMARTFIN capterait 100 % des intérêts. Il faudrait en contrepartie des fonds propres et porter le risque.
+
+## 1.8 Points de vigilance
+
+1. **Coût d'entrée de l'argent** : chaque cotisation passe par Mobile Money et SMARTFIN paie l'encaissement (≈ 35 % du chiffre d'affaires en 2029). Négocier sous 0,8 % est vital (onglet *Sensibilité*).
+2. **Risque de crédit** : le SFD porte les prêts, mais demandera probablement une **garantie de première perte**. Le modèle suppose que SMARTFIN couvre 50 % des pertes. Objectif PAR30 < 5 %, suivi en temps réel dans le back-office.
+3. **Réglementation** : ni SMARTFIN ni les organisateurs ne détiennent l'argent ; tout crédit est octroyé par un SFD agréé (chapitre 6).
+
+## 1.9 Avantages défendables
+
+- **Données de cotisation** : un historique de discipline financière que ni les banques ni les opérateurs Mobile Money n'ont.
+- **Effet réseau** : une tontine ne fonctionne qu'à plusieurs ; chaque organisateur recrute son groupe.
+- **Confiance** : caution automatique, tirage au sort vérifiable, grand livre en partie double, zéro argent perdu.

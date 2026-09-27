@@ -43,6 +43,7 @@ export default function Profil() {
         </Card>
       ))}
 
+      <Button title="Mes contrats de prêt entre proches" variant="ghost" onPress={() => router.push('/contrats')} />
       <Button title="Aide & support" variant="ghost" onPress={() => router.push('/support')} />
       <Button title="Se déconnecter" variant="danger" onPress={signOut} />
     </Screen>

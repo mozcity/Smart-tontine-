@@ -3,8 +3,9 @@
 ## 3.1 Positionnement
 
 - **Promesse** : « Gère ton argent sans stress, depuis ton téléphone. »
+- **Accroche produit** : « Ta tontine, sans trésorier qui disparaît. Et à la clé, ton premier crédit. »
 - **Ton** : tutoiement, bienveillant, sans jargon bancaire, humour local (nouchi léger sur les réseaux, jamais dans les écrans d'argent).
-- **Territoire** : la discipline financière *positive* — on célèbre chaque franc épargné, on ne culpabilise pas.
+- **Territoire** : la tontine modernisée et la discipline financière *positive*. On célèbre chaque cotisation payée à l'heure, parce qu'elle fait monter le score et ouvre le crédit.
 - **Preuves** : dépôts gratuits, double validation des cagnottes, fonds cantonnés chez une banque partenaire, support WhatsApp humain.
 
 ## 3.2 Entonnoir et objectifs
@@ -14,7 +15,8 @@
 | Notoriété | Vues, portée | 1 M de vues / mois en A1 |
 | Inscription | Compte créé (OTP validé) | 25 000 fin A1 |
 | **Activation** | 1er dépôt | ≥ 50 % des inscrits sous 14 jours |
-| **Habitude** | Au moins un produit d'épargne actif (e-caisse, projet, challenge, cagnotte) | ≥ 35 % des actifs |
+| **Habitude** | Membre d'une tontine active (ou autre produit d'épargne) | ≥ 40 % des actifs en A1, 60 % en A4 |
+| **Crédit** | Score ≥ 550 puis 1er microcrédit, ou avance sur tontine | 10 % des membres de tontine prennent une avance |
 | Monétisation | SMARTFIN+ ou retrait payant | 3 % d'abonnés en A1 |
 | Recommandation | Filleul ayant déposé | 30 % des nouveaux inscrits via parrainage |
 
@@ -24,8 +26,9 @@ L'onglet *Tableau de bord* du back-office affiche cet entonnoir, les segments et
 
 | Canal | Tactique | Coût cible / inscrit |
 |---|---|---|
+| **Organisateurs de tontine** | Recruter les « présidentes » et « présidents » de tontines existantes (marchés, bureaux, associations) : formation, kit WhatsApp, badge « Organisateur certifié », accès prioritaire au crédit pour eux | ~0 F par membre ; 5 000-10 000 F par organisateur |
 | **Parrainage** | 500 F au parrain au 1er dépôt ≥ 5 000 F du filleul ; code partagé en un clic depuis l'app | 500 F |
-| **Cagnotte+ virale** | Le créateur d'une cagnotte invite son groupe ; chaque invité doit s'inscrire | ~0 F |
+| **Tontine virale** | Le code d'invitation d'une tontine oblige chaque membre à s'inscrire : 1 organisateur = 5 à 30 inscrits | ~0 F |
 | **TikTok / Instagram Reels** | Séries « Défi 52 semaines », « Combien tu as mis de côté ce mois ? », micro-influenceurs finance et lifestyle (10-100 k abonnés) | 800-1 500 F |
 | **Facebook / WhatsApp** | Groupes de tontines, statuts WhatsApp des ambassadeurs, publicités ciblées 20-35 ans Abidjan | 1 000-1 500 F |
 | **Ambassadeurs terrain** | Étudiants (campus UFHB, INP-HB, écoles privées) et commerçants (Adjamé, Treichville) payés au 1er dépôt | 1 000 F |
@@ -37,10 +40,11 @@ L'onglet *Tableau de bord* du back-office affiche cet entonnoir, les segments et
 
 | Période | Actions | Indicateurs |
 |---|---|---|
-| **J-30 → J0 — Pré-lancement** | Liste d'attente (page web + WhatsApp) · 20 ambassadeurs recrutés et formés · 10 groupes de tontine pilotes · contenus « Voir clair dans son jeton » (tutos vidéo) | 3 000 inscrits en liste d'attente |
+| **J-30 → J0 — Pré-lancement** | Liste d'attente (page web + WhatsApp) · **50 organisateurs de tontine** recrutés et formés · 20 ambassadeurs · contenus « Voir clair dans son jeton » (tutos vidéo) | 3 000 inscrits en liste d'attente, 50 tontines prêtes à démarrer |
 | **J0 → J30 — Lancement Abidjan** | Événement de lancement · campagne influenceurs · challenge collectif « 30 jours / 1 000 F » avec classement public · parrainage doublé (1 000 F) pendant 30 jours | 5 000 inscrits, 50 % d'activation |
 | **J30 → J60 — Traction** | Campagnes segmentées (relance J+3, J+7 des inscrits sans dépôt) · premiers partenariats entreprises · témoignages vidéo clients | 10 000 inscrits, CAC < 1 500 F |
-| **J60 → J90 — Rétention & monétisation** | Lancement SMARTFIN+ · programme « Rentrée scolaire » (challenge 90 jours) · enquête de satisfaction NPS | 3 % d'abonnés, rétention M1 > 40 % |
+| **J60 → J90 — Rétention & monétisation** | Ouverture de l'**avance sur tontine** · campagne « Ton score, ton crédit » · SMARTFIN+ · enquête NPS | 10 % des membres éligibles prennent une avance, taux de cotisation à l'heure > 90 % |
+| **J90 → J180 — Microcrédit** | Premiers microcrédits pour les clients ayant un score ≥ 550 (commerçantes en priorité) | 200 prêts pilotes, PAR30 < 5 % |
 
 ## 3.5 Calendrier éditorial (temps forts ivoiriens)
 
@@ -59,7 +63,9 @@ Le back-office envoie des **campagnes ciblées par segment** (push in-app aujour
 
 | Déclencheur | Segment | Message |
 |---|---|---|
-| Inscrit sans dépôt à J+3 | `nouveau` | « Ton jeton t'attend : dépose 5 000 F et lance ta 1re e-caisse » |
+| Inscrit sans dépôt à J+3 | `nouveau` | « Ton jeton t'attend : rejoins une tontine ou crée la tienne » |
+| Veille d'échéance de cotisation | membres de tontine | « Ta cotisation de demain : 25 000 F. Paie à l'heure, ton score monte » |
+| Score qui franchit 550 | éligibles crédit | « Bonne nouvelle : tu as accès au microcrédit » |
 | Inscrit sans dépôt à J+14 | `sans_depot` | Tutoriel vidéo + rappel parrainage |
 | 30 jours sans activité | `dormant` | « Ton challenge t'attend », nouveau défi du mois |
 | Épargne active | `epargnant` | Proposition SMARTFIN+, parrainage |
@@ -76,4 +82,4 @@ Le back-office envoie des **campagnes ciblées par segment** (push in-app aujour
 
 ## 3.8 Tableau de bord marketing hebdomadaire
 
-Inscriptions par canal · taux d'activation J+14 · CAC par canal · part du parrainage · rétention M1/M3 par cohorte · NPS · nombre de Cagnottes+ créées et taille moyenne des groupes.
+Inscriptions par canal · taux d'activation J+14 · CAC par canal · part du parrainage · rétention M1/M3 par cohorte · NPS · **tontines créées et démarrées, taille moyenne, taux de cotisation à l'heure, impayés couverts par caution** · avances et microcrédits accordés.

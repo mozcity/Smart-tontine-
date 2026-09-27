@@ -88,6 +88,7 @@
     <h1>SMART<b>FIN</b> · Back-office</h1>
     <nav id="tabs">
       <button data-tab="dashboard" class="on">Tableau de bord</button>
+      <button data-tab="microfinance">Tontines &amp; crédit</button>
       <button data-tab="customers">Clients</button>
       <button data-tab="tickets">Support</button>
       <button data-tab="campaigns">Campagnes</button>
@@ -139,6 +140,7 @@
       </div>
     </section>
     <section data-view="finance" class="hidden"></section>
+    <section data-view="microfinance" class="hidden"></section>
   </main>
 </div>
 
@@ -151,7 +153,10 @@ const int = (n) => new Intl.NumberFormat('fr-FR').format(n ?? 0);
 const date = (d) => d ? new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const SEG = { nouveau: 'Nouveau', sans_depot: 'Sans dépôt', actif: 'Actif', epargnant: 'Épargnant', dormant: 'Dormant', vip: 'VIP' };
-const TYPES = { deposit: 'Dépôt', withdrawal: 'Retrait', transfer: 'Transfert', ecaisse_lock: 'E-caisse', ecaisse_break: 'E-caisse cassée', ecaisse_release: 'E-caisse débloquée', cagnotte_contribution: 'Cagnotte', cagnotte_withdrawal: 'Retrait cagnotte', subscription: 'SMARTFIN+', referral_bonus: 'Parrainage', projet_contribution: 'Projet', challenge_saving: 'Challenge', contrat_repayment: 'Échéance contrat', contrat_disbursement: 'Prêt versé', reversal: 'Annulation' };
+const TYPES = { deposit: 'Dépôt', withdrawal: 'Retrait', transfer: 'Transfert', ecaisse_lock: 'E-caisse', ecaisse_break: 'E-caisse cassée', ecaisse_release: 'E-caisse débloquée', cagnotte_contribution: 'Cagnotte', cagnotte_withdrawal: 'Retrait cagnotte', subscription: 'SMARTFIN+', referral_bonus: 'Parrainage', projet_contribution: 'Projet', challenge_saving: 'Challenge', contrat_repayment: 'Échéance contrat', contrat_disbursement: 'Prêt versé', reversal: 'Annulation', tontine_contribution: 'Cotisation tontine', tontine_payout: 'Pot tontine', tontine_guarantee: 'Caution tontine', tontine_guarantee_return: 'Caution rendue', loan_disbursement: 'Crédit versé', loan_repayment: 'Remboursement crédit' };
+const PRODUCT = { avance_tontine: 'Avance sur tontine', microcredit: 'Microcrédit' };
+const LOAN_STATUS = { active: 'En cours', repaid: 'Remboursé', defaulted: 'En défaut' };
+const pct = (x) => x == null ? '—' : Math.round(x * 1000) / 10 + ' %';
 
 let token = null;
 try { token = localStorage.getItem('sf_admin_token'); } catch {}
@@ -186,7 +191,7 @@ function logout() { token = null; try { localStorage.removeItem('sf_admin_token'
 $('#logout button').onclick = logout;
 
 // ───── Navigation ─────
-const loaders = { dashboard: loadDashboard, customers: loadCustomers, tickets: loadTickets, campaigns: loadCampaigns, finance: loadFinance };
+const loaders = { dashboard: loadDashboard, microfinance: loadMicrofinance, customers: loadCustomers, tickets: loadTickets, campaigns: loadCampaigns, finance: loadFinance };
 $('#tabs').onclick = (e) => {
   const tab = e.target.dataset?.tab; if (!tab) return;
   document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
@@ -262,6 +267,42 @@ async function loadDashboard() {
   barChart($('#chartSignups'), k.daily, 'signups', (v) => int(v) + ' inscrits');
 }
 
+// ───── Tontines & crédit ─────
+async function loadMicrofinance() {
+  const c = await api('/admin/api/credit');
+  const p = c.portfolio, t = c.tontines;
+  const par = p.outstanding ? p.par30 / p.outstanding : 0;
+  $('[data-view=microfinance]').innerHTML = `
+    <h2 style="margin-top:0">Tontines</h2>
+    <div class="grid">
+      ${tile('Tontines en cours', int(t.active), int(t.recruiting) + ' en recrutement · ' + int(t.completed) + ' terminées')}
+      ${tile('Membres engagés', int(t.members))}
+      ${tile('Cotisations collectées', fcfa(t.collected), int(t.contributions) + ' cotisations')}
+      ${tile('Impayés couverts par caution', int(t.covered_defaults), pct(t.contributions ? t.covered_defaults / t.contributions : 0) + ' des cotisations')}
+      ${tile('Cotisations en retard', int(t.late_contributions))}
+    </div>
+    ${c.overdueRounds.length ? `<div class="card" style="margin-top:12px"><h3>Tours échus non versés (clôture automatique après le délai de grâce)</h3><table>
+      <tr><th>Tontine</th><th class="num">Tour</th><th>Échéance</th><th class="num">Cotisations manquantes</th></tr>
+      ${c.overdueRounds.map((r) => `<tr><td>${esc(r.name)}</td><td class="num">${r.number}</td><td>${date(r.due_date)}</td><td class="num">${r.missing}</td></tr>`).join('')}</table></div>` : ''}
+    <h2>Portefeuille de crédit</h2>
+    <div class="grid">
+      ${tile('Encours', fcfa(p.outstanding), int(p.active_loans) + ' crédits actifs')}
+      ${tile('dont avances sur tontine', fcfa(p.outstanding_advances), 'remboursées sur le pot')}
+      ${tile('PAR 30', pct(par), fcfa(p.par30) + ' à risque')}
+      ${tile('En défaut', fcfa(p.defaulted), '> 90 jours de retard')}
+      ${tile('Remboursement à l\'heure', pct(c.onTimeRate), 'échéances échues')}
+      ${tile('Total décaissé', fcfa(c.totals.disbursed), int(c.totals.loans) + ' crédits · ' + int(c.totals.repaid) + ' remboursés')}
+      ${tile('Intérêts reversés au SFD', fcfa(c.income.partner_interest))}
+    </div>
+    <p class="${par > 0.05 ? 'ko' : 'ok'}">${par > 0.05 ? '⚠ PAR 30 au-dessus du seuil de 5 % : durcir l\'octroi et renforcer le recouvrement.' : '✔ PAR 30 sous le seuil de 5 %.'}</p>
+    <div class="card scroll"><h3>Crédits</h3><table>
+      <tr><th>Client</th><th>Produit</th><th>Objet</th><th class="num">Montant</th><th class="num">Reste dû</th><th>Prochaine échéance</th><th class="num">Score</th><th>Statut</th></tr>
+      ${c.loans.map((l) => `<tr><td><b>${esc(l.full_name || '—')}</b><br><span class="muted">${esc(l.phone)}</span></td><td>${PRODUCT[l.product]}</td><td>${esc(l.purpose)}</td>
+        <td class="num">${fcfa(l.principal)}</td><td class="num">${fcfa(l.outstanding)}</td><td>${l.next_due ? date(l.next_due) : '—'}</td>
+        <td class="num">${l.score_at_grant}</td><td><span class="pill">${LOAN_STATUS[l.status]}</span></td></tr>`).join('') || '<tr><td colspan="8" class="muted">Aucun crédit.</td></tr>'}
+    </table></div>`;
+}
+
 // ───── Clients ─────
 let searchTimer;
 $('#search').oninput = () => { clearTimeout(searchTimer); searchTimer = setTimeout(loadCustomers, 300); };
@@ -298,11 +339,16 @@ async function openCustomer(id) {
         ${list(d.notes, (n) => `<div class="note">${esc(n.body)}<br><span class="muted">${esc(n.author)} · ${date(n.created_at)}</span></div>`)}
       </div>
       <div><h3>Produits</h3>
+        ${d.products.tontines.map((e) => `<div>🔄 Tontine « ${esc(e.name)} » — ${fcfa(e.contribution_amount)}/tour, position ${e.position ?? '—'}, ${e.member_status === 'defaulter' ? '<span class="ko">défaillant</span>' : 'à jour'}, caution ${e.guarantee_status}</div>`).join('')}
         ${list(d.products.ecaisses, (e) => `<div>🔒 E-caisse « ${esc(e.name)} » — ${fcfa(e.balance)} (${e.status}, ${date(e.unlock_at)})</div>`)}
         ${d.products.cagnottes.map((e) => `<div>👥 Cagnotte « ${esc(e.name)} » — ${e.role}, ${fcfa(e.balance)}</div>`).join('')}
         ${d.products.projets.map((e) => `<div>🎯 Projet « ${esc(e.name)} » — ${fcfa(e.balance)} / ${fcfa(e.target_amount)}</div>`).join('')}
         ${d.products.contrats.map((e) => `<div>📝 Contrat « ${esc(e.title)} » — ${e.kind}, ${fcfa(e.principal)}, ${e.status}</div>`).join('')}
       </div>
+    </div>
+    <div class="two" style="margin-top:12px">
+      <div><h3>Score SMARTFIN : ${d.score.score} / 1000</h3>${d.score.factors.map((f) => `<div class="muted">${f.points > 0 ? '+' : ''}${f.points} · ${esc(f.label)}</div>`).join('')}</div>
+      <div><h3>Crédits</h3>${list(d.loans, (l) => `<div>${PRODUCT[l.product]} — ${fcfa(l.principal)} · reste ${fcfa(l.outstanding)} · <span class="pill">${LOAN_STATUS[l.status]}</span></div>`)}</div>
     </div>
     <h3 style="margin-top:20px">Dernières transactions</h3>
     <div class="scroll"><table><tr><th>Date</th><th>Type</th><th>Statut</th><th class="num">Montant</th><th class="num">Frais</th></tr>

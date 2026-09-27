@@ -44,6 +44,32 @@ HYPOTHESES = [
      "Part des inscrits ayant au moins une opération dans le mois. Référence fintechs d'épargne : 30-50 %.", True),
     ("plus_rate", "Actifs abonnés SMARTFIN+", "%", [0.03, 0.05, 0.07, 0.08, 0.09], PCT,
      "Conversion freemium typique : 2-10 % des actifs.", True),
+    ("§", "Tontines en ligne (produit cœur)"),
+    ("tontine_share", "Actifs membres d'au moins une tontine", "%", [0.40, 0.50, 0.55, 0.60, 0.60], PCT,
+     "La tontine est le produit d'entrée : la majorité des actifs y cotisent.", True),
+    ("tontine_monthly", "Cotisation mensuelle moyenne par membre", "FCFA", [25_000, 27_000, 30_000, 32_000, 35_000], FCFA,
+     "Équivalent mensuel (tontines hebdomadaires ramenées au mois). Inclus dans les dépôts.", True),
+    ("tontine_commission", "Commission SMARTFIN sur chaque pot versé", "%", [0.01], PCT, "backend/src/pricing.ts → tontine.commissionRate", True),
+    ("§", "Microfinance (crédit financé par le SFD partenaire)"),
+    ("adv_uptake", "Membres de tontine prenant une avance dans l'année", "%", [0.10, 0.15, 0.20, 0.20, 0.20], PCT,
+     "Avance sur le futur pot, remboursée automatiquement au versement.", True),
+    ("adv_avg", "Avance moyenne", "FCFA", [40_000, 45_000, 50_000, 55_000, 60_000], FCFA, "Plafond : 50 % du pot.", False),
+    ("adv_months", "Durée moyenne d'une avance", "mois", [2], INT, "", False),
+    ("adv_rate", "Taux mensuel de l'avance", "%", [0.015], PCT, "18 % / an, sous le taux d'usure SFD (24 %).", False),
+    ("mc_uptake", "Actifs ayant un microcrédit dans l'année", "%", [0.01, 0.03, 0.05, 0.07, 0.08], PCT,
+     "Réservé aux clients KYC 1+ avec un score ≥ 550.", True),
+    ("mc_per_year", "Microcrédits par emprunteur et par an", "prêts", [2], INT, "Prêts de 4 mois en moyenne, renouvelés.", False),
+    ("mc_avg", "Microcrédit moyen", "FCFA", [75_000, 90_000, 100_000, 120_000, 140_000], FCFA, "Plafond produit : 500 000 F.", False),
+    ("mc_months", "Durée moyenne d'un microcrédit", "mois", [4], INT, "", False),
+    ("mc_rate", "Taux mensuel du microcrédit (capital restant dû)", "%", [0.015], PCT, "", False),
+    ("smartfin_share", "Part des intérêts revenant à SMARTFIN", "%", [0.40], PCT,
+     "Le SFD partenaire finance et porte les prêts ; SMARTFIN note, verse et recouvre. À négocier.", True),
+    ("adv_loss", "Pertes sur avances (% des montants versés)", "%", [0.005], PCT, "Faibles : remboursées sur le pot, cautions en plus.", False),
+    ("mc_loss", "Pertes sur microcrédits (% des montants versés)", "%", [0.04, 0.035, 0.03, 0.03, 0.03], PCT,
+     "Référence microfinance UEMOA : viser un PAR30 < 5 %.", True),
+    ("first_loss", "Part des pertes garantie par SMARTFIN (première perte)", "%", [0.50], PCT,
+     "Les SFD demandent souvent une garantie de première perte au partenaire technique.", True),
+    ("bureau_cost", "Consultation bureau de crédit par prêt", "FCFA", [500], FCFA, "Bureau d'information sur le crédit (BIC) UEMOA.", False),
     ("§", "Flux d'argent"),
     ("dep_month", "Dépôt moyen mensuel par actif", "FCFA", [20_000, 22_000, 25_000, 27_000, 30_000], FCFA,
      "Montant épargné/transité chaque mois via l'app (pas le salaire complet).", True),
@@ -62,8 +88,8 @@ HYPOTHESES = [
     ("plus_price", "Abonnement SMARTFIN+ mensuel", "FCFA", [1_000], FCFA, "", True),
     ("float_yield", "Rendement annuel du float (compte de cantonnement / DAT)", "%", [0.03], PCT,
      "À valider avec la banque partenaire : la rémunération des fonds de monnaie électronique est encadrée par la BCEAO.", True),
-    ("partner_rev", "Commissions partenaires par actif et par an", "FCFA", [0, 500, 1_000, 1_500, 2_000], FCFA,
-     "Apport d'affaires : micro-assurance, microcrédit (IMF), épargne rémunérée partenaire.", False),
+    ("partner_rev", "Commissions micro-assurance et autres partenaires par actif et par an", "FCFA", [0, 200, 400, 600, 800], FCFA,
+     "Apport d'affaires : micro-assurance (santé, décès pour les tontines), épargne rémunérée partenaire.", False),
     ("§", "Coûts directs"),
     ("col_cost", "Coût d'encaissement (agrégateur / opérateurs)", "%", [0.010, 0.009, 0.008, 0.008, 0.007], PCT,
      "Grille indicative agrégateurs UEMOA 1-2 % ; objectif : contrats directs Wave / Orange / MTN < 1 %. HYPOTHÈSE CRITIQUE.", True),
@@ -184,7 +210,7 @@ AMORT_YEARS = f"Investissement!$B${last + 2}"
 
 # ── Onglet Projections ──
 p = wb.create_sheet(PROJ)
-title(p, "SMARTFIN — Projections sur 5 ans", "Montants en millions de FCFA sauf mention contraire · tout est calculé à partir des hypothèses")
+title(p, "SMARTFIN — Projections sur 5 ans (tontine en ligne + microfinance)", "Montants en millions de FCFA sauf mention contraire · tout est calculé à partir des hypothèses")
 style_header(p, 4, ["Indicateur", "Unité", *YEARS, "Méthode de calcul"], [46, 12, 14, 14, 14, 14, 14, 60])
 p.freeze_panes = "C5"
 rows = {}
@@ -235,14 +261,27 @@ line("aum", "Encours moyen clients (float)", "M FCFA", lambda c, pc: f"={R('acti
 line("cag_wd", "Retraits de Cagnottes+", "M FCFA", lambda c, pc: f"={R('deposits', c)}*{h('cagnotte_share', c)}")
 line("breaks", "E-caisses cassées avant l'échéance", "M FCFA", lambda c, pc: f"={R('aum', c)}*{h('locked_share', c)}*{h('break_rate', c)}")
 
+line("tontiniers", "Membres de tontine actifs", "clients", lambda c, pc: f"={R('actives', c)}*{h('tontine_share', c)}", INT)
+line("tontine_vol", "Pots de tontine versés", "M FCFA", lambda c, pc: f"={R('tontiniers', c)}*{h('tontine_monthly', c)}*12",
+     note="membres × cotisation mensuelle × 12 (chaque cotisation finit dans un pot)")
+line("adv_vol", "Avances sur tontine versées", "M FCFA", lambda c, pc: f"={R('tontiniers', c)}*{h('adv_uptake', c)}*{h('adv_avg', c)}")
+line("mc_count", "Microcrédits accordés", "prêts", lambda c, pc: f"={R('actives', c)}*{h('mc_uptake', c)}*{h('mc_per_year', c)}", INT)
+line("mc_vol", "Microcrédits versés", "M FCFA", lambda c, pc: f"={R('mc_count', c)}*{h('mc_avg', c)}")
+line("credit_total", "Total crédits versés", "M FCFA", lambda c, pc: f"={R('adv_vol', c)}+{R('mc_vol', c)}")
+line("credit_int", "Intérêts totaux (SMARTFIN + SFD)", "M FCFA",
+     lambda c, pc: f"={R('adv_vol', c)}*{h('adv_rate', c)}*{h('adv_months', c)}+{R('mc_vol', c)}*{h('mc_rate', c)}*({h('mc_months', c)}+1)/2",
+     note="avances : taux × durée ; microcrédit amorti : taux × (n+1)/2")
+
 section("Revenus")
+line("rev_tontine", "Commissions sur pots de tontine", "M FCFA", lambda c, pc: f"={R('tontine_vol', c)}*{h('tontine_commission', c)}")
+line("rev_credit", "Part SMARTFIN des intérêts de crédit", "M FCFA", lambda c, pc: f"={R('credit_int', c)}*{h('smartfin_share', c)}")
 line("rev_wd", "Frais de retrait", "M FCFA", lambda c, pc: f"={R('paid_wd', c)}*{h('wd_fee', c)}")
 line("rev_cag", "Frais Cagnotte+", "M FCFA", lambda c, pc: f"={R('cag_wd', c)}*{h('cag_fee', c)}")
 line("rev_break", "Pénalités e-caisse", "M FCFA", lambda c, pc: f"={R('breaks', c)}*{h('break_fee', c)}")
 line("rev_plus", "Abonnements SMARTFIN+", "M FCFA", lambda c, pc: f"={R('plus_subs', c)}*{h('plus_price', c)}*12")
 line("rev_float", "Revenus du float", "M FCFA", lambda c, pc: f"={R('aum', c)}*{h('float_yield', c)}")
 line("rev_partner", "Commissions partenaires", "M FCFA", lambda c, pc: f"={R('actives', c)}*{h('partner_rev', c)}")
-line("revenue", "Chiffre d'affaires", "M FCFA", lambda c, pc: f"=SUM({c}{rows['rev_wd']}:{c}{rows['rev_partner']})", bold=True, total=True)
+line("revenue", "Chiffre d'affaires", "M FCFA", lambda c, pc: f"=SUM({c}{rows['rev_tontine']}:{c}{rows['rev_partner']})", bold=True, total=True)
 
 section("Coûts directs")
 line("c_col", "Frais d'encaissement opérateurs", "M FCFA", lambda c, pc: f"={R('deposits', c)}*{h('col_cost', c)}")
@@ -250,7 +289,11 @@ line("c_pay", "Frais de décaissement opérateurs", "M FCFA", lambda c, pc: f"={
 line("c_sms", "SMS (OTP, alertes)", "M FCFA", lambda c, pc: f"={R('actives', c)}*{h('sms_month', c)}*12*{h('sms_cost', c)}")
 line("c_kyc", "Vérifications KYC", "M FCFA", lambda c, pc: f"={R('new_users', c)}*{h('kyc_rate', c)}*{h('kyc_cost', c)}")
 line("c_ref", "Bonus de parrainage", "M FCFA", lambda c, pc: f"={R('new_users', c)}*{h('ref_share', c)}*{h('ref_bonus', c)}")
-line("direct", "Total coûts directs", "M FCFA", lambda c, pc: f"=SUM({c}{rows['c_col']}:{c}{rows['c_ref']})", bold=True, total=True)
+line("c_risk", "Coût du risque (garantie de première perte)", "M FCFA",
+     lambda c, pc: f"=({R('adv_vol', c)}*{h('adv_loss', c)}+{R('mc_vol', c)}*{h('mc_loss', c)})*{h('first_loss', c)}")
+line("c_bureau", "Bureau de crédit", "M FCFA",
+     lambda c, pc: f"=({R('mc_count', c)}+{R('tontiniers', c)}*{h('adv_uptake', c)})*{h('bureau_cost', c)}")
+line("direct", "Total coûts directs", "M FCFA", lambda c, pc: f"=SUM({c}{rows['c_col']}:{c}{rows['c_bureau']})", bold=True, total=True)
 line("gross", "Marge brute", "M FCFA", lambda c, pc: f"={R('revenue', c)}-{R('direct', c)}", bold=True)
 line("gross_pct", "Taux de marge brute", "%", lambda c, pc: f"=IF({R('revenue', c)}=0,0,{R('gross', c)}/{R('revenue', c)})", PCT)
 
@@ -299,6 +342,8 @@ SYN = [
     ("Clients actifs", "clients", "actives", INT),
     ("Dépôts annuels", "M FCFA", "deposits", MFCFA),
     ("Encours moyen clients", "M FCFA", "aum", MFCFA),
+    ("Pots de tontine versés", "M FCFA", "tontine_vol", MFCFA),
+    ("Crédits versés (avances + microcrédits)", "M FCFA", "credit_total", MFCFA),
     ("Chiffre d'affaires", "M FCFA", "revenue", MFCFA),
     ("Marge brute", "M FCFA", "gross", MFCFA),
     ("Taux de marge brute", "%", "gross_pct", PCT),
@@ -336,8 +381,9 @@ for i, (label, formula, fmt, note) in enumerate(KEYS, start=r0 + 1):
     c.font = BOLD
     s.cell(row=i, column=3, value=note).font = Font(name=FONT, size=9, color="555555")
 s.column_dimensions["B"].width = 16
-s[f"A{r0 + len(KEYS) + 2}"] = ("Lecture : l'équilibre dépend surtout (1) du coût d'encaissement négocié avec les opérateurs, "
-                               "(2) de l'encours moyen par client (revenus du float) et (3) de la conversion SMARTFIN+. "
+s[f"A{r0 + len(KEYS) + 2}"] = ("Lecture : SMARTFIN est une tontine en ligne adossée à la microfinance. L'équilibre dépend surtout (1) du coût d'encaissement "
+                               "négocié avec les opérateurs, (2) de la part des actifs membres de tontines et (3) de la part des intérêts "
+                               "négociée avec le SFD partenaire, sous contrainte du coût du risque. "
                                "Voir l'onglet Sensibilité et les cellules jaunes de l'onglet Hypothèses.")
 s[f"A{r0 + len(KEYS) + 2}"].font = Font(name=FONT, size=9, italic=True)
 s[f"A{r0 + len(KEYS) + 2}"].alignment = Alignment(wrap_text=True, vertical="top")

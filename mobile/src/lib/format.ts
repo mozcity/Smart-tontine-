@@ -13,6 +13,8 @@ export const TX_LABELS: Record<string, string> = {
   projet_contribution: 'Projet', projet_payout: 'Projet clôturé', challenge_saving: 'Challenge',
   challenge_payout: 'Challenge', challenge_reward: 'Récompense', subscription: 'SMARTFIN+',
   referral_bonus: 'Bonus parrainage', contrat_disbursement: 'Prêt', contrat_repayment: 'Échéance',
+  tontine_contribution: 'Cotisation tontine', tontine_payout: 'Pot de tontine', tontine_guarantee: 'Caution tontine',
+  tontine_guarantee_return: 'Caution rendue', loan_disbursement: 'Crédit reçu', loan_repayment: 'Remboursement crédit',
 };
 
 /** Convertit une saisie « 10 000 » en entier. */
