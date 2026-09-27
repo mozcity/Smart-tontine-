@@ -67,7 +67,7 @@ Garanties :
 | **Tontines** | `GET/POST /tontines`, `GET /tontines/:id`, `GET /tontines/:id/preview`, `POST /tontines/:id/join|leave|start`, `POST /tontines/:id/rounds/:number/contribute|close` |
 | **Crédit** | `GET /credit/offers` (score + offres), `GET /credit/simulate`, `POST /credit/advances`, `GET/POST /credit/loans`, `POST /credit/loans/:id/repay` |
 | E-caisse | `GET/POST /ecaisses`, `POST /ecaisses/:id/topup|release|break` |
-| Cagnotte+ | `GET/POST /cagnottes`, `GET /cagnottes/:id`, `POST /cagnottes/:id/members|contribute|withdrawals`, `POST /cagnottes/withdrawals/:wid/decision` |
+| Coffres de groupe (Cagnotte+) | `GET/POST /cagnottes`, `GET /cagnottes/:id`, `GET /cagnottes/:id/preview`, `GET /cagnottes/:id/cotisations` (payé / partiel / impayé par période), `POST /cagnottes/:id/join|members|contribute|withdrawals`, `POST /cagnottes/withdrawals/:wid/decision` |
 | Budget | `GET /budget/categories`, `PUT /budget/plans/:month`, `POST/DELETE /budget/entries`, `GET /budget/summary` |
 | Projets | `GET/POST /projets`, `POST /projets/:id/contribute|close`, `POST /projets/:id/steps/:stepId/done` |
 | Challenges | `GET /challenges`, `GET /challenges/leaderboard`, `POST /challenges/:code/join`, `POST /challenges/participations/:id/save|withdraw` |
@@ -115,7 +115,7 @@ cp .env.example .env              # variables par défaut : PostgreSQL local, pa
 npm install
 npm run seed                      # schéma + démo : tontine à 4 en cours, avance sur tontine (admin : +2250748553268)
 npm run dev                       # http://localhost:4000 · back-office : http://localhost:4000/admin
-npm test                          # 25 tests de bout en bout (base smartfin_test)
+npm test                          # 28 tests de bout en bout (base smartfin_test)
 
 # Application mobile
 cd ../mobile

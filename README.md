@@ -2,19 +2,22 @@
 
 **SMARTFIN est une tontine en ligne adossée à un modèle de microfinance** (Côte d'Ivoire → UEMOA). On cotise ensemble et on reçoit le pot à son tour, sans trésorier et avec une caution qui protège le groupe. La discipline de cotisation devient un **score de crédit** qui ouvre l'**avance sur tontine** et le **microcrédit**, financés par un SFD partenaire agréé.
 
+Références : **Maman Tontine** (expérience tontine au Sénégal) et **MaTontine** (tontine → crédit via une IMF), voir [docs/00](docs/00_benchmark_senegal.md).
+
 Ce dépôt contient tout le projet : stratégie, modèle économique, modèle financier, marketing, CRM, plateforme informatique et application mobile.
 
 ## Contenu
 
 | Dossier | Ce qu'il contient |
 |---|---|
-| [`docs/`](docs/) | Dossier stratégique en 7 chapitres |
+| [`docs/`](docs/) | Dossier stratégique : comparatif Sénégal + 7 chapitres |
 | [`finance/`](finance/) | Modèle financier Excel sur 5 ans (formules, hypothèses modifiables, sensibilité) et son générateur |
-| [`backend/`](backend/) | API Node.js/TypeScript + PostgreSQL : moteur de tontine, scoring et crédit, grand livre en partie double, back-office CRM web, 25 tests de bout en bout |
+| [`backend/`](backend/) | API Node.js/TypeScript + PostgreSQL : moteur de tontine, scoring et crédit, coffres de groupe, rappels automatiques, grand livre en partie double, back-office CRM web, 28 tests de bout en bout |
 | [`mobile/`](mobile/) | Application Expo / React Native (Android, iOS, web) reprenant l'interface de l'affiche |
 
 ## Dossier stratégique
 
+0. [Références : Maman Tontine et MaTontine (Sénégal)](docs/00_benchmark_senegal.md) — comparatif, ce qu'on reprend, différenciation, prix, Côte d'Ivoire vs Sénégal
 1. [Modèle économique](docs/01_modele_economique.md) — proposition de valeur, segments, Business Model Canvas, grille tarifaire, moteurs de revenus
 2. [Modèle financier](docs/02_modele_financier.md) — projections 2027-2031, besoin de financement, économie unitaire, leviers
 3. [Système marketing](docs/03_marketing.md) — positionnement, entonnoir, canaux, plan de lancement 90 jours, calendrier, automatisations
@@ -41,7 +44,9 @@ Ce dépôt contient tout le projet : stratégie, modèle économique, modèle fi
 | Connexion par OTP SMS, code PIN | ✅ | ✅ | ✅ |
 | Portefeuille « Mon jeton » : dépôt, retrait, transfert, historique | ✅ | ✅ | rapprochement |
 | E-caisse (épargne bloquée, déblocage auto, rupture à 2 %) | ✅ | ✅ | ✅ |
-| Cagnotte+ (caisse commune, double validation des retraits) | ✅ | ✅ | ✅ |
+| **Coffres de groupe** (associations, dahiras, familles, GIE…) : suivi des cotisations payé / partiel / impayé, double validation des retraits | ✅ | ✅ | ✅ |
+| **Invitation** par QR code, WhatsApp, lien ou code | ✅ | ✅ | — |
+| **Rappels automatiques** J-1 / J0 (cotisations et échéances) | ✅ | ✅ | — |
 | Budget (plafonds, alertes) | ✅ | ✅ | — |
 | Projets (objectif, étapes, progression) | ✅ | ✅ | ✅ |
 | Challenges (défis, points, classement, récompenses) | ✅ | ✅ | ✅ |

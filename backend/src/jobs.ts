@@ -5,11 +5,15 @@ import { notify } from './services/notify.js';
 import { pricing } from './pricing.js';
 import { closeOverdueRounds } from './modules/tontine.js';
 import { collectDueInstallments } from './modules/credit.js';
+import { sendReminders } from './services/reminders.js';
 
 /** Tâches périodiques (toutes les heures). En production : un worker dédié ou un cron. */
 export async function runJobs() {
   const results = { ecaissesReleased: 0, plansRenewed: 0, plansExpired: 0, challengesExpired: 0, tontineRoundsClosed: 0,
-    credit: { autoDebited: 0, penalized: 0, defaulted: 0 } };
+    credit: { autoDebited: 0, penalized: 0, defaulted: 0 }, reminders: 0 };
+
+  // Rappels J-1 et J0 (cotisations de tontine et échéances de crédit), envoyés une seule fois.
+  results.reminders = await sendReminders();
 
   // Tontines : tours échus au-delà du délai de grâce → cautions mobilisées et pot versé.
   results.tontineRoundsClosed = await closeOverdueRounds();

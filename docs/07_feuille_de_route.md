@@ -19,7 +19,7 @@ Gouvernance : comité mensuel (KPI, grand livre, incidents), **comité de crédi
 | **T2** | Lancement public Abidjan · **avance sur tontine** · KYC par photo · SMS/WhatsApp | Plan 90 jours (3.4) · organisateurs certifiés |
 | **T3** | **Microcrédit pilote** (200 prêts, commerçantes en priorité) · contrat de prêt électronique au nom du SFD · connexion BIC | Levée d'amorçage · suivi PAR30 hebdomadaire |
 | **T4** | Micro-assurance décès des membres · détection des tontines fictives · rééchelonnement en ligne | Couverture Côte d'Ivoire entière |
-| **Année 2** | Tontines d'entreprise (cotisation sur salaire) · USSD pour cotiser sans smartphone · tontine « aux enchères » (le membre qui accepte une décote passe en premier) | Préparation Sénégal / Burkina |
+| **Année 2** | Tontines d'entreprise (cotisation sur salaire) · USSD/SMS pour cotiser sans smartphone (comme MaTontine) · tontine « aux enchères » (le membre qui accepte une décote passe en premier) | **Lancement Sénégal** face à Maman Tontine et MaTontine (dahiras, GIE ; chapitre 0.5), puis Burkina |
 | **Année 3** | Multi-pays · crédit plus long (équipement) · étude d'**agrément SFD propre** | Série A |
 
 ## 7.3 Facteurs clés de succès

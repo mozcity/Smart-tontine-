@@ -6,6 +6,8 @@
 
 Promesse client : « Gère ton argent sans stress, depuis ton téléphone. »
 
+**Références** (détail au [chapitre 0](00_benchmark_senegal.md)) : SMARTFIN reprend l'expérience de **Maman Tontine** (Sénégal : tontines, coffres de groupe, rappels, invitation QR/WhatsApp, 1 % de frais) et le modèle de microfinance de **MaTontine** (Sénégal : l'historique de tontine ouvre l'accès au crédit d'une IMF partenaire). Sa différence : une tontine *protégée* par caution et le crédit intégré dans la même application.
+
 ## 1.2 Pourquoi la tontine, pourquoi en ligne
 
 La tontine (épargne rotative) est l'outil d'épargne le plus utilisé en Afrique de l'Ouest, bien avant les comptes bancaires. Elle repose sur la confiance, et c'est aussi sa faiblesse :
@@ -34,7 +36,8 @@ La tontine (épargne rotative) est l'outil d'épargne le plus utilisé en Afriqu
                  │ Avance sur tontine (≤ 50 % du futur pot, remboursée sur le pot)│ → Part des intérêts (40 %)
                  │ Microcrédit (10 000 – 500 000 F, 1 à 6 mois, 18 %/an)         │
                  └──────────────────────────────────────────────────────────────┘
-  Produits d'accompagnement (rétention et score) : E-caisse · Projets · Challenges · Budget · Contrats entre proches
+  Coffres de groupe (associations, dahiras, lieux de culte, familles, GIE, ASC) : cotisations suivies mois par mois
+  Produits d'accompagnement (rétention et score) : E-caisse (coffre personnel) · Projets · Challenges · Budget · Contrats
 ```
 
 ### Tontine rotative
@@ -74,9 +77,10 @@ Le détail du score est affiché au client (écran Crédit) et au conseiller (fi
 ## 1.4 Segments de clientèle
 
 1. **Groupes de tontine existants** (collègues, associations, familles, commerçantes des marchés, diaspora) : on digitalise leur tontine. Chaque organisateur amène 5 à 30 membres.
-2. **Jeunes actifs urbains 20-35 ans** : tontines entre amis, challenges d'épargne, premier crédit.
-3. **Petits commerçants et entrepreneurs** : tontine hebdomadaire + microcrédit de stock. C'est le cœur de cible de la microfinance.
-4. **B2B2C** (phase 2) : entreprises, mutuelles, coopératives, églises qui gèrent leur caisse commune sur SMARTFIN.
+2. **Associations et communautés** (dahiras, mosquées, églises, GIE, ASC, associations de quartier) : leur caisse devient un coffre de groupe, avec cotisations visibles et retraits à double validation.
+3. **Jeunes actifs urbains 20-35 ans** : tontines entre amis, challenges d'épargne, premier crédit.
+4. **Petits commerçants et entrepreneurs** : tontine hebdomadaire + microcrédit de stock. C'est le cœur de cible de la microfinance.
+5. **B2B2C** (phase 2) : entreprises, mutuelles, coopératives, églises qui gèrent leur caisse commune sur SMARTFIN.
 
 ## 1.5 Business Model Canvas
 
@@ -133,6 +137,7 @@ Le détail du score est affiché au client (écran Crédit) et au conseiller (fi
 1. **Coût d'entrée de l'argent** : chaque cotisation passe par Mobile Money et SMARTFIN paie l'encaissement (≈ 35 % du chiffre d'affaires en 2029). Négocier sous 0,8 % est vital (onglet *Sensibilité*).
 2. **Risque de crédit** : le SFD porte les prêts, mais demandera probablement une **garantie de première perte**. Le modèle suppose que SMARTFIN couvre 50 % des pertes. Objectif PAR30 < 5 %, suivi en temps réel dans le back-office.
 3. **Réglementation** : ni SMARTFIN ni les organisateurs ne détiennent l'argent ; tout crédit est octroyé par un SFD agréé (chapitre 6).
+4. **Prix face à Maman Tontine** : chez elle, le tour arrive directement sur Wave ou Orange Money pour 1 % au total. Chez SMARTFIN, jusqu'à 2,5 % si le pot est entièrement retiré. S'aligner coûterait cher (chapitre 0.3) : il faut plutôt réserver le retrait offert du pot aux abonnés SMARTFIN+ et renégocier une fois les contrats opérateurs signés.
 
 ## 1.9 Avantages défendables
 

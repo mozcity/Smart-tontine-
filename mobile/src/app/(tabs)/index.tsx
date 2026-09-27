@@ -22,7 +22,7 @@ const SECTIONS = [
   { value: 'portefeuille', label: 'Portefeuille' },
   { value: 'projet', label: 'Projet' },
   { value: 'ecaisse', label: 'E-caisse' },
-  { value: 'cagnotte', label: 'Cagnotte' },
+  { value: 'cagnotte', label: 'Coffres' },
 ] as const;
 const SECTION_ROUTES: Record<string, Href> = { projet: '/projets', ecaisse: '/ecaisse', cagnotte: '/cagnottes' };
 

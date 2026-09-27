@@ -36,7 +36,7 @@ La fiche client du back-office affiche : indicateurs, produits détenus (e-caiss
 | J+30 | Entrée dans le PAR30 ; organisateur de tontine informé si le client est membre | Back-office |
 | J+90 | **Défaut** : score ramené à 0, crédit bloqué, dossier transmis au SFD (et au BIC selon la convention) | Back-office |
 
-Déjà automatisé dans l'API (job horaire) : prélèvement à J0, pénalités et clôture des tours à J+3, passage en défaut à J+90. **À mettre en place** : rappels J-1 (SMS/push), outil d'appel des conseillers, rééchelonnement.
+Déjà automatisé dans l'API (job horaire) : **rappels J-1 et J0** (notification + SMS, envoyés une seule fois), prélèvement à J0, pénalités et clôture des tours à J+3, passage en défaut à J+90. **À mettre en place** : outil d'appel des conseillers, rééchelonnement.
 
 Principes : pas de harcèlement, pas de publication du nom d'un défaillant hors de sa tontine, rééchelonnement proposé avant le défaut.
 

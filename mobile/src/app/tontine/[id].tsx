@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Share, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { api } from '@/lib/api';
 import { useApi } from '@/lib/useApi';
 import { useAuth } from '@/lib/auth';
 import { fcfa, shortDate } from '@/lib/format';
 import { Button, Card, H1, H2, P, Row, Screen, colors, notifyError, notifyOk } from '@/components/ui';
+import { InviteCard } from '@/components/InviteCard';
 
 interface Detail {
   id: string; name: string; description: string | null; status: string; organizer_id: string; contribution_amount: number;
@@ -50,13 +51,14 @@ export default function TontineDetail() {
       {data.status === 'recruiting' && (
         <Card>
           <H2>En attente de membres ({data.members.length}/{data.max_members})</H2>
-          <P>Partage le code d'invitation. Chaque membre bloque une caution qui couvre un éventuel impayé.</P>
-          <Text selectable style={{ fontFamily: 'monospace', color: colors.brand }}>{data.id}</Text>
-          <Button title="Partager l'invitation" variant="ghost"
-            onPress={() => Share.share({ message: `Rejoins ma tontine « ${data.name} » sur SMARTFIN (${fcfa(data.contribution_amount)}). Code : ${data.id}` })} />
+          <P>Chaque membre bloque une caution qui couvre un éventuel impayé.</P>
           {isOrganizer && <Button title="Démarrer la tontine" variant="green" loading={busy} disabled={data.members.length < 2}
             onPress={() => run(`/tontines/${id}/start`, () => 'Tontine démarrée : l\'ordre de passage est fixé')} />}
         </Card>
+      )}
+
+      {data.status === 'recruiting' && (
+        <InviteCard code={data.id} name={data.name} amountLabel={`${fcfa(data.contribution_amount)} par ${data.frequency === 'weekly' ? 'semaine' : 'mois'}`} />
       )}
 
       {current && data.status === 'active' && (

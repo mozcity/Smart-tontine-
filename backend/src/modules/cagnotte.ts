@@ -8,8 +8,9 @@ import { fee, pricing } from '../pricing.js';
 import { createAccount, post, systemAccount, walletOf } from '../services/ledger.js';
 import { notify, track } from '../services/notify.js';
 
-// Cagnotte+ : épargne collective (tontine moderne). Tout retrait exige l'accord
-// de `required_approvals` administrateurs distincts (double validation par défaut).
+// Cagnotte+ / coffre de groupe : caisse commune d'une association, d'un dahira, d'une famille,
+// d'un GIE… Cotisations suivies période par période (payé / partiel / impayé). Tout retrait exige
+// l'accord de `required_approvals` administrateurs distincts (double validation par défaut).
 export const router = Router();
 
 async function membership(db: pg.PoolClient | pg.Pool, cagnotteId: string, userId: string) {
@@ -20,7 +21,7 @@ async function membership(db: pg.PoolClient | pg.Pool, cagnotteId: string, userI
 
 router.get('/', async (req, res) => {
   res.json(await many(pool,
-    `SELECT c.id, c.name, c.target_amount, c.status, a.balance, m.role,
+    `SELECT c.id, c.name, c.category, c.visibility, c.contribution_amount, c.frequency, c.target_amount, c.status, a.balance, m.role,
             (SELECT count(*)::int FROM cagnotte_members WHERE cagnotte_id = c.id) AS members
      FROM cagnottes c JOIN cagnotte_members m ON m.cagnotte_id = c.id AND m.user_id = $1
      JOIN accounts a ON a.id = c.account_id ORDER BY c.created_at DESC`, [currentUser(req).id]));
@@ -35,19 +36,76 @@ router.post('/', async (req, res) => {
     contributionAmount: z.number().int().positive().optional(),
     frequency: z.enum(['daily', 'weekly', 'monthly', 'free']).default('free'),
     requiredApprovals: z.number().int().min(1).max(5).default(2),
+    category: z.enum(['association', 'dahira', 'religieux', 'famille', 'gie', 'asc', 'projet', 'autre']).default('autre'),
+    visibility: z.enum(['private', 'public']).default('private'),
   }).parse(req.body);
   const c = await withTx(async (client) => {
     const accountId = await createAccount(client, null, 'cagnotte');
     const row = await one(client,
-      `INSERT INTO cagnottes (account_id, name, description, target_amount, contribution_amount, frequency, required_approvals, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      `INSERT INTO cagnottes (account_id, name, description, target_amount, contribution_amount, frequency, required_approvals, created_by, category, visibility)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
       [accountId, body.name, body.description ?? null, body.targetAmount ?? null, body.contributionAmount ?? null,
-        body.frequency, body.requiredApprovals, user.id]);
+        body.frequency, body.requiredApprovals, user.id, body.category, body.visibility]);
     await client.query("INSERT INTO cagnotte_members (cagnotte_id, user_id, role) VALUES ($1, $2, 'admin')", [row.id, user.id]);
     return row;
   });
   await track(pool, user.id, 'cagnotte_created', {});
   res.status(201).json(c);
+});
+
+/** Aperçu via code d'invitation / QR code, avant de rejoindre. */
+router.get('/:id/preview', async (req, res) => {
+  const c = await one(pool,
+    `SELECT c.id, c.name, c.description, c.category, c.visibility, c.contribution_amount, c.frequency, c.status, u.full_name AS organizer,
+            (SELECT count(*)::int FROM cagnotte_members WHERE cagnotte_id = c.id) AS members
+     FROM cagnottes c JOIN users u ON u.id = c.created_by WHERE c.id = $1`, [req.params.id]);
+  if (!c) throw notFound('Coffre');
+  res.json(c);
+});
+
+/** Un coffre « public » (ex. caisse d'un dahira) se rejoint directement avec son code. */
+router.post('/:id/join', async (req, res) => {
+  const user = currentUser(req);
+  const c = await one(pool, 'SELECT id, visibility, status, created_by, name FROM cagnottes WHERE id = $1', [req.params.id]);
+  if (!c) throw notFound('Coffre');
+  if (c.visibility !== 'public') throw forbidden('Coffre privé : demande à un administrateur de t\'ajouter');
+  if (c.status !== 'open') throw conflict('closed', 'Coffre clôturé');
+  const r = await pool.query('INSERT INTO cagnotte_members (cagnotte_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [c.id, user.id]);
+  if (!r.rowCount) throw conflict('already_member', 'Tu es déjà membre');
+  await notify(pool, c.created_by, 'Nouveau membre', `Un membre a rejoint « ${c.name} »`);
+  res.status(201).json({ ok: true });
+});
+
+/**
+ * Tableau des cotisations par membre et par période (mois ou semaine) :
+ * « payé » si la cotisation attendue est atteinte, « partiel » si une partie seulement, « na » avant l'adhésion, sinon « impayé ».
+ */
+router.get('/:id/cotisations', async (req, res) => {
+  const id = req.params.id;
+  await membership(pool, id, currentUser(req).id);
+  const { periods } = z.object({ periods: z.coerce.number().int().min(1).max(24).default(6) }).parse(req.query);
+  const c = await one(pool, 'SELECT contribution_amount, frequency FROM cagnottes WHERE id = $1', [id]);
+  const unit = c.frequency === 'weekly' ? 'week' : 'month';
+  const rows = await many(pool,
+    `WITH p AS (
+       SELECT generate_series(date_trunc($2, now()) - ($3::int - 1) * ('1 ' || $2)::interval, date_trunc($2, now()), ('1 ' || $2)::interval) AS start
+     )
+     SELECT u.id AS user_id, COALESCE(u.full_name, u.phone) AS name, to_char(p.start, 'YYYY-MM-DD') AS period,
+            (p.start + ('1 ' || $2)::interval <= m.joined_at) AS before_join,
+            COALESCE((SELECT sum(t.amount) FROM transactions t WHERE t.type = 'cagnotte_contribution' AND t.status = 'completed'
+                      AND t.initiator_id = u.id AND t.meta->>'cagnotteId' = $1::text
+                      AND t.created_at >= p.start AND t.created_at < p.start + ('1 ' || $2)::interval), 0)::bigint AS paid
+     FROM cagnotte_members m JOIN users u ON u.id = m.user_id CROSS JOIN p
+     WHERE m.cagnotte_id = $1::uuid ORDER BY name, period`, [id, unit, periods]);
+  const expected = c.contribution_amount ?? 0;
+  const status = (paid: number) => (expected === 0 ? (paid > 0 ? 'paye' : 'impaye') : paid >= expected ? 'paye' : paid > 0 ? 'partiel' : 'impaye');
+  const members = new Map<string, { userId: string; name: string; periods: { period: string; paid: number; status: string }[] }>();
+  for (const r of rows) {
+    if (!members.has(r.user_id)) members.set(r.user_id, { userId: r.user_id, name: r.name, periods: [] });
+    // Période entièrement antérieure à l'adhésion : rien n'était dû (« non concerné »).
+    members.get(r.user_id)!.periods.push({ period: r.period, paid: r.paid, status: r.before_join && r.paid === 0 ? 'na' : status(r.paid) });
+  }
+  res.json({ expected, frequency: c.frequency, members: [...members.values()] });
 });
 
 router.get('/:id', async (req, res) => {

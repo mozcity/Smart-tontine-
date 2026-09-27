@@ -75,6 +75,13 @@ async function demoTontine() {
   const offers = await call('/credit/offers', null, tokens[3], 'GET');
   const offer = offers.advances[0];
   if (offer?.eligible) await call('/credit/advances', { roundId: offer.roundId, amount: 30_000, pin: '1234' }, tokens[3]);
+
+  // Coffre de groupe d'une association, cotisations mensuelles (une complète, une partielle, une absente).
+  const coffre = await call('/cagnottes', { name: 'Association des femmes du quartier', category: 'association', visibility: 'public',
+    frequency: 'monthly', contributionAmount: 5_000 }, tokens[1]);
+  for (const tk of [tokens[0], tokens[2]]) await call(`/cagnottes/${coffre.id}/join`, {}, tk);
+  await call(`/cagnottes/${coffre.id}/contribute`, { amount: 5_000 }, tokens[1]);
+  await call(`/cagnottes/${coffre.id}/contribute`, { amount: 2_500 }, tokens[0]);
   server.close();
 }
 

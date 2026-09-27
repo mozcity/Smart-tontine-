@@ -49,7 +49,10 @@ HYPOTHESES = [
      "La tontine est le produit d'entrée : la majorité des actifs y cotisent.", True),
     ("tontine_monthly", "Cotisation mensuelle moyenne par membre", "FCFA", [25_000, 27_000, 30_000, 32_000, 35_000], FCFA,
      "Équivalent mensuel (tontines hebdomadaires ramenées au mois). Inclus dans les dépôts.", True),
-    ("tontine_commission", "Commission SMARTFIN sur chaque pot versé", "%", [0.01], PCT, "backend/src/pricing.ts → tontine.commissionRate", True),
+    ("tontine_commission", "Commission SMARTFIN sur chaque pot versé", "%", [0.01], PCT,
+     "backend/src/pricing.ts → tontine.commissionRate. Référence marché : Maman Tontine (Sénégal) affiche 1 % de frais de plateforme.", True),
+    ("pot_free_wd", "Part des pots retirés vers Mobile Money SANS frais de retrait", "%", [0.0], PCT,
+     "Levier concurrentiel : chez Maman Tontine, le tour est reçu directement sur Wave / Orange Money pour 1 % au total. 0 % = tarif actuel (retrait 1,5 %).", True),
     ("§", "Microfinance (crédit financé par le SFD partenaire)"),
     ("adv_uptake", "Membres de tontine prenant une avance dans l'année", "%", [0.10, 0.15, 0.20, 0.20, 0.20], PCT,
      "Avance sur le futur pot, remboursée automatiquement au versement.", True),
@@ -256,7 +259,9 @@ line("plus_subs", "Abonnés SMARTFIN+", "clients", lambda c, pc: f"={R('actives'
 section("Volumes")
 line("deposits", "Dépôts annuels", "M FCFA", lambda c, pc: f"={R('actives', c)}*{h('dep_month', c)}*12", note="actifs × dépôt mensuel × 12")
 line("withdrawals", "Retraits vers Mobile Money", "M FCFA", lambda c, pc: f"={R('deposits', c)}*{h('wd_share', c)}")
-line("paid_wd", "dont retraits payants", "M FCFA", lambda c, pc: f"={R('withdrawals', c)}*(1-{h('free_wd_share', c)})")
+line("paid_wd", "dont retraits payants", "M FCFA",
+     lambda c, pc: f"=MAX(0,{R('withdrawals', c)}*(1-{h('free_wd_share', c)})-{h('tontine_monthly', c)}*{R('actives', c)}*{h('tontine_share', c)}*12*{h('pot_free_wd', c)})",
+     note="retraits − offerts SMARTFIN+ − pots retirés sans frais (levier concurrentiel)")
 line("aum", "Encours moyen clients (float)", "M FCFA", lambda c, pc: f"={R('actives', c)}*{h('aum_per_active', c)}")
 line("cag_wd", "Retraits de Cagnottes+", "M FCFA", lambda c, pc: f"={R('deposits', c)}*{h('cagnotte_share', c)}")
 line("breaks", "E-caisses cassées avant l'échéance", "M FCFA", lambda c, pc: f"={R('aum', c)}*{h('locked_share', c)}*{h('break_rate', c)}")

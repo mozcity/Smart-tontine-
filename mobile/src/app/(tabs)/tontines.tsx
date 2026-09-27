@@ -26,7 +26,7 @@ export default function Tontines() {
   const [form, setForm] = useState({ name: '', amount: '', members: '5', frequency: 'monthly' as 'weekly' | 'monthly', order: 'random' as 'random' | 'fixed' });
 
   async function lookup() {
-    try { setPreview(await api<Preview>(`/tontines/${code.trim()}/preview`)); } catch (e) { notifyError(e); }
+    try { setPreview(await api<Preview>(`/tontines/${code.trim().split('/').pop()}/preview`)); } catch (e) { notifyError(e); }
   }
   async function join() {
     try { await api(`/tontines/${preview!.id}/join`, { body: {} }); setPreview(null); setCode(''); await list.reload(); } catch (e) { notifyError(e); }
@@ -74,7 +74,7 @@ export default function Tontines() {
       {mode === 'join' ? (
         <Card>
           <H2>Rejoindre avec un code</H2>
-          <Field label="Code d'invitation reçu de l'organisateur" value={code} onChangeText={setCode} autoCapitalize="none" />
+          <Field label="Code ou lien d'invitation reçu de l'organisateur" value={code} onChangeText={setCode} autoCapitalize="none" />
           <Button title="Voir la tontine" variant="ghost" onPress={lookup} disabled={code.trim().length < 10} />
           {preview && (
             <View style={{ gap: 8 }}>

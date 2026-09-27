@@ -24,9 +24,10 @@ function RootStack() {
         <Stack.Screen name="projets" options={{ title: 'Mes projets' }} />
         <Stack.Screen name="contrats" options={{ title: 'Contrats' }} />
         <Stack.Screen name="challenges" options={{ title: 'Challenges' }} />
-        <Stack.Screen name="cagnottes" options={{ title: 'Cagnotte+' }} />
-        <Stack.Screen name="cagnotte/[id]" options={{ title: 'Cagnotte+' }} />
+        <Stack.Screen name="cagnottes" options={{ title: 'Coffres de groupe' }} />
+        <Stack.Screen name="cagnotte/[id]" options={{ title: 'Coffre de groupe' }} />
         <Stack.Screen name="tontine/[id]" options={{ title: 'Tontine' }} />
+        <Stack.Screen name="rejoindre/[code]" options={{ title: 'Invitation' }} />
         <Stack.Screen name="historique" options={{ title: 'Historique' }} />
         <Stack.Screen name="support" options={{ title: 'Aide & support' }} />
       </Stack.Protected>

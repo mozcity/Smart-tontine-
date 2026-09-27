@@ -28,6 +28,7 @@ L'onglet *Tableau de bord* du back-office affiche cet entonnoir, les segments et
 |---|---|---|
 | **Organisateurs de tontine** | Recruter les « présidentes » et « présidents » de tontines existantes (marchés, bureaux, associations) : formation, kit WhatsApp, badge « Organisateur certifié », accès prioritaire au crédit pour eux | ~0 F par membre ; 5 000-10 000 F par organisateur |
 | **Parrainage** | 500 F au parrain au 1er dépôt ≥ 5 000 F du filleul ; code partagé en un clic depuis l'app | 500 F |
+| **Associations et communautés** | Caisse de dahira, d'association, d'église, de GIE ou d'ASC en coffre de groupe public : le trésorier partage le QR code en réunion | ~0 F |
 | **Tontine virale** | Le code d'invitation d'une tontine oblige chaque membre à s'inscrire : 1 organisateur = 5 à 30 inscrits | ~0 F |
 | **TikTok / Instagram Reels** | Séries « Défi 52 semaines », « Combien tu as mis de côté ce mois ? », micro-influenceurs finance et lifestyle (10-100 k abonnés) | 800-1 500 F |
 | **Facebook / WhatsApp** | Groupes de tontines, statuts WhatsApp des ambassadeurs, publicités ciblées 20-35 ans Abidjan | 1 000-1 500 F |
