@@ -7,7 +7,7 @@ import { hashSecret, otpCode, referralCode, verifySecret } from '../lib/crypto.j
 import { requireAuth, currentUser, signToken } from '../lib/auth.js';
 import { createAccount } from '../services/ledger.js';
 import { sms } from '../services/sms.js';
-import { track } from '../services/notify.js';
+import { notify, track } from '../services/notify.js';
 
 export const router = Router();
 
@@ -91,16 +91,34 @@ router.put('/me/pin', requireAuth, async (req, res) => {
   const body = z.object({ pin: z.string().regex(/^\d{4}$/), currentPin: z.string().optional() }).parse(req.body);
   const user = currentUser(req);
   const row = await one(pool, 'SELECT pin_hash FROM users WHERE id = $1', [user.id]);
-  if (row.pin_hash && !(body.currentPin && verifySecret(body.currentPin, row.pin_hash))) {
-    throw badRequest('pin_invalid', 'Code PIN actuel incorrect');
-  }
-  await pool.query('UPDATE users SET pin_hash = $2 WHERE id = $1', [user.id, hashSecret(body.pin)]);
+  if (row.pin_hash) await assertPin(user.id, body.currentPin); // le changement de PIN compte aussi les erreurs
+  await pool.query('UPDATE users SET pin_hash = $2, pin_failed_attempts = 0, pin_locked_until = NULL WHERE id = $1', [user.id, hashSecret(body.pin)]);
   res.json({ ok: true });
 });
 
-/** Vérifie le code PIN avant toute sortie d'argent. */
+/**
+ * Vérifie le code PIN avant toute sortie d'argent. Après 5 erreurs consécutives, le PIN est
+ * verrouillé 30 minutes : les tentatives suivantes sont refusées sans même être comparées.
+ */
 export async function assertPin(userId: string, pin: string | undefined) {
-  const row = await one(pool, 'SELECT pin_hash FROM users WHERE id = $1', [userId]);
+  const row = await one(pool, 'SELECT pin_hash, pin_failed_attempts, pin_locked_until FROM users WHERE id = $1', [userId]);
   if (!row?.pin_hash) throw badRequest('pin_required', 'Définis d\'abord ton code PIN');
-  if (!pin || !verifySecret(pin, row.pin_hash)) throw badRequest('pin_invalid', 'Code PIN incorrect');
+  if (row.pin_locked_until && new Date(row.pin_locked_until) > new Date()) {
+    const minutes = Math.ceil((new Date(row.pin_locked_until).getTime() - Date.now()) / 60_000);
+    throw new HttpError(423, 'pin_locked', `Code PIN verrouillé après trop d'erreurs. Réessaie dans ${minutes} min.`);
+  }
+  if (pin && verifySecret(pin, row.pin_hash)) {
+    if (row.pin_failed_attempts > 0) await pool.query('UPDATE users SET pin_failed_attempts = 0, pin_locked_until = NULL WHERE id = $1', [userId]);
+    return;
+  }
+  const { rows } = await pool.query(
+    `UPDATE users SET pin_failed_attempts = pin_failed_attempts + 1,
+       pin_locked_until = CASE WHEN pin_failed_attempts + 1 >= $2 THEN now() + make_interval(mins => $3) END
+     WHERE id = $1 RETURNING pin_failed_attempts`, [userId, config.pinMaxAttempts, config.pinLockMinutes]);
+  const left = config.pinMaxAttempts - rows[0].pin_failed_attempts;
+  if (left <= 0) {
+    await notify(pool, userId, 'Code PIN verrouillé 🔒', `Trop d'erreurs : ton code PIN est bloqué ${config.pinLockMinutes} minutes. Si ce n'était pas toi, contacte le support.`);
+    throw new HttpError(423, 'pin_locked', `Code PIN verrouillé ${config.pinLockMinutes} minutes après ${config.pinMaxAttempts} erreurs.`);
+  }
+  throw badRequest('pin_invalid', `Code PIN incorrect (${left} essai${left > 1 ? 's' : ''} restant${left > 1 ? 's' : ''})`);
 }

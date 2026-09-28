@@ -15,6 +15,13 @@ export default function Depot() {
     setLoading(true);
     try {
       const r = await api<{ paymentUrl?: string; reference: string }>('/wallet/deposits', { body: { amount: parseAmount(amount), channel } });
+      // Fournisseur simulé (développement, démonstration) : confirmation immédiate, sans ouvrir de page de paiement.
+      if (r.paymentUrl?.includes('example.test')) {
+        await api(`/wallet/deposits/${r.reference}/simulate`, { body: {} });
+        notifyOk('Dépôt confirmé (démo)', 'Ton jeton est crédité.');
+        router.back();
+        return;
+      }
       if (r.paymentUrl) await Linking.openURL(r.paymentUrl).catch(() => undefined);
       notifyOk('Paiement en cours', 'Valide le paiement sur ton application Mobile Money. Ton jeton sera crédité dès confirmation.');
       router.back();

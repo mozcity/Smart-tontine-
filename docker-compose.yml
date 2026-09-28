@@ -1,4 +1,6 @@
-# Environnement complet local : PostgreSQL + API + back-office
+# Environnement complet : PostgreSQL + API (et back-office) + worker des tâches planifiées + plateforme web.
+#   docker compose up -d --build        → site web http://localhost:8080 · API http://localhost:4000 · back-office /admin
+#   docker compose exec api node dist/src/seed.js   (données de démonstration)
 services:
   db:
     image: postgres:16
@@ -8,15 +10,40 @@ services:
       POSTGRES_DB: smarttontine
     ports: ["5432:5432"]
     volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smarttontine"]
+      interval: 5s
+      retries: 10
+
   api:
     build: ./backend
-    depends_on: [db]
-    environment:
+    depends_on: { db: { condition: service_healthy } }
+    environment: &api-env
       NODE_ENV: development
       DATABASE_URL: postgres://smarttontine:smarttontine@db:5432/smarttontine
       JWT_SECRET: change-me
       PAYMENT_WEBHOOK_SECRET: change-me-webhook
       PAYMENT_PROVIDER: mock
+      RUN_JOBS: "false"
     ports: ["4000:4000"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/health || exit 1"]
+      interval: 10s
+      retries: 5
+
+  # Une seule instance exécute les tâches planifiées, quel que soit le nombre d'API.
+  worker:
+    build: ./backend
+    depends_on: { api: { condition: service_healthy } }
+    environment:
+      <<: *api-env
+      RUN_JOBS: "true"
+      PORT: "4001"
+
+  web:
+    build: ./web
+    depends_on: [api]
+    ports: ["8080:80"]
+
 volumes:
   pgdata:

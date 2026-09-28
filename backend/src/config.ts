@@ -27,6 +27,10 @@ export const config = {
   smsProvider: process.env.SMS_PROVIDER ?? 'console',
   otpTtlMinutes: 5,
   otpMaxAttempts: 5,
+  pinMaxAttempts: 5,
+  pinLockMinutes: 30,
+  // Plateforme web (build Vite) servie par l'API si le dossier existe ; sinon hébergée à part (CDN).
+  webDist: process.env.WEB_DIST ?? '',
 };
 
 // Racine du projet, que le code tourne depuis src/ (tsx) ou dist/src/ (build).

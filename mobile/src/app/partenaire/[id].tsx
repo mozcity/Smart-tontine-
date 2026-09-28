@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { api } from '@/lib/api';
@@ -208,8 +208,32 @@ export default function PartnerDashboard() {
                 onPress={() => run(`/partners/${p.id}/withdraw`, { amount: parseAmount(money.withdraw), channel: 'orange_money', pin: money.pin }, 'Retrait envoyé')} />
             </Card>
           )}
+          {owner && <Statement partnerId={p.id} />}
         </>
       )}
     </Screen>
+  );
+}
+
+interface Entry { id: string; created_at: string; type: string; description: string; amount: number; balance_after: number }
+
+/** Relevé du compte partenaire : les 20 dernières écritures (l'export CSV complet est sur le portail web). */
+function Statement({ partnerId }: { partnerId: string }) {
+  const [rows, setRows] = useState<Entry[] | null>(null);
+  useEffect(() => { api<Entry[]>(`/partners/${partnerId}/statement`).then(setRows).catch(() => setRows([])); }, [partnerId]);
+  return (
+    <Card>
+      <H2>Relevé du compte</H2>
+      {!rows ? <P muted>Chargement…</P> : rows.length === 0 ? <Empty text="Aucune opération." /> : rows.slice(0, 20).map((e) => (
+        <Row key={e.id} style={{ justifyContent: 'space-between' }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: colors.ink, fontWeight: '600' }}>{e.description}</Text>
+            <Text style={{ color: colors.muted, fontSize: 12 }}>{shortDate(e.created_at)} · solde {fcfa(e.balance_after)}</Text>
+          </View>
+          <Text style={{ color: e.amount > 0 ? colors.green : colors.danger, fontWeight: '700' }}>{e.amount > 0 ? '+' : ''}{fcfa(e.amount)}</Text>
+        </Row>
+      ))}
+      <P muted>Export CSV et filtres par période : portail partenaire web.</P>
+    </Card>
   );
 }

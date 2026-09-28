@@ -60,10 +60,10 @@ router.get('/', async (req, res) => {
      ORDER BY t.status = 'completed', t.created_at DESC`, [currentUser(req).id]));
 });
 
-/** Tontines publiques en recrutement (argent ou biens), visibles par tous dans « Découvrir ». */
-router.get('/public', async (req, res) => {
-  const q = z.object({ kind: z.enum(['argent', 'bien']).optional(), search: z.string().max(60).optional() }).parse(req.query);
-  res.json(await many(pool,
+/** Tontines publiques en recrutement (argent ou biens), visibles par tous dans « Découvrir » et sur le site. */
+export async function publicTontines(query: unknown) {
+  const q = z.object({ kind: z.enum(['argent', 'bien']).optional(), search: z.string().max(60).optional() }).parse(query);
+  return many(pool,
     `SELECT t.id, t.name, t.description, t.kind, t.contribution_amount, t.frequency, t.max_members, t.guarantee_amount,
             t.good_label, t.good_price, g.image AS good_image,
             (SELECT count(*)::int FROM tontine_members WHERE tontine_id = t.id) AS members,
@@ -71,22 +71,26 @@ router.get('/public', async (req, res) => {
      FROM tontines t LEFT JOIN goods g ON g.id = t.good_id
      WHERE t.visibility = 'public' AND t.status = 'recruiting'
        AND ($1::text IS NULL OR t.kind = $1) AND ($2::text IS NULL OR t.name ILIKE '%' || $2 || '%' OR t.good_label ILIKE '%' || $2 || '%')
-     ORDER BY t.created_at DESC LIMIT 50`, [q.kind ?? null, q.search ?? null]));
-});
+     ORDER BY t.created_at DESC LIMIT 50`, [q.kind ?? null, q.search ?? null]);
+}
 
-/** Aperçu public d'une tontine (lien d'invitation) avant d'y adhérer. */
-router.get('/:id/preview', async (req, res) => {
-  const t = await load(pool, req.params.id);
+/** Aperçu d'une tontine (lien d'invitation) avant d'y adhérer ; l'identifiant sert de code d'invitation. */
+export async function tontinePreview(id: string) {
+  if (!z.uuid().safeParse(id).success) throw notFound('Tontine');
+  const t = await load(pool, id);
   const organizer = await one(pool, 'SELECT full_name FROM users WHERE id = $1', [t.organizer_id]);
   const count = await one(pool, 'SELECT count(*)::int AS n FROM tontine_members WHERE tontine_id = $1', [t.id]);
   const partner = t.partner_id ? await one(pool, `SELECT ${BRANDING_SQL} AS b FROM partners p WHERE p.id = $1`, [t.partner_id]) : null;
-  res.json({
+  return {
     id: t.id, name: t.name, description: t.description, organizer: partner?.b.name ?? organizer.full_name, status: t.status,
     kind: t.kind, visibility: t.visibility, good_label: t.good_label, good_price: t.good_price, partner: partner?.b ?? null,
     contribution_amount: t.contribution_amount, frequency: t.frequency, max_members: t.max_members,
     guarantee_amount: t.guarantee_amount, members: count.n, pot: t.contribution_amount * t.max_members,
-  });
-});
+  };
+}
+
+router.get('/public', async (req, res) => { res.json(await publicTontines(req.query)); });
+router.get('/:id/preview', async (req, res) => { res.json(await tontinePreview(req.params.id)); });
 
 router.post('/', async (req, res) => {
   const user = currentUser(req);

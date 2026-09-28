@@ -195,6 +195,21 @@ router.patch('/partners/:id', requireRole('admin'), async (req, res) => {
   res.json({ ok: true });
 });
 
+// ───── Demandes reçues du site public (prospects partenaires / SFD, contact) ─────
+router.get('/leads', async (req, res) => {
+  const { status } = z.object({ status: z.enum(['new', 'contacted', 'won', 'lost']).optional() }).parse(req.query);
+  res.json(await many(pool,
+    `SELECT l.*, u.full_name AS handler FROM leads l LEFT JOIN users u ON u.id = l.handled_by
+     WHERE ($1::text IS NULL OR l.status = $1) ORDER BY l.status = 'new' DESC, l.created_at DESC LIMIT 200`, [status ?? null]));
+});
+
+router.patch('/leads/:id', async (req, res) => {
+  const { status } = z.object({ status: z.enum(['new', 'contacted', 'won', 'lost']) }).parse(req.body);
+  const r = await pool.query('UPDATE leads SET status = $2, handled_by = $3 WHERE id = $1', [req.params.id, status, currentUser(req).id]);
+  if (!r.rowCount) throw notFound('Demande');
+  res.json({ ok: true });
+});
+
 // ───── Support ─────
 router.get('/tickets', async (req, res) => {
   const { status } = z.object({ status: z.enum(['open', 'pending', 'closed']).optional() }).parse(req.query);

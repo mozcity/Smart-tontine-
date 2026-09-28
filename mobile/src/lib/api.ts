@@ -2,7 +2,9 @@ import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
-export const API_URL: string = (Constants.expoConfig?.extra as { apiUrl?: string } | undefined)?.apiUrl ?? 'http://localhost:4000';
+// Adresse de l'API : EXPO_PUBLIC_API_URL (fixée par profil dans eas.json), sinon extra.apiUrl de app.json.
+export const API_URL: string = process.env.EXPO_PUBLIC_API_URL
+  ?? (Constants.expoConfig?.extra as { apiUrl?: string } | undefined)?.apiUrl ?? 'http://localhost:4000';
 const KEY = 'smarttontine_token';
 
 // Le jeton de session est stocké dans le trousseau sécurisé (Keychain / Keystore).

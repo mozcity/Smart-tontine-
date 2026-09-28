@@ -71,7 +71,7 @@ La licence partenaire **généralise la licence SFD** du modèle G (chapitre 1.3
 - **Qualité des fournisseurs** : validation préalable, séquestre, confirmation de réception, suspension en cas de litiges répétés. *À ajouter* : notation des fournisseurs et médiation des litiges.
 - **Frais du partenaire** : plafonnés à 3 % et affichés avant l'adhésion, pour éviter les abus de tontiniers.
 - **Marque blanche complète** (application séparée à la marque d'un gros partenaire) : techniquement possible, puisque le code est commun et qu'il suffit de configurer le nom, l'icône et les couleurs à la compilation EAS. À proposer sur devis : frais de mise en place et licence plus élevée.
-- *À ajouter* : portail web du partenaire (même fonctionnalités que l'espace dans l'app, sur ordinateur), exports comptables du compte partenaire.
+- **Portail partenaire web** (`/partenaire` sur la plateforme web) : mêmes fonctions que l'espace dans l'app, sur ordinateur, avec en plus la liste des membres (retards, défaillances), le relevé du compte et son **export CSV**. Voir le [chapitre 10](10_architecture_technique.md).
 
 ## 8.5 Référence API
 

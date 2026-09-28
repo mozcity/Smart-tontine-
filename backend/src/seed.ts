@@ -95,6 +95,13 @@ async function demoTontine() {
     visibility: 'public', partnerId: vendeur.id, description: 'Une moto par mois pendant 10 mois.' }, tokens[2]);
   // Partenaire association (en attente de validation : visible dans le back-office).
   await call('/partners', { name: 'Association Wend-Panga', type: 'association', city: 'Bobo-Dioulasso', primaryColor: '#1F6F43', managementFeeRate: 0.01 }, tokens[0]);
+  await call('/tontines', { name: 'Tontine hebdo du marché Rood Woko', frequency: 'weekly', maxMembers: 8, contributionAmount: 10_000,
+    visibility: 'public', description: 'Commerçantes du marché central : cotisation chaque lundi.' }, tokens[1]);
+  // Demandes reçues depuis le site public (onglet « Demandes » du back-office).
+  await pool.query(
+    `INSERT INTO leads (kind, name, organization, partner_type, phone, city, members, message) VALUES
+     ('sfd', 'Awa Ouédraogo', 'Caisse populaire de Tanghin', 'sfd', '+22670112233', 'Ouagadougou', 3500, 'Numériser nos groupes d''épargne'),
+     ('partenaire', 'Boureima Traoré', 'GIE des maraîchers de Bama', 'association', '+22676554433', 'Bobo-Dioulasso', 120, NULL)`);
   server.close();
 }
 

@@ -56,9 +56,10 @@ router.get('/mine', async (req, res) => {
 });
 
 /** Vitrine publique d'un partenaire : marque, tontines publiques en recrutement, catalogue. */
-router.get('/:id/public', async (req, res) => {
+export async function partnerShowcase(id: string) {
+  if (!z.uuid().safeParse(id).success) throw notFound('Partenaire');
   const p = await one(pool,
-    "SELECT id, name, type, description, logo, primary_color, city, phone FROM partners WHERE id = $1 AND status = 'active'", [req.params.id]);
+    "SELECT id, name, type, description, logo, primary_color, city, phone FROM partners WHERE id = $1 AND status = 'active'", [id]);
   if (!p) throw notFound('Partenaire');
   const tontines = await many(pool,
     `SELECT t.id, t.name, t.kind, t.contribution_amount, t.frequency, t.max_members, t.good_label, t.good_price,
@@ -66,8 +67,10 @@ router.get('/:id/public', async (req, res) => {
      FROM tontines t WHERE t.partner_id = $1 AND t.visibility = 'public' AND t.status = 'recruiting' ORDER BY t.created_at DESC`, [p.id]);
   const goods = await many(pool,
     'SELECT id, name, description, category, price, image, stock FROM goods WHERE partner_id = $1 AND active ORDER BY price', [p.id]);
-  res.json({ ...p, tontines, goods });
-});
+  return { ...p, tontines, goods };
+}
+
+router.get('/:id/public', async (req, res) => { res.json(await partnerShowcase(req.params.id)); });
 
 /** Tableau de bord du partenaire : groupes, membres, cotisations, revenus, commandes, factures. */
 router.get('/:id/dashboard', async (req, res) => {
@@ -174,6 +177,65 @@ router.post('/:id/withdraw', async (req, res) => {
   const payout = await paymentProvider().payout({ reference: tx.reference, amount: body.amount, phone, channel: body.channel as Channel });
   await pool.query(`UPDATE transactions SET meta = meta || jsonb_build_object('payout', $2::text) WHERE id = $1`, [tx.id, payout.status]);
   res.status(201).json({ reference: tx.reference, fee: f, status: payout.status });
+});
+
+/** Membres du partenaire : groupes de chacun, retards et défaillances (portail partenaire). */
+router.get('/:id/members', async (req, res) => {
+  const { partner } = await assertStaff(pool, req.params.id, currentUser(req).id);
+  res.json(await many(pool,
+    `WITH g AS (
+       SELECT m.user_id, t.name, 'tontine' AS kind, m.status FROM tontine_members m JOIN tontines t ON t.id = m.tontine_id WHERE t.partner_id = $1
+       UNION ALL
+       SELECT m.user_id, c.name, 'coffre', 'active' FROM cagnotte_members m JOIN cagnottes c ON c.id = m.cagnotte_id WHERE c.partner_id = $1
+     )
+     SELECT u.id, u.full_name, u.phone, u.kyc_level,
+            json_agg(json_build_object('name', g.name, 'kind', g.kind, 'status', g.status) ORDER BY g.name) AS groups,
+            bool_or(g.status = 'defaulter') AS defaulter,
+            (SELECT count(*)::int FROM tontine_contributions c JOIN tontine_rounds r ON r.id = c.round_id JOIN tontines t ON t.id = r.tontine_id
+              WHERE t.partner_id = $1 AND c.user_id = u.id AND c.late) AS late_payments,
+            (SELECT COALESCE(sum(c.amount), 0)::bigint FROM tontine_contributions c JOIN tontine_rounds r ON r.id = c.round_id JOIN tontines t ON t.id = r.tontine_id
+              WHERE t.partner_id = $1 AND c.user_id = u.id) AS contributed
+     FROM g JOIN users u ON u.id = g.user_id
+     GROUP BY u.id ORDER BY u.full_name NULLS LAST`, [partner.id]));
+});
+
+/** Catalogue complet du partenaire, y compris les biens désactivés. */
+router.get('/:id/goods', async (req, res) => {
+  const { partner } = await assertStaff(pool, req.params.id, currentUser(req).id);
+  res.json(await many(pool,
+    `SELECT g.*, (SELECT count(*)::int FROM goods_orders o WHERE o.good_id = g.id) AS orders
+     FROM goods g WHERE g.partner_id = $1 ORDER BY g.active DESC, g.created_at DESC`, [partner.id]));
+});
+
+async function statement(partnerId: string, userId: string, query: unknown) {
+  const { partner } = await assertStaff(pool, partnerId, userId, 'owner');
+  const q = z.object({
+    from: z.iso.date().optional(),
+    to: z.iso.date().optional(),
+  }).parse(query);
+  // Le solde après opération est calculé sur tout l'historique, puis filtré sur la période demandée.
+  const entries = await many(pool,
+    `SELECT * FROM (
+       SELECT e.id, e.created_at, t.reference, t.type, t.description, e.amount, sum(e.amount) OVER (ORDER BY e.id) AS balance_after
+       FROM ledger_entries e JOIN transactions t ON t.id = e.tx_id WHERE e.account_id = $1
+     ) x WHERE ($2::date IS NULL OR x.created_at >= $2::date) AND ($3::date IS NULL OR x.created_at < $3::date + 1)
+     ORDER BY x.id DESC`, [partner.account_id, q.from ?? null, q.to ?? null]);
+  return { partner, entries };
+}
+
+/** Relevé du compte partenaire (propriétaire) : chaque écriture avec le solde après opération. */
+router.get('/:id/statement', async (req, res) => {
+  const { entries } = await statement(req.params.id, currentUser(req).id, req.query);
+  res.json(entries.map((e) => ({ ...e, balance_after: Number(e.balance_after) })));
+});
+
+router.get('/:id/statement.csv', async (req, res) => {
+  const { partner, entries } = await statement(req.params.id, currentUser(req).id, req.query);
+  const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const lines = entries.map((e) => [new Date(e.created_at).toISOString().replace('T', ' ').slice(0, 16), e.reference, e.type, e.description,
+    e.amount, Number(e.balance_after)].map(esc).join(';'));
+  const csv = ['date;reference;type;libelle;montant;solde', ...lines].join('\n');
+  res.type('text/csv; charset=utf-8').attachment(`releve-${partner.name.replace(/[^A-Za-z0-9]+/g, '-').toLowerCase()}.csv`).send('\uFEFF' + csv);
 });
 
 /** Membres distincts actifs dans les groupes du partenaire (base de la licence). */

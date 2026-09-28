@@ -4,6 +4,7 @@ import { many, one, pool, withTx } from '../db.js';
 import { badRequest, conflict, notFound } from '../lib/errors.js';
 import { currentUser } from '../lib/auth.js';
 import { reference } from '../lib/crypto.js';
+import { config } from '../config.js';
 import { fee, pricing } from '../pricing.js';
 import { post, applyLegs, systemAccount, walletOf } from '../services/ledger.js';
 import { paymentProvider, type Channel } from '../services/payments/index.js';
@@ -48,6 +49,13 @@ router.post('/deposits', async (req, res) => {
   if (wallet.balance + body.amount > limit.balance) {
     throw badRequest('kyc_limit', `Plafond de solde atteint (${limit.balance} FCFA). Complète ta vérification d'identité.`);
   }
+  // Plafond d'entrées mensuelles par niveau KYC (LBC/FT) : dépôts confirmés ou en cours depuis le 1er du mois.
+  const inflow = await one(pool,
+    `SELECT COALESCE(sum(amount), 0)::bigint AS total FROM transactions
+     WHERE initiator_id = $1 AND type = 'deposit' AND status IN ('pending', 'completed') AND created_at >= date_trunc('month', now())`, [user.id]);
+  if (inflow.total + body.amount > limit.monthlyInflow) {
+    throw badRequest('kyc_monthly_limit', `Plafond mensuel de dépôts atteint (${limit.monthlyInflow} FCFA). Complète ta vérification d'identité.`);
+  }
 
   const ref = reference('DEP');
   const tx = await one(pool,
@@ -61,6 +69,17 @@ router.post('/deposits', async (req, res) => {
   await pool.query('UPDATE transactions SET provider_ref = $2 WHERE id = $1', [tx.id, result.providerRef ?? null]);
   await track(pool, user.id, 'deposit_initiated', { amount: body.amount, channel: body.channel });
   res.status(201).json({ reference: ref, paymentUrl: result.paymentUrl, status: 'pending' });
+});
+
+/**
+ * Développement et démonstration uniquement (fournisseur simulé) : confirme un dépôt comme le ferait
+ * le webhook de l'agrégateur. Désactivé en production et avec un vrai fournisseur.
+ */
+router.post('/deposits/:reference/simulate', async (req, res) => {
+  if (config.isProd || paymentProvider().name !== 'mock') throw notFound('Route');
+  const tx = await one(pool, "SELECT initiator_id FROM transactions WHERE reference = $1 AND type = 'deposit'", [req.params.reference]);
+  if (!tx || tx.initiator_id !== currentUser(req).id) throw notFound('Dépôt');
+  res.json(await settleDeposit(req.params.reference as string, true, `MOCK-${req.params.reference}`));
 });
 
 /** Appelé par le webhook de l'agrégateur. Idempotent : un dépôt n'est crédité qu'une fois. */

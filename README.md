@@ -12,8 +12,9 @@ Références : **Maman Tontine** (expérience tontine au Sénégal) et **MaTonti
 |---|---|
 | [`docs/`](docs/) | Dossier stratégique : comparatif Sénégal + 7 chapitres |
 | [`finance/`](finance/) | `SmartTontine_modeles_economiques.xlsx` : 7 modèles économiques chiffrés et validés (Burkina puis UEMOA), tests de résistance, et son générateur |
-| [`backend/`](backend/) | API Node.js/TypeScript + PostgreSQL : moteur de tontine, scoring et crédit, coffres de groupe, rappels automatiques, Organisateur Pro, tontines de biens, espaces partenaires, grand livre en partie double, back-office CRM web, 35 tests de bout en bout |
-| [`mobile/`](mobile/) | Application Expo / React Native (Android, iOS, web) reprenant l'interface de l'affiche |
+| [`backend/`](backend/) | API Node.js/TypeScript + PostgreSQL : moteur de tontine, scoring et crédit, coffres de groupe, rappels automatiques, Organisateur Pro, tontines de biens, espaces partenaires, grand livre en partie double, API publique du site, back-office CRM web, 41 tests de bout en bout |
+| [`web/`](web/) | **Plateforme web** React : site public (vitrine, tarifs, tontines publiques, catalogue, vitrines partenaires, « Devenir partenaire »), espace membre, **portail partenaire** |
+| [`mobile/`](mobile/) | Application Expo / React Native (Android, iOS) reprenant l'interface de l'affiche, profils de build EAS |
 
 ## Dossier stratégique
 
@@ -26,6 +27,8 @@ Références : **Maman Tontine** (expérience tontine au Sénégal) et **MaTonti
 6. [Conformité et risques](docs/06_conformite_risques.md) — montage avec un établissement agréé BCEAO, obligations, registre des risques
 7. [Organisation et feuille de route](docs/07_feuille_de_route.md) — équipe, trimestres, facteurs clés de succès, 10 prochaines actions
 8. [Tontines de biens et espaces partenaires](docs/08_biens_et_partenaires.md) — biens en individuel / groupe privé / groupe public, séquestre, partenaires à leur logo, revenus
+9. [**Cahier des charges**](docs/09_cahier_des_charges.md) — objectifs, acteurs et droits, exigences fonctionnelles et non fonctionnelles, livrables, lots, critères de recette
+10. [**Architecture technique**](docs/10_architecture_technique.md) — composants, plateforme web, sécurité, environnements, Docker, intégration continue, EAS, exploitation
 
 ## Chiffres clés (modèle G retenu, modifiable dans l'Excel)
 
@@ -36,27 +39,31 @@ Références : **Maman Tontine** (expérience tontine au Sénégal) et **MaTonti
 
 ## Fonctionnalités livrées
 
-| Fonction | App mobile | API | Back-office |
-|---|---|---|---|
-| **Tontine rotative** : création, invitation par code, caution, tirage au sort, cotisation, versement automatique du pot, pénalité de retard, clôture des tours échus par les cautions | ✅ | ✅ | ✅ |
-| **Tontines de biens matériels** : individuel (plan d'achat), groupe privé ou public ; catalogue des commerçants ; paiement au séquestre libéré à la réception | ✅ | ✅ | — |
-| **Espaces partenaires** à leur logo et leurs couleurs : plusieurs tontines et coffres, équipe, tableau de bord, frais de gestion, catalogue, licence mensuelle | ✅ | ✅ | ✅ validation |
-| **Découvrir** : tontines publiques d'argent et de biens | ✅ | ✅ | — |
-| **Score Smart Tontine** (0-1000, facteurs expliqués) | ✅ | ✅ | ✅ |
-| **Avance sur tontine** (≤ 50 % du futur pot, remboursée sur le pot) | ✅ | ✅ | ✅ |
-| **Microcrédit** (score ≥ 550, échéancier, prélèvement auto, pénalités, défaut, PAR30) | ✅ | ✅ | ✅ |
-| Connexion par OTP SMS, code PIN | ✅ | ✅ | ✅ |
-| Portefeuille « Mon jeton » : dépôt, retrait, transfert, historique | ✅ | ✅ | rapprochement |
-| E-caisse (épargne bloquée, déblocage auto, rupture à 2 %) | ✅ | ✅ | ✅ |
-| **Coffres de groupe** (associations, dahiras, familles, GIE…) : suivi des cotisations payé / partiel / impayé, double validation des retraits | ✅ | ✅ | ✅ |
-| **Invitation** par QR code, WhatsApp, lien ou code | ✅ | ✅ | — |
-| **Rappels automatiques** J-1 / J0 (cotisations et échéances) | ✅ | ✅ | — |
-| Budget (plafonds, alertes) | ✅ | ✅ | — |
-| Projets (objectif, étapes, progression) | ✅ | ✅ | ✅ |
-| Challenges (défis, points, classement, récompenses) | ✅ | ✅ | ✅ |
-| Contrats (prêts entre proches signés, échéancier) | ✅ | ✅ | ✅ |
-| **Organisateur Pro** (plus de 2 groupes gérés, export CSV) · Smart Tontine+ · parrainage · notifications · support | ✅ | ✅ | ✅ |
-| KPI, segments, fiche client 360, notes, tickets, campagnes, contrôle du grand livre | — | ✅ | ✅ |
+| Fonction | App mobile | Web | API | Back-office |
+|---|---|---|---|---|
+| **Tontine rotative** : création, invitation par code, caution, tirage au sort, cotisation, versement automatique du pot, pénalité de retard, clôture des tours échus par les cautions | ✅ | ✅ | ✅ | ✅ |
+| **Tontines de biens matériels** : individuel (plan d'achat), groupe privé ou public ; catalogue des commerçants ; paiement au séquestre libéré à la réception | ✅ | ✅ | ✅ | — |
+| **Espaces partenaires** à leur logo et leurs couleurs : plusieurs tontines et coffres, équipe, tableau de bord, frais de gestion, catalogue, licence mensuelle | ✅ | ✅ portail | ✅ | ✅ validation |
+| **Découvrir** : tontines publiques d'argent et de biens | ✅ | ✅ | ✅ | — |
+| **Score Smart Tontine** (0-1000, facteurs expliqués) | ✅ | ✅ | ✅ | ✅ |
+| **Avance sur tontine** (≤ 50 % du futur pot, remboursée sur le pot) | ✅ | ✅ | ✅ | ✅ |
+| **Microcrédit** (score ≥ 550, échéancier, prélèvement auto, pénalités, défaut, PAR30) | ✅ | ✅ | ✅ | ✅ |
+| Connexion par OTP SMS, code PIN | ✅ | ✅ | ✅ | ✅ |
+| Portefeuille « Mon jeton » : dépôt, retrait, transfert, historique | ✅ | ✅ | ✅ | rapprochement |
+| E-caisse (épargne bloquée, déblocage auto, rupture à 2 %) | ✅ | — | ✅ | ✅ |
+| **Coffres de groupe** (associations, dahiras, familles, GIE…) : suivi des cotisations payé / partiel / impayé, double validation des retraits | ✅ | ✅ | ✅ | ✅ |
+| **Invitation** par QR code, WhatsApp, lien ou code | ✅ | ✅ | ✅ | — |
+| **Rappels automatiques** J-1 / J0 (cotisations et échéances) | ✅ | — | ✅ | — |
+| Budget (plafonds, alertes) | ✅ | — | ✅ | — |
+| Projets (objectif, étapes, progression) | ✅ | — | ✅ | ✅ |
+| Challenges (défis, points, classement, récompenses) | ✅ | — | ✅ | ✅ |
+| Contrats (prêts entre proches signés, échéancier) | ✅ | — | ✅ | ✅ |
+| **Organisateur Pro** (plus de 2 groupes gérés, export CSV) · Smart Tontine+ · parrainage · notifications · support | ✅ | ✅ | ✅ | ✅ |
+| KPI, segments, fiche client 360, notes, tickets, campagnes, contrôle du grand livre | — | — | ✅ | ✅ |
+| **Site public** : vitrine, tarifs en direct, tontines publiques et catalogue sans compte, vitrines partenaires | — | ✅ | ✅ | — |
+| **Demandes « Devenir partenaire / SFD »** | — | ✅ | ✅ | ✅ suivi |
+| **Portail partenaire** : membres, relevé et export CSV, catalogue, commandes, équipe, marque | relevé | ✅ | ✅ | — |
+| **Sécurité** : verrouillage du PIN, plafond mensuel KYC, limitation de débit | ✅ | ✅ | ✅ | — |
 
 ## Démarrage rapide
 
@@ -64,10 +71,12 @@ Références : **Maman Tontine** (expérience tontine au Sénégal) et **MaTonti
 docker compose up -d db              # ou un PostgreSQL 16 local
 cd backend && cp .env.example .env && npm install && npm run seed && npm run dev
 # API : http://localhost:4000   ·   back-office : http://localhost:4000/admin  (admin de démo : +22670000000)
+cd ../web && npm install && npm run dev   # plateforme web : http://localhost:5173
 cd ../mobile && npm install && npx expo start
+# ou tout en conteneurs : docker compose up -d --build   → http://localhost:8080
 ```
 
-Détails : [docs/05_plateforme_informatique.md](docs/05_plateforme_informatique.md#57-démarrer-en-local).
+Détails : [docs/10_architecture_technique.md](docs/10_architecture_technique.md#106-démarrer-la-plateforme-complète-en-local).
 
 ## Ce qui reste à faire avant un lancement réel
 
