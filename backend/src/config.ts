@@ -19,7 +19,7 @@ export const config = {
   env,
   isProd: env === 'production',
   port: Number(process.env.PORT ?? 4000),
-  databaseUrl: required('DATABASE_URL', 'postgres://smartfin:smartfin@localhost:5432/smartfin'),
+  databaseUrl: required('DATABASE_URL', 'postgres://smarttontine:smarttontine@localhost:5432/smarttontine'),
   jwtSecret: required('JWT_SECRET', 'dev-secret'),
   jwtTtl: '30d',
   paymentProvider: process.env.PAYMENT_PROVIDER ?? 'mock',

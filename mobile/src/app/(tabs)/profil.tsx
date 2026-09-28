@@ -10,6 +10,10 @@ export default function Profil() {
   const { me, refresh, signOut } = useAuth();
   const notifs = useApi<{ id: string; title: string; body: string; created_at: string; read_at: string | null }[]>('/me/notifications');
 
+  async function subscribePro() {
+    try { await api('/me/pro/subscribe', { body: {} }); await refresh(); } catch (e) { notifyError(e); }
+  }
+
   async function subscribe() {
     try { await api('/me/plan/subscribe', { body: {} }); await refresh(); } catch (e) { notifyError(e); }
   }
@@ -20,9 +24,17 @@ export default function Profil() {
       <P muted>{me?.phone} · vérification d'identité niveau {me?.kyc_level} · 🏅 {me?.points} points</P>
 
       <Card style={{ backgroundColor: me?.plan === 'plus' ? colors.green : colors.brand }}>
-        <Text style={{ color: '#fff', fontWeight: '800', fontSize: 18 }}>SMARTFIN+ {me?.plan === 'plus' ? '✓ actif' : ''}</Text>
-        <Text style={{ color: '#fff' }}>3 retraits offerts / mois · challenges exclusifs · coach budget · support prioritaire — 1 000 F / mois</Text>
-        {me?.plan !== 'plus' && <Button title="Passer à SMARTFIN+" variant="green" onPress={subscribe} />}
+        <Text style={{ color: '#fff', fontWeight: '800', fontSize: 18 }}>Smart Tontine+ {me?.plan === 'plus' ? '✓ actif' : ''}</Text>
+        <Text style={{ color: '#fff' }}>3 retraits offerts par mois (dont ton pot de tontine) · support prioritaire — 500 F / mois</Text>
+        {me?.plan !== 'plus' && <Button title="Passer à Smart Tontine+" variant="green" onPress={subscribe} />}
+      </Card>
+
+      <Card style={{ borderColor: colors.brand, borderWidth: 2 }}>
+        <H2>Organisateur Pro {me?.is_pro ? '✓' : ''}</H2>
+        <P>Pour les trésoriers de tontines, d'associations, de GIE : gère plus de 2 groupes à la fois et exporte les cotisations (CSV) pour tes assemblées. 2 000 F / mois.</P>
+        {me?.is_pro
+          ? <P muted>Actif jusqu'au {me.pro_renews_at ? shortDate(me.pro_renews_at) : '—'} (renouvellement automatique).</P>
+          : <Button title="Devenir Organisateur Pro" onPress={subscribePro} />}
       </Card>
 
       <Card>
@@ -30,7 +42,7 @@ export default function Profil() {
         <P>Gagne 500 F quand un filleul fait son premier dépôt de 5 000 F ou plus.</P>
         <Row style={{ justifyContent: 'space-between' }}>
           <Text style={{ fontSize: 22, fontWeight: '900', letterSpacing: 3, color: colors.brand }}>{me?.referral_code}</Text>
-          <Button title="Partager" variant="ghost" onPress={() => Share.share({ message: `Rejoins-moi sur SMARTFIN pour gérer ton argent sans stress ! Mon code parrain : ${me?.referral_code} — https://smartfin.app` })} />
+          <Button title="Partager" variant="ghost" onPress={() => Share.share({ message: `Rejoins-moi sur Smart Tontine pour gérer ton argent sans stress ! Mon code parrain : ${me?.referral_code} — https://smarttontine.app` })} />
         </Row>
       </Card>
 

@@ -39,7 +39,7 @@ export default function Home() {
   return (
     <Screen onRefresh={() => { void wallet.reload(); void history.reload(); void tontines.reload(); }} refreshing={wallet.loading && !!wallet.data}>
       <Row style={{ justifyContent: 'space-between' }}>
-        <Text style={{ fontSize: 22, fontWeight: '900', color: colors.brand }}>⚡ SMARTFIN</Text>
+        <Text style={{ fontSize: 22, fontWeight: '900', color: colors.brand }}>Smart Tontine</Text>
         <Pressable onPress={() => router.push('/support')} accessibilityLabel="Aide et support"><Text style={{ fontSize: 22 }}>💬</Text></Pressable>
       </Row>
       <Text style={{ fontSize: 18, fontWeight: '700', color: colors.ink }}>👋 Hello, {firstName || 'toi'}</Text>
@@ -75,7 +75,7 @@ export default function Home() {
       {credit.data && (
         <Pressable onPress={() => router.push('/credit')}>
           <Card style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10 }}>
-            <Text style={{ flex: 1, color: colors.ink2 }}>Mon score SMARTFIN</Text>
+            <Text style={{ flex: 1, color: colors.ink2 }}>Mon score Smart Tontine</Text>
             <Text style={{ fontWeight: '800', color: colors.brand }}>{credit.data.score} / 1000 ›</Text>
           </Card>
         </Pressable>

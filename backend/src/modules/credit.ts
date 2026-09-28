@@ -10,16 +10,16 @@ import { amortize, assertUnderUsury, creditScore, microcreditLimit } from '../se
 import { notify, track } from '../services/notify.js';
 import { assertPin } from './auth.js';
 
-// Microfinance : prêts financés par le SFD partenaire (SYS_CREDIT). SMARTFIN note, verse,
-// recouvre et perçoit `smartfinInterestShare` des intérêts ; le reste revient au partenaire.
+// Microfinance : prêts financés par le SFD partenaire (SYS_CREDIT). Smart Tontine note, verse,
+// recouvre et perçoit `smartTontineInterestShare` des intérêts ; le reste revient au partenaire.
 export const router = Router();
 
 const DAY = 86_400_000;
 const today = () => new Date().toISOString().slice(0, 10);
 
 function splitInterest(amount: number) {
-  const smartfin = Math.round(amount * pricing.credit.smartfinInterestShare);
-  return { smartfin, partner: amount - smartfin };
+  const ours = Math.round(amount * pricing.credit.smartTontineInterestShare);
+  return { ours, partner: amount - ours };
 }
 
 /** Tours de tontine pour lesquels l'utilisateur peut demander une avance sur son futur pot. */
@@ -174,7 +174,7 @@ export async function payNextInstallment(client: pg.PoolClient, loanId: string) 
     legs: [
       { accountId: wallet.id, amount: -total },
       { accountId: await systemAccount(client, 'SYS_CREDIT'), amount: inst.principal },
-      { accountId: await systemAccount(client, 'SYS_FEES'), amount: income.smartfin },
+      { accountId: await systemAccount(client, 'SYS_FEES'), amount: income.ours },
       { accountId: await systemAccount(client, 'SYS_CREDIT_INCOME'), amount: income.partner },
     ],
   });
@@ -210,7 +210,7 @@ export async function settleAdvanceFromPayout(client: pg.PoolClient, roundId: st
   return {
     total: inst.principal + inst.interest + inst.penalty,
     principal: inst.principal,
-    smartfinInterest: income.smartfin,
+    smartTontineInterest: income.ours,
     partnerInterest: income.partner,
     async markRepaid(txId: string) {
       await client.query('UPDATE loan_installments SET paid_at = now(), tx_id = $2 WHERE id = $1', [inst.id, txId]);

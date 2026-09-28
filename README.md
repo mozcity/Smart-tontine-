@@ -1,44 +1,44 @@
-# SMARTFIN — « Gère ton argent sans stress, depuis ton téléphone »
+# Smart Tontine — « La tontine en ligne sûre, adossée à la microfinance »
 
-**SMARTFIN est une tontine en ligne adossée à un modèle de microfinance** (Côte d'Ivoire → UEMOA). On cotise ensemble et on reçoit le pot à son tour, sans trésorier et avec une caution qui protège le groupe. La discipline de cotisation devient un **score de crédit** qui ouvre l'**avance sur tontine** et le **microcrédit**, financés par un SFD partenaire agréé.
+**Smart Tontine** numérise la tontine : on cotise par Orange Money, Moov Money ou Wave, et on reçoit le pot à son tour. Il n'y a plus de trésorier qui garde la caisse, et une caution protège le groupe. La régularité des cotisations devient un **score de crédit**, qui ouvre l'**avance sur tontine** et le **microcrédit** accordés par des **SFD partenaires**. Ces SFD utilisent aussi la plateforme en marque blanche pour numériser leurs propres groupes.
+
+**Lancement : Burkina Faso (2027)**, puis Côte d'Ivoire (2029), Mali (2030), Niger et Sénégal (2031), Bénin et Togo.
 
 Références : **Maman Tontine** (expérience tontine au Sénégal) et **MaTontine** (tontine → crédit via une IMF), voir [docs/00](docs/00_benchmark_senegal.md).
-
-Ce dépôt contient tout le projet : stratégie, modèle économique, modèle financier, marketing, CRM, plateforme informatique et application mobile.
 
 ## Contenu
 
 | Dossier | Ce qu'il contient |
 |---|---|
 | [`docs/`](docs/) | Dossier stratégique : comparatif Sénégal + 7 chapitres |
-| [`finance/`](finance/) | Modèle financier Excel sur 5 ans (formules, hypothèses modifiables, sensibilité) et son générateur |
-| [`backend/`](backend/) | API Node.js/TypeScript + PostgreSQL : moteur de tontine, scoring et crédit, coffres de groupe, rappels automatiques, grand livre en partie double, back-office CRM web, 28 tests de bout en bout |
+| [`finance/`](finance/) | `SmartTontine_modeles_economiques.xlsx` : 7 modèles économiques chiffrés et validés (Burkina puis UEMOA), tests de résistance, et son générateur |
+| [`backend/`](backend/) | API Node.js/TypeScript + PostgreSQL : moteur de tontine, scoring et crédit, coffres de groupe, rappels automatiques, Organisateur Pro, grand livre en partie double, back-office CRM web, 29 tests de bout en bout |
 | [`mobile/`](mobile/) | Application Expo / React Native (Android, iOS, web) reprenant l'interface de l'affiche |
 
 ## Dossier stratégique
 
-0. [Références : Maman Tontine et MaTontine (Sénégal)](docs/00_benchmark_senegal.md) — comparatif, ce qu'on reprend, différenciation, prix, Côte d'Ivoire vs Sénégal
-1. [Modèle économique](docs/01_modele_economique.md) — proposition de valeur, segments, Business Model Canvas, grille tarifaire, moteurs de revenus
-2. [Modèle financier](docs/02_modele_financier.md) — projections 2027-2031, besoin de financement, économie unitaire, leviers
+0. [Références : Maman Tontine et MaTontine (Sénégal)](docs/00_benchmark_senegal.md) — comparatif, ce qu'on reprend, différenciation, Burkina vs Sénégal
+1. [Modèle économique](docs/01_modele_economique.md) — **7 modèles testés, le modèle retenu (G) et pourquoi il est rentable**, grille tarifaire, revenus
+2. [Modèle financier](docs/02_modele_financier.md) — déploiement pays par pays, compte de résultat, leviers, tests de résistance, levée
 3. [Système marketing](docs/03_marketing.md) — positionnement, entonnoir, canaux, plan de lancement 90 jours, calendrier, automatisations
 4. [Gestion des clients (CRM)](docs/04_gestion_clients_crm.md) — vue 360°, segmentation, cycle de vie, support, KYC
 5. [Plateforme informatique et app](docs/05_plateforme_informatique.md) — architecture, grand livre, flux d'argent, API, sécurité, hébergement
 6. [Conformité et risques](docs/06_conformite_risques.md) — montage avec un établissement agréé BCEAO, obligations, registre des risques
 7. [Organisation et feuille de route](docs/07_feuille_de_route.md) — équipe, trimestres, facteurs clés de succès, 10 prochaines actions
 
-## Chiffres clés (scénario central, modifiable dans l'Excel)
+## Chiffres clés (modèle G retenu, modifiable dans l'Excel)
 
-- 2031 : 262 500 clients actifs dont 157 500 membres de tontines ; 66 Mds FCFA de pots versés ; 7,8 Mds FCFA de crédits versés (financés par le SFD)
-- Chiffre d'affaires : 484 M FCFA en 2029, 2,4 Mds FCFA en 2031, dont 1re source la commission sur les pots de tontine
-- EBITDA positif en **2031** ; besoin de financement **≈ 824 M FCFA** (levée recommandée ≈ 1,07 Md FCFA ≈ 1,6 M€)
-- Hypothèses les plus sensibles : coût d'encaissement Mobile Money, part des actifs en tontine, conditions négociées avec le SFD (part d'intérêts, garantie de première perte)
+- **7 modèles économiques testés, 1 seul rentable** : le modèle **G, « B2B2C adossé aux SFD »**. Il combine la commission de 1 % sur les pots, 1 % sur les retraits, les abonnements Organisateur Pro (2 000 F/mois) et Smart Tontine+ (500 F/mois), les licences SFD (75 F/membre/mois) et la part des intérêts de crédit.
+- **Chiffre d'affaires** : 356 M F en 2029, **1,2 Md F en 2031** ; **EBITDA positif en 2030**, marge de 15,7 % en 2031.
+- **Besoin de financement : 427 M F** ; levée recommandée ≈ 555 M F (≈ 0,85 M€) en deux tours.
+- **Le modèle résiste** : il reste rentable en 2031 dans chacun des 8 scénarios dégradés testés. Les conditions à sécuriser sont un SFD partenaire et des frais Mobile Money réduits de 40 %.
 
 ## Fonctionnalités livrées
 
 | Fonction | App mobile | API | Back-office |
 |---|---|---|---|
 | **Tontine rotative** : création, invitation par code, caution, tirage au sort, cotisation, versement automatique du pot, pénalité de retard, clôture des tours échus par les cautions | ✅ | ✅ | ✅ |
-| **Score SMARTFIN** (0-1000, facteurs expliqués) | ✅ | ✅ | ✅ |
+| **Score Smart Tontine** (0-1000, facteurs expliqués) | ✅ | ✅ | ✅ |
 | **Avance sur tontine** (≤ 50 % du futur pot, remboursée sur le pot) | ✅ | ✅ | ✅ |
 | **Microcrédit** (score ≥ 550, échéancier, prélèvement auto, pénalités, défaut, PAR30) | ✅ | ✅ | ✅ |
 | Connexion par OTP SMS, code PIN | ✅ | ✅ | ✅ |
@@ -51,7 +51,7 @@ Ce dépôt contient tout le projet : stratégie, modèle économique, modèle fi
 | Projets (objectif, étapes, progression) | ✅ | ✅ | ✅ |
 | Challenges (défis, points, classement, récompenses) | ✅ | ✅ | ✅ |
 | Contrats (prêts entre proches signés, échéancier) | ✅ | ✅ | ✅ |
-| SMARTFIN+, parrainage, notifications, News & Tuto, support | ✅ | ✅ | ✅ |
+| **Organisateur Pro** (plus de 2 groupes gérés, export CSV) · Smart Tontine+ · parrainage · notifications · support | ✅ | ✅ | ✅ |
 | KPI, segments, fiche client 360, notes, tickets, campagnes, contrôle du grand livre | — | ✅ | ✅ |
 
 ## Démarrage rapide
@@ -59,7 +59,7 @@ Ce dépôt contient tout le projet : stratégie, modèle économique, modèle fi
 ```bash
 docker compose up -d db              # ou un PostgreSQL 16 local
 cd backend && cp .env.example .env && npm install && npm run seed && npm run dev
-# API : http://localhost:4000   ·   back-office : http://localhost:4000/admin  (admin : +2250748553268)
+# API : http://localhost:4000   ·   back-office : http://localhost:4000/admin  (admin de démo : +22670000000)
 cd ../mobile && npm install && npx expo start
 ```
 

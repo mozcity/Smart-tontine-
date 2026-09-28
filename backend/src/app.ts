@@ -28,7 +28,7 @@ export function createApp() {
   // Le corps brut est conservé pour vérifier la signature HMAC des webhooks.
   app.use(express.json({ limit: '100kb', verify: (req, _res, buf) => { (req as any).rawBody = buf.toString('utf8'); } }));
 
-  app.get('/health', (_req, res) => { res.json({ ok: true, service: 'smartfin-api' }); });
+  app.get('/health', (_req, res) => { res.json({ ok: true, service: 'smart-tontine-api' }); });
   app.get('/pricing', (_req, res) => { res.json(pricing); });
 
   app.use('/auth', auth);

@@ -3,7 +3,7 @@ import { api, setUnauthorizedHandler, tokenStore } from './api';
 
 export interface Me {
   id: string; phone: string; full_name: string | null; plan: 'free' | 'plus'; kyc_level: number;
-  referral_code: string; points: number; has_pin: boolean; wallet_balance: number;
+  referral_code: string; points: number; has_pin: boolean; wallet_balance: number; is_pro: boolean; pro_renews_at: string | null;
 }
 
 interface AuthState {

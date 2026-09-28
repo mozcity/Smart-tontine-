@@ -58,3 +58,29 @@ describe('rappels automatiques', () => {
     expect(notifs.body.some((n: any) => n.title === 'Rappel de cotisation' && n.body.includes('demain'))).toBe(true);
   });
 });
+
+describe('Organisateur Pro', () => {
+  it('limite la version gratuite à 2 groupes gérés et débloque la limite et l\'export avec Pro', async () => {
+    const tresorier = await signup('Boureima');
+    await fund(tresorier, 20_000);
+    const c1 = await tresorier.auth(request(app).post('/cagnottes')).send({ name: 'GIE des maraîchères', category: 'gie', contributionAmount: 2_000, frequency: 'monthly' }).expect(201);
+    await tresorier.auth(request(app).post('/tontines')).send({ name: 'Tontine du marché', contributionAmount: 5_000, frequency: 'weekly', maxMembers: 5 }).expect(201);
+    const blocked = await tresorier.auth(request(app).post('/cagnottes')).send({ name: 'ASC du secteur 15', category: 'asc' });
+    expect(blocked.status).toBe(402);
+    expect(blocked.body.error).toBe('pro_required');
+    await tresorier.auth(request(app).get(`/cagnottes/${c1.body.id}/cotisations.csv`)).expect(402);
+
+    await tresorier.auth(request(app).post('/me/pro/subscribe')).expect(200);
+    await tresorier.auth(request(app).post('/me/pro/subscribe')).expect(409);
+    const me = await tresorier.auth(request(app).get('/auth/me')).expect(200);
+    expect(me.body.is_pro).toBe(true);
+    expect(me.body.wallet_balance).toBe(20_000 - 5_000 - 2_000); // caution de tontine + abonnement
+    await tresorier.auth(request(app).post('/cagnottes')).send({ name: 'ASC du secteur 15', category: 'asc' }).expect(201);
+
+    await tresorier.auth(request(app).post(`/cagnottes/${c1.body.id}/contribute`)).send({ amount: 2_000 }).expect(201);
+    const csv = await tresorier.auth(request(app).get(`/cagnottes/${c1.body.id}/cotisations.csv`)).expect(200);
+    expect(csv.headers['content-type']).toContain('text/csv');
+    expect(csv.text).toContain('Boureima');
+    expect(csv.text.split('\n')).toHaveLength(2);
+  });
+});

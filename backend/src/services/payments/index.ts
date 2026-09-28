@@ -8,12 +8,12 @@ let provider: PaymentProvider | undefined;
 export function paymentProvider(): PaymentProvider {
   if (provider) return provider;
   if (config.paymentProvider === 'cinetpay') {
-    const base = process.env.PUBLIC_API_URL ?? 'https://api.smartfin.app';
+    const base = process.env.PUBLIC_API_URL ?? 'https://api.smarttontine.app';
     provider = cinetpayProvider({
       apiKey: process.env.CINETPAY_API_KEY ?? '',
       siteId: process.env.CINETPAY_SITE_ID ?? '',
       notifyUrl: `${base}/webhooks/payments`,
-      returnUrl: 'smartfin://depot/retour',
+      returnUrl: 'smarttontine://depot/retour',
     });
   } else {
     provider = mockProvider;

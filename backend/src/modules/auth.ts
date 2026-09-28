@@ -24,7 +24,7 @@ router.post('/otp/request', async (req, res) => {
     `INSERT INTO otp_codes (phone, code_hash, expires_at) VALUES ($1, $2, now() + make_interval(mins => $3))`,
     [p, hashSecret(code), config.otpTtlMinutes],
   );
-  await sms.send(p, `SMARTFIN : ton code est ${code}. Ne le partage avec personne.`);
+  await sms.send(p, `Smart Tontine : ton code est ${code}. Ne le partage avec personne.`);
   res.json({ ok: true, ...(config.isProd ? {} : { devCode: code }) });
 });
 
@@ -74,7 +74,7 @@ router.post('/otp/verify', async (req, res) => {
 router.get('/me', requireAuth, async (req, res) => {
   const me = await one(pool,
     `SELECT u.id, u.phone, u.full_name, u.email, u.role, u.kyc_level, u.plan, u.referral_code, u.points,
-            (u.pin_hash IS NOT NULL) AS has_pin, a.balance AS wallet_balance
+            (u.pin_hash IS NOT NULL) AS has_pin, (u.pro_renews_at > now()) IS TRUE AS is_pro, u.pro_renews_at, a.balance AS wallet_balance
      FROM users u JOIN accounts a ON a.owner_id = u.id AND a.kind = 'wallet' WHERE u.id = $1`,
     [currentUser(req).id]);
   res.json(me);

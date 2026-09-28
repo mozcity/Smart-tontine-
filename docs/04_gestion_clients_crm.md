@@ -1,6 +1,6 @@
 # 4. Système de gestion des clients (CRM)
 
-Le CRM est intégré à la plateforme : **back-office web** (`/admin`, fichier `backend/public/admin/index.html`) branché sur l'API `/admin/api/*`. Pas d'outil tiers à payer au démarrage ; les données clients restent sur l'infrastructure SMARTFIN.
+Le CRM est intégré à la plateforme : **back-office web** (`/admin`, fichier `backend/public/admin/index.html`) branché sur l'API `/admin/api/*`. Pas d'outil tiers à payer au démarrage ; les données clients restent sur l'infrastructure Smart Tontine.
 
 ## 4.1 Rôles
 
@@ -10,11 +10,11 @@ Le CRM est intégré à la plateforme : **back-office web** (`/admin`, fichier `
 | `admin` | Tout + modification KYC/statut, envoi de campagnes, contrôle du grand livre, rapprochement des retraits |
 | `customer` | Application mobile uniquement |
 
-Connexion au back-office par OTP SMS, comme l'app. Un compte est promu en SQL : `UPDATE users SET role = 'admin' WHERE phone = '+225…';`
+Connexion au back-office par OTP SMS, comme l'app. Un compte est promu en SQL : `UPDATE users SET role = 'admin' WHERE phone = '+226…';`
 
 ## 4.2 Vue client 360°
 
-La vue SQL `customer_overview` (migration `002_crm_views.sql`) calcule pour chaque client : solde portefeuille, épargne bloquée, patrimoine SMARTFIN, nombre et total des dépôts, **revenu généré**, filleuls, canal d'acquisition et **segment**.
+La vue SQL `customer_overview` (migration `002_crm_views.sql`) calcule pour chaque client : solde portefeuille, épargne bloquée, patrimoine Smart Tontine, nombre et total des dépôts, **revenu généré**, filleuls, canal d'acquisition et **segment**.
 
 La fiche client du back-office affiche : indicateurs, produits détenus (e-caisses, cagnottes, projets, contrats), 30 dernières transactions, tickets, **notes CRM** de l'équipe, parcours (événements analytiques : inscription, dépôt, création de produits…), et les actions KYC / suspension.
 
@@ -23,7 +23,7 @@ La fiche client du back-office affiche : indicateurs, produits détenus (e-caiss
 - **Tontines** : en cours, en recrutement et terminées ; membres engagés ; cotisations collectées ; impayés couverts par caution ; cotisations en retard ; **tours échus non versés**.
 - **Portefeuille de crédit** : encours, dont avances ; **PAR30** (encours avec plus de 30 jours de retard, alerte au-delà de 5 %) ; défauts ; taux de remboursement à l'heure ; total décaissé ; intérêts reversés au SFD.
 - **Liste des crédits** avec reste dû, prochaine échéance et score à l'octroi.
-- La **fiche client** affiche le score SMARTFIN et le détail de ses facteurs, les tontines (position, statut, caution) et les crédits.
+- La **fiche client** affiche le score Smart Tontine et le détail de ses facteurs, les tontines (position, statut, caution) et les crédits.
 
 ## 4.4 Recouvrement (processus automatisé + humain)
 
@@ -47,9 +47,9 @@ Principes : pas de harcèlement, pas de publication du nom d'un défaillant hors
 | `nouveau` | Inscrit depuis < 14 jours, aucun dépôt | Onboarding, relance J+3 |
 | `sans_depot` | Inscrit depuis ≥ 14 jours, aucun dépôt | Relance, appel ambassadeur |
 | `actif` | A déjà déposé, actif dans les 30 jours | Proposer un 1er produit d'épargne |
-| `epargnant` | Épargne bloquée > 0 | SMARTFIN+, parrainage |
+| `epargnant` | Épargne bloquée > 0 | Smart Tontine+, parrainage |
 | `dormant` | Aucune activité depuis 30 jours | Réactivation, nouveau challenge |
-| `vip` | Patrimoine SMARTFIN ≥ 500 000 F | Relation personnalisée, KYC niveau 2 |
+| `vip` | Patrimoine Smart Tontine ≥ 500 000 F | Relation personnalisée, KYC niveau 2 |
 
 ## 4.6 Cycle de vie client
 
@@ -66,8 +66,8 @@ Chaque étape est tracée dans `user_events` (`signup`, `deposit_completed`, `to
 | Canal | Outil | Délai cible |
 |---|---|---|
 | In-app | Tickets (`/me/support/tickets`), réponses depuis le back-office, notification au client | < 24 h |
-| WhatsApp | +225 07 48 55 32 68 (WhatsApp Business ; ticket créé par l'agent avec canal `whatsapp`) | < 2 h ouvrées |
-| E-mail | contact@smartfin.app | < 24 h |
+| WhatsApp | numéro WhatsApp Business burkinabè à ouvrir (le numéro de l'affiche, +225 07 48 55 32 68, est ivoirien) ; ticket créé par l'agent avec canal `whatsapp` | < 2 h ouvrées |
+| E-mail | contact@smarttontine.app | < 24 h |
 
 **Scripts prioritaires** (à préparer dans la base de connaissances) : dépôt non crédité, cotisation non prise en compte, contestation de l'ordre de passage, caution mobilisée, refus de crédit (expliquer le score), difficulté de remboursement, code PIN oublié, relèvement de plafond (KYC).
 
@@ -85,7 +85,7 @@ Plafonds paramétrés dans `pricing.ts`. L'API applique aujourd'hui le plafond d
 
 ## 4.9 Indicateurs CRM suivis
 
-Nombre de clients, nouveaux 7/30 jours, actifs 30 jours (MAU), encours, dépôts 30 jours, revenus 30 jours, abonnés SMARTFIN+, tickets ouverts, répartition par segment et par canal, produits actifs, courbes quotidiennes d'inscriptions et de dépôts.
+Nombre de clients, nouveaux 7/30 jours, actifs 30 jours (MAU), encours, dépôts 30 jours, revenus 30 jours, abonnés Smart Tontine+, tickets ouverts, répartition par segment et par canal, produits actifs, courbes quotidiennes d'inscriptions et de dépôts.
 
 ## 4.10 Évolutions prévues
 

@@ -30,20 +30,20 @@ async function deposit(userId: string, amount: number) {
   });
 }
 
-const admin = await user('+2250748553268', 'Admin SMARTFIN', 'admin');
-const clovis = await user('+2250700000001', 'Clovis Kouadio', 'customer', 'facebook');
-const awa = await user('+2250700000002', 'Awa Traoré', 'customer', 'parrainage');
-await user('+2250700000003', 'Moussa Diallo', 'customer', 'tiktok');
-await user('+2250700000004', 'Fatou Koné', 'customer', 'ambassadeur');
-const moussa = await one(pool, "SELECT id FROM users WHERE phone = '+2250700000003'");
-const fatou = await one(pool, "SELECT id FROM users WHERE phone = '+2250700000004'");
+const admin = await user('+22670000000', 'Admin Smart Tontine', 'admin');
+const clovis = await user('+22670000001', 'Aminata Ouédraogo', 'customer', 'facebook');
+const awa = await user('+22670000002', 'Issouf Sawadogo', 'customer', 'parrainage');
+await user('+22670000003', 'Salif Compaoré', 'customer', 'organisateur');
+await user('+22670000004', 'Awa Kaboré', 'customer', 'sfd_partenaire');
+const moussa = await one(pool, "SELECT id FROM users WHERE phone = '+22670000003'");
+const fatou = await one(pool, "SELECT id FROM users WHERE phone = '+22670000004'");
 const seeded = await one(pool, 'SELECT count(*)::int AS n FROM tontines');
 if (seeded.n === 0) {
   await deposit(clovis, 200_000);
   await deposit(awa, 75_000);
   await deposit(moussa.id, 60_000);
   await deposit(fatou.id, 60_000);
-  await pool.query("UPDATE users SET kyc_level = 1 WHERE phone IN ('+2250700000001', '+2250700000002')");
+  await pool.query("UPDATE users SET kyc_level = 1 WHERE phone IN ('+22670000001', '+22670000002')");
   await demoTontine();
 }
 await pool.query("INSERT INTO support_tickets (user_id, subject, body) VALUES ($1, 'Dépôt Wave non reçu', 'J''ai payé 5 000 F par Wave mais je ne vois rien.')", [awa]);
@@ -64,20 +64,20 @@ async function demoTontine() {
     await call('/auth/me/pin', { pin: '1234' }, token, 'PUT');
     return token as string;
   };
-  const phones = ['+2250700000001', '+2250700000002', '+2250700000003', '+2250700000004'];
+  const phones = ['+22670000001', '+22670000002', '+22670000003', '+22670000004'];
   const tokens = await Promise.all(phones.map(login));
-  const t = await call('/tontines', { name: 'Tontine des collègues', contributionAmount: 25_000, frequency: 'monthly', maxMembers: 4, orderMode: 'fixed',
-    description: 'Cotisation le 5 de chaque mois' }, tokens[0]);
+  const t = await call('/tontines', { name: 'Tontine du marché de Rood Woko', contributionAmount: 15_000, frequency: 'monthly', maxMembers: 4, orderMode: 'fixed',
+    description: 'Cotisation le 5 de chaque mois — Ouagadougou' }, tokens[0]);
   for (const tk of tokens.slice(1)) await call(`/tontines/${t.id}/join`, {}, tk);
   const ids = (await one(pool, 'SELECT array_agg(id ORDER BY phone) AS ids FROM users WHERE phone = ANY($1)', [phones])).ids;
   await call(`/tontines/${t.id}/start`, { order: ids }, tokens[0]);
   for (const tk of tokens) await call(`/tontines/${t.id}/rounds/1/contribute`, {}, tk);
   const offers = await call('/credit/offers', null, tokens[3], 'GET');
   const offer = offers.advances[0];
-  if (offer?.eligible) await call('/credit/advances', { roundId: offer.roundId, amount: 30_000, pin: '1234' }, tokens[3]);
+  if (offer?.eligible) await call('/credit/advances', { roundId: offer.roundId, amount: 20_000, pin: '1234' }, tokens[3]);
 
   // Coffre de groupe d'une association, cotisations mensuelles (une complète, une partielle, une absente).
-  const coffre = await call('/cagnottes', { name: 'Association des femmes du quartier', category: 'association', visibility: 'public',
+  const coffre = await call('/cagnottes', { name: 'Association des femmes de Tanghin', category: 'association', visibility: 'public',
     frequency: 'monthly', contributionAmount: 5_000 }, tokens[1]);
   for (const tk of [tokens[0], tokens[2]]) await call(`/cagnottes/${coffre.id}/join`, {}, tk);
   await call(`/cagnottes/${coffre.id}/contribute`, { amount: 5_000 }, tokens[1]);
@@ -85,5 +85,5 @@ async function demoTontine() {
   server.close();
 }
 
-console.log('Données de démo créées. Admin :', admin, '(+2250748553268 — connexion par OTP)');
+console.log('Données de démo créées. Admin :', admin, '(+22670000000 — connexion par OTP)');
 await pool.end();

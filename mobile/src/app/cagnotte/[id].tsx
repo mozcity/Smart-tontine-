@@ -24,7 +24,7 @@ export default function CagnotteDetail() {
   const { data, reload } = useApi<Detail>(`/cagnottes/${id}`);
   const table = useApi<Cotisations>(`/cagnottes/${id}/cotisations?periods=4`);
   const [amount, setAmount] = useState('');
-  const [invite, setInvite] = useState('+225');
+  const [invite, setInvite] = useState('+226');
   const [withdraw, setWithdraw] = useState({ amount: '', phone: '', reason: '' });
 
   const isAdmin = data?.members.find((m) => m.id === me?.id)?.role === 'admin';
@@ -90,7 +90,7 @@ export default function CagnotteDetail() {
         ))}
         {isAdmin && (
           <>
-            <Field label="Ajouter un membre (numéro SMARTFIN)" value={invite} onChangeText={setInvite} keyboardType="phone-pad" />
+            <Field label="Ajouter un membre (numéro Smart Tontine)" value={invite} onChangeText={setInvite} keyboardType="phone-pad" />
             <Row>
               <Button title="Ajouter membre" variant="ghost" onPress={() => run(`/cagnottes/${id}/members`, { phone: invite.replace(/\s/g, '') })} />
               <Button title="Ajouter admin" variant="ghost" onPress={() => run(`/cagnottes/${id}/members`, { phone: invite.replace(/\s/g, ''), role: 'admin' })} />

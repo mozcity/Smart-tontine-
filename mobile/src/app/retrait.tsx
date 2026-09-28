@@ -41,7 +41,7 @@ export default function Retrait() {
         <Field label={me?.has_pin ? 'Code PIN' : 'Choisis ton code PIN (4 chiffres)'} value={pin} onChangeText={setPin}
           keyboardType="number-pad" secureTextEntry maxLength={4} />
         <Button title="Retirer" onPress={submit} loading={loading} disabled={value < 100 || pin.length !== 4} />
-        <P muted>{me?.plan === 'plus' ? 'SMARTFIN+ : 3 retraits offerts chaque mois.' : 'Frais : 1,5 % (min. 100 F). Passe à SMARTFIN+ pour 3 retraits offerts / mois.'}</P>
+        <P muted>{me?.plan === 'plus' ? 'Smart Tontine+ : 3 retraits offerts chaque mois.' : 'Frais : 1 % (min. 100 F). Avec Smart Tontine+ (500 F/mois), 3 retraits offerts chaque mois.'}</P>
       </Card>
     </Screen>
   );

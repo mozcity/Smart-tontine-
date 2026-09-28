@@ -1,13 +1,17 @@
-// Grille tarifaire SMARTFIN — source unique utilisée par l'API, l'app et le modèle financier.
-// Principe : dépôts et épargne gratuits (acquisition). On monétise la tontine (commission sur
-// chaque pot versé), le crédit (part des intérêts), la sortie d'argent et l'abonnement SMARTFIN+.
+// Grille tarifaire Smart Tontine — source unique utilisée par l'API et l'app, alignée sur le
+// modèle économique retenu (modèle G, finance/SmartTontine_modeles_economiques.xlsx) :
+// dépôts, cotisations et épargne gratuits ; 1 % sur chaque pot ; 1 % sur les retraits vers
+// Mobile Money ; abonnements Organisateur Pro et Smart Tontine+ ; part des intérêts de crédit.
 
 export const pricing = {
-  withdrawal: { rate: 0.015, min: 100, max: 7500 },
+  withdrawal: { rate: 0.01, min: 100, max: 5000 },
   cagnotteWithdrawal: { rate: 0.01, min: 100, max: 10000 },
   ecaisseEarlyBreak: { rate: 0.02, min: 200 },
   p2pTransfer: { rate: 0, min: 0 },
-  plus: { monthlyPrice: 1000, freeWithdrawalsPerMonth: 3 },
+  plus: { monthlyPrice: 500, freeWithdrawalsPerMonth: 3 },
+  // Organisateur Pro : pour les trésoriers de tontines, associations, GIE. La version gratuite
+  // permet de gérer 2 tontines ou coffres de groupe à la fois ; Pro lève la limite et ajoute les exports.
+  pro: { monthlyPrice: 2000, freeOrganizerLimit: 2 },
   referral: { referrerBonus: 500, minFirstDeposit: 5000 },
   tontine: {
     commissionRate: 0.01,      // prélevé sur chaque pot versé au bénéficiaire du tour
@@ -16,7 +20,7 @@ export const pricing = {
   },
   credit: {
     usuryApr: 0.24,            // taux d'usure applicable aux SFD dans l'UEMOA (à confirmer avec le partenaire)
-    smartfinInterestShare: 0.4, // part des intérêts revenant à SMARTFIN, le reste au SFD partenaire
+    smartTontineInterestShare: 0.4, // part des intérêts revenant à Smart Tontine, le reste au SFD partenaire
     advance: { monthlyRate: 0.015, maxShareOfPot: 0.5, minAmount: 5_000 },
     microcredit: {
       monthlyRate: 0.015,      // intérêt sur capital restant dû (18 % / an)

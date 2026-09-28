@@ -1,4 +1,4 @@
--- SMARTFIN — schéma initial
+-- Smart Tontine — schéma initial
 -- Tous les montants sont en FCFA (XOF), stockés en entiers (BIGINT) : le FCFA n'a pas de décimales.
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;

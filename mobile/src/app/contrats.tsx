@@ -16,7 +16,7 @@ const STATUS: Record<string, string> = { draft: '✍️ À signer', active: '�
 export default function Contrats() {
   const { me } = useAuth();
   const list = useApi<Contrat[]>('/contrats');
-  const [form, setForm] = useState({ phone: '+225', title: '', amount: '', months: '2', role: 'creditor' as 'creditor' | 'debtor' });
+  const [form, setForm] = useState({ phone: '+226', title: '', amount: '', months: '2', role: 'creditor' as 'creditor' | 'debtor' });
   const [pin, setPin] = useState('');
 
   async function create() {

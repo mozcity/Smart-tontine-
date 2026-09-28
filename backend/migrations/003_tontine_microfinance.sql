@@ -1,4 +1,4 @@
--- SMARTFIN — tontine rotative en ligne + microfinance (avance sur tontine, microcrédit)
+-- Smart Tontine — tontine rotative en ligne + microfinance (avance sur tontine, microcrédit)
 
 ALTER TABLE accounts DROP CONSTRAINT accounts_kind_check;
 ALTER TABLE accounts ADD CONSTRAINT accounts_kind_check
@@ -64,7 +64,7 @@ CREATE TABLE tontine_contributions (
 );
 
 -- ───────────── Microfinance ─────────────
--- Les prêts sont financés par le SFD partenaire (compte SYS_CREDIT) ; SMARTFIN fait le scoring,
+-- Les prêts sont financés par le SFD partenaire (compte SYS_CREDIT) ; Smart Tontine fait le scoring,
 -- verse, recouvre et perçoit une part des intérêts.
 CREATE TABLE loans (
   id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -100,4 +100,4 @@ CREATE INDEX loan_installments_due_idx ON loan_installments (due_date) WHERE pai
 
 INSERT INTO news_tutos (title, summary) VALUES
   ('Rejoindre une tontine en ligne', 'Cotise chaque semaine ou chaque mois et reçois le pot à ton tour, sans risque de fuite de la caisse.'),
-  ('Comment fonctionne ton score SMARTFIN', 'Chaque cotisation payée à l''heure augmente ton score et débloque des crédits.');
+  ('Comment fonctionne ton score Smart Tontine', 'Chaque cotisation payée à l''heure augmente ton score et débloque des crédits.');

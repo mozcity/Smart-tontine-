@@ -8,6 +8,7 @@ import { currentUser } from '../lib/auth.js';
 import { pricing } from '../pricing.js';
 import { createAccount, post, systemAccount, walletOf } from '../services/ledger.js';
 import { notify, track } from '../services/notify.js';
+import { assertCanOrganize } from '../services/pro.js';
 import { settleAdvanceFromPayout } from './credit.js';
 
 // Tontine rotative en ligne : chaque tour, tous les membres cotisent ; le bénéficiaire du tour
@@ -15,6 +16,7 @@ import { settleAdvanceFromPayout } from './credit.js';
 export const router = Router();
 
 const today = () => new Date().toISOString().slice(0, 10);
+const frDate = (iso: string) => iso.split('-').reverse().join('/');
 const isoDate = (d: Date | string) => (d instanceof Date ? d.toISOString().slice(0, 10) : String(d));
 
 function dueDate(start: string, frequency: 'weekly' | 'monthly', index: number): string {
@@ -72,6 +74,7 @@ router.post('/', async (req, res) => {
     guaranteeAmount: z.number().int().min(0).optional(),
   }).parse(req.body);
   // Par défaut la caution vaut une cotisation : elle couvre un tour impayé.
+  await assertCanOrganize(pool, user.id);
   const guarantee = body.guaranteeAmount ?? body.contributionAmount;
   const t = await withTx(async (client) => {
     const accountId = await createAccount(client, null, 'tontine');
@@ -166,7 +169,7 @@ router.post('/:id/start', async (req, res) => {
       await client.query('UPDATE tontine_members SET position = $3 WHERE tontine_id = $1 AND user_id = $2', [t.id, userId, i + 1]);
       await client.query('INSERT INTO tontine_rounds (tontine_id, number, beneficiary_id, due_date) VALUES ($1, $2, $3, $4)',
         [t.id, i + 1, userId, dueDate(start, t.frequency, i)]);
-      await notify(client, userId, `Tontine « ${t.name} » démarrée`, `Ton tour : n° ${i + 1} le ${dueDate(start, t.frequency, i)}`);
+      await notify(client, userId, `Tontine « ${t.name} » démarrée`, `Ton tour : n° ${i + 1} le ${frDate(dueDate(start, t.frequency, i))}`);
     }
     await client.query("UPDATE tontines SET status = 'active', start_date = $2, max_members = $3 WHERE id = $1", [t.id, start, order.length]);
     return { status: 'active', order };
@@ -237,7 +240,7 @@ router.post('/:id/rounds/:number/close', async (req, res) => {
 /**
  * Verse le pot du tour au bénéficiaire quand tout le monde a cotisé (ou, si `force`,
  * après avoir mobilisé les cautions des membres défaillants). Sur le pot sont déduits :
- * la commission SMARTFIN, l'avance sur tontine éventuelle, et la reconstitution de la
+ * la commission Smart Tontine, l'avance sur tontine éventuelle, et la reconstitution de la
  * caution si le bénéficiaire est lui-même défaillant.
  */
 export async function payoutRound(client: pg.PoolClient, roundId: string, force: boolean) {
@@ -280,7 +283,7 @@ export async function payoutRound(client: pg.PoolClient, roundId: string, force:
     legs: [
       { accountId: t.account_id, amount: -(pot - replenish) },
       { accountId: wallet.id, amount: net },
-      { accountId: await systemAccount(client, 'SYS_FEES'), amount: commission + (advance?.smartfinInterest ?? 0) },
+      { accountId: await systemAccount(client, 'SYS_FEES'), amount: commission + (advance?.smartTontineInterest ?? 0) },
       { accountId: await systemAccount(client, 'SYS_CREDIT'), amount: advance?.principal ?? 0 },
       { accountId: await systemAccount(client, 'SYS_CREDIT_INCOME'), amount: advance?.partnerInterest ?? 0 },
     ],

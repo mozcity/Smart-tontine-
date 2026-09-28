@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Charte SMARTFIN (reprise de l'affiche) : indigo profond + vert « argent ».
+// Charte Smart Tontine (reprise de l'affiche) : indigo profond + vert « argent ».
 export const colors = {
   brand: '#2F2C8F',
   brandDark: '#211F6B',

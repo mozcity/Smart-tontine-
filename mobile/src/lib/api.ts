@@ -3,7 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
 export const API_URL: string = (Constants.expoConfig?.extra as { apiUrl?: string } | undefined)?.apiUrl ?? 'http://localhost:4000';
-const KEY = 'smartfin_token';
+const KEY = 'smarttontine_token';
 
 // Le jeton de session est stocké dans le trousseau sécurisé (Keychain / Keystore).
 export const tokenStore = {

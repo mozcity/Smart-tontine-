@@ -94,7 +94,7 @@ export default function Tontines() {
           <Field label="Nombre de membres" value={form.members} onChangeText={(members) => setForm({ ...form, members })} keyboardType="number-pad" />
           <Segmented options={[{ value: 'weekly', label: 'Hebdomadaire' }, { value: 'monthly', label: 'Mensuelle' }]} value={form.frequency} onChange={(frequency) => setForm({ ...form, frequency })} />
           <Segmented options={[{ value: 'random', label: 'Ordre tiré au sort' }, { value: 'fixed', label: 'Ordre fixé' }]} value={form.order} onChange={(order) => setForm({ ...form, order })} />
-          {parseAmount(form.amount) > 0 && <P>Pot à chaque tour : {fcfa(parseAmount(form.amount) * (Number(form.members) || 0))} (commission SMARTFIN 1 %)</P>}
+          {parseAmount(form.amount) > 0 && <P>Pot à chaque tour : {fcfa(parseAmount(form.amount) * (Number(form.members) || 0))} (commission Smart Tontine 1 %)</P>}
           <Button title="Créer la tontine" variant="green" onPress={create} disabled={form.name.length < 2 || parseAmount(form.amount) < 500 || Number(form.members) < 2} />
         </Card>
       )}

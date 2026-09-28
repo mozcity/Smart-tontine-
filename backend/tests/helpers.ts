@@ -22,7 +22,7 @@ export async function fund(user: Awaited<ReturnType<typeof signup>>, amount: num
   const dep = await user.auth(request(app).post('/wallet/deposits')).send({ amount, channel: 'wave' }).expect(201);
   const body = JSON.stringify({ reference: dep.body.reference, status: 'success' });
   await request(app).post('/webhooks/payments').set('content-type', 'application/json')
-    .set('x-smartfin-signature', hmac('test-webhook', body)).send(body).expect(200);
+    .set('x-smarttontine-signature', hmac('test-webhook', body)).send(body).expect(200);
   return dep.body.reference as string;
 }
 

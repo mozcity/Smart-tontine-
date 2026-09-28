@@ -2,11 +2,12 @@ import { Router } from 'express';
 import type pg from 'pg';
 import { z } from 'zod';
 import { many, one, pool, withTx } from '../db.js';
-import { badRequest, conflict, forbidden, notFound } from '../lib/errors.js';
+import { badRequest, conflict, forbidden, HttpError, notFound } from '../lib/errors.js';
 import { currentUser } from '../lib/auth.js';
 import { fee, pricing } from '../pricing.js';
 import { createAccount, post, systemAccount, walletOf } from '../services/ledger.js';
 import { notify, track } from '../services/notify.js';
+import { assertCanOrganize, isPro } from '../services/pro.js';
 
 // Cagnotte+ / coffre de groupe : caisse commune d'une association, d'un dahira, d'une famille,
 // d'un GIE… Cotisations suivies période par période (payé / partiel / impayé). Tout retrait exige
@@ -39,6 +40,7 @@ router.post('/', async (req, res) => {
     category: z.enum(['association', 'dahira', 'religieux', 'famille', 'gie', 'asc', 'projet', 'autre']).default('autre'),
     visibility: z.enum(['private', 'public']).default('private'),
   }).parse(req.body);
+  await assertCanOrganize(pool, user.id);
   const c = await withTx(async (client) => {
     const accountId = await createAccount(client, null, 'cagnotte');
     const row = await one(client,
@@ -108,6 +110,22 @@ router.get('/:id/cotisations', async (req, res) => {
   res.json({ expected, frequency: c.frequency, members: [...members.values()] });
 });
 
+/** Export CSV des cotisations (Organisateur Pro) : pour l'assemblée générale ou la comptabilité de l'association. */
+router.get('/:id/cotisations.csv', async (req, res) => {
+  const user = currentUser(req);
+  const id = req.params.id;
+  if ((await membership(pool, id, user.id)) !== 'admin') throw forbidden('Réservé aux administrateurs du coffre');
+  if (!(await isPro(pool, user.id))) throw new HttpError(402, 'pro_required', 'Export réservé aux abonnés Organisateur Pro');
+  const rows = await many(pool,
+    `SELECT to_char(t.created_at, 'YYYY-MM-DD') AS date, COALESCE(u.full_name, '') AS membre, u.phone AS telephone, t.amount AS montant
+     FROM transactions t JOIN users u ON u.id = t.initiator_id
+     WHERE t.type = 'cagnotte_contribution' AND t.status = 'completed' AND t.meta->>'cagnotteId' = $1::text
+     ORDER BY t.created_at`, [id]);
+  const esc = (v: unknown) => `"${String(v).replace(/"/g, '""')}"`;
+  const csv = ['date;membre;telephone;montant', ...rows.map((r) => [r.date, r.membre, r.telephone, r.montant].map(esc).join(';'))].join('\n');
+  res.type('text/csv; charset=utf-8').attachment(`cotisations-${id}.csv`).send('\uFEFF' + csv);
+});
+
 router.get('/:id', async (req, res) => {
   const id = req.params.id as string;
   await membership(pool, id, currentUser(req).id);
@@ -131,7 +149,7 @@ router.post('/:id/members', async (req, res) => {
   if ((await membership(pool, id, user.id)) !== 'admin') throw forbidden('Seul un administrateur peut ajouter des membres');
   const body = z.object({ phone: z.string(), role: z.enum(['admin', 'member']).default('member') }).parse(req.body);
   const invitee = await one(pool, 'SELECT id FROM users WHERE phone = $1', [body.phone]);
-  if (!invitee) throw notFound('Utilisateur SMARTFIN');
+  if (!invitee) throw notFound('Utilisateur Smart Tontine');
   await pool.query(
     `INSERT INTO cagnotte_members (cagnotte_id, user_id, role) VALUES ($1, $2, $3)
      ON CONFLICT (cagnotte_id, user_id) DO UPDATE SET role = EXCLUDED.role`, [id, invitee.id, body.role]);

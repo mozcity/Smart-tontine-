@@ -3,9 +3,9 @@ services:
   db:
     image: postgres:16
     environment:
-      POSTGRES_USER: smartfin
-      POSTGRES_PASSWORD: smartfin
-      POSTGRES_DB: smartfin
+      POSTGRES_USER: smarttontine
+      POSTGRES_PASSWORD: smarttontine
+      POSTGRES_DB: smarttontine
     ports: ["5432:5432"]
     volumes: [pgdata:/var/lib/postgresql/data]
   api:
@@ -13,7 +13,7 @@ services:
     depends_on: [db]
     environment:
       NODE_ENV: development
-      DATABASE_URL: postgres://smartfin:smartfin@db:5432/smartfin
+      DATABASE_URL: postgres://smarttontine:smarttontine@db:5432/smarttontine
       JWT_SECRET: change-me
       PAYMENT_WEBHOOK_SECRET: change-me-webhook
       PAYMENT_PROVIDER: mock

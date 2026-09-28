@@ -56,7 +56,7 @@ router.post('/deposits', async (req, res) => {
     [ref, body.amount, user.id, paymentProvider().name, { channel: body.channel, walletId: wallet.id }]);
   const result = await paymentProvider().collect({
     reference: ref, amount: body.amount, phone: body.phone ?? profile.phone, channel: body.channel as Channel,
-    description: 'Dépôt SMARTFIN',
+    description: 'Dépôt Smart Tontine',
   });
   await pool.query('UPDATE transactions SET provider_ref = $2 WHERE id = $1', [tx.id, result.providerRef ?? null]);
   await track(pool, user.id, 'deposit_initiated', { amount: body.amount, channel: body.channel });
@@ -184,13 +184,13 @@ export async function reverseWithdrawal(txId: string) {
   });
 }
 
-// ───── Transfert entre utilisateurs SMARTFIN (gratuit) ─────
+// ───── Transfert entre utilisateurs Smart Tontine (gratuit) ─────
 router.post('/transfers', async (req, res) => {
   const user = currentUser(req);
   const body = z.object({ toPhone: z.string(), amount, note: z.string().max(140).optional(), pin: z.string().optional() }).parse(req.body);
   await assertPin(user.id, body.pin);
   const recipient = await one(pool, "SELECT id, full_name FROM users WHERE phone = $1 AND status = 'active'", [body.toPhone]);
-  if (!recipient) throw notFound('Destinataire SMARTFIN');
+  if (!recipient) throw notFound('Destinataire Smart Tontine');
   if (recipient.id === user.id) throw badRequest('self_transfer', 'Impossible de t\'envoyer de l\'argent à toi-même');
 
   const tx = await withTx(async (client) => {

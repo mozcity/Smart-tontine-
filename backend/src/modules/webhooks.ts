@@ -9,12 +9,12 @@ export const router = Router();
 
 /**
  * Notification de l'agrégateur de paiement. Le corps brut est signé en HMAC-SHA256
- * (en-tête x-smartfin-signature). Pour CinetPay, placer ici l'appel de vérification
+ * (en-tête x-smarttontine-signature). Pour CinetPay, placer ici l'appel de vérification
  * /v2/payment/check avant de créditer : ne jamais faire confiance au seul webhook.
  */
 router.post('/payments', async (req, res) => {
   const raw = (req as any).rawBody as string | undefined;
-  const signature = String(req.headers['x-smartfin-signature'] ?? '');
+  const signature = String(req.headers['x-smarttontine-signature'] ?? '');
   if (!raw || !safeEqual(signature, hmac(config.paymentWebhookSecret, raw))) {
     throw new HttpError(401, 'bad_signature', 'Signature invalide');
   }

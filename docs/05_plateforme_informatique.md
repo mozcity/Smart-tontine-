@@ -4,7 +4,7 @@
 
 ```
  ┌──────────────────────┐     HTTPS/JSON      ┌─────────────────────────────────────┐
- │ App mobile (Expo/RN) │ ──────────────────► │ API SMARTFIN (Node.js / Express 5)  │
+ │ App mobile (Expo/RN) │ ──────────────────► │ API Smart Tontine (Node.js / Express 5)  │
  │ Android · iOS · Web  │                     │  auth · wallet · TONTINE · CRÉDIT   │
  └──────────────────────┘                     │  score · e-caisse · cagnotte        │
                                               │  budget · projets · challenges      │
@@ -33,7 +33,7 @@
 
 ## 5.2 Le cœur : un grand livre en partie double
 
-Chaque « poche » d'argent est un **compte** (`accounts`) : portefeuille, **tontine** (cotisations + cautions), e-caisse, cagnotte, projet, challenge, et cinq comptes système : `SYS_FLOAT` (fonds chez les opérateurs), `SYS_FEES` (revenus SMARTFIN), `SYS_REWARDS` (récompenses), **`SYS_CREDIT`** (ligne de crédit du SFD partenaire, négative à hauteur de l'encours prêté) et **`SYS_CREDIT_INCOME`** (intérêts revenant au SFD). Chaque mouvement est une **transaction** composée d'**écritures** dont la somme est **toujours nulle** (`services/ledger.ts`).
+Chaque « poche » d'argent est un **compte** (`accounts`) : portefeuille, **tontine** (cotisations + cautions), e-caisse, cagnotte, projet, challenge, et cinq comptes système : `SYS_FLOAT` (fonds chez les opérateurs), `SYS_FEES` (revenus Smart Tontine), `SYS_REWARDS` (récompenses), **`SYS_CREDIT`** (ligne de crédit du SFD partenaire, négative à hauteur de l'encours prêté) et **`SYS_CREDIT_INCOME`** (intérêts revenant au SFD). Chaque mouvement est une **transaction** composée d'**écritures** dont la somme est **toujours nulle** (`services/ledger.ts`).
 
 Garanties :
 - aucun franc créé ni perdu : `SUM(accounts.balance) = 0` en permanence, vérifiable dans *Finance → Contrôle du grand livre* ;
@@ -113,9 +113,9 @@ Déjà en place :
 cd backend
 cp .env.example .env              # variables par défaut : PostgreSQL local, paiements simulés
 npm install
-npm run seed                      # schéma + démo : tontine à 4 en cours, avance sur tontine (admin : +2250748553268)
+npm run seed                      # schéma + démo : tontine à 4 en cours, avance sur tontine (Burkina : admin +22670000000)
 npm run dev                       # http://localhost:4000 · back-office : http://localhost:4000/admin
-npm test                          # 28 tests de bout en bout (base smartfin_test)
+npm test                          # 28 tests de bout en bout (base smarttontine_test)
 
 # Application mobile
 cd ../mobile

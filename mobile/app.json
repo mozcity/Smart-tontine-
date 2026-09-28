@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "SMARTFIN",
-    "slug": "smartfin",
+    "name": "Smart Tontine",
+    "slug": "smart-tontine",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.smartfin.mobile"
+      "bundleIdentifier": "app.smarttontine.mobile"
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +18,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "app.smartfin.mobile"
+      "package": "app.smarttontine.mobile"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -28,7 +28,7 @@
       "expo-router",
       "expo-secure-store"
     ],
-    "scheme": "smartfin",
+    "scheme": "smarttontine",
     "experiments": {
       "typedRoutes": true
     },

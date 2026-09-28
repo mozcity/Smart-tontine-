@@ -30,19 +30,19 @@ describe('portefeuille', () => {
     expect(await balance(u)).toBe(10_000);
     const body = JSON.stringify({ reference: ref, status: 'success' });
     const again = await request(app).post('/webhooks/payments').set('content-type', 'application/json')
-      .set('x-smartfin-signature', hmac('test-webhook', body)).send(body).expect(200);
+      .set('x-smarttontine-signature', hmac('test-webhook', body)).send(body).expect(200);
     expect(again.body.alreadyProcessed).toBe(true);
     expect(await balance(u)).toBe(10_000);
-    await request(app).post('/webhooks/payments').set('x-smartfin-signature', 'faux').send({ reference: ref, status: 'success' }).expect(401);
+    await request(app).post('/webhooks/payments').set('x-smarttontine-signature', 'faux').send({ reference: ref, status: 'success' }).expect(401);
   });
 
-  it('prélève 1,5 % (min 100 F) sur les retraits et exige le PIN', async () => {
+  it('prélève 1 % (min 100 F) sur les retraits et exige le PIN', async () => {
     const u = await signup('Awa');
     await fund(u, 50_000);
     await u.auth(request(app).post('/wallet/withdrawals')).send({ amount: 20_000, channel: 'orange_money', pin: '9999' }).expect(400);
     const w = await u.auth(request(app).post('/wallet/withdrawals')).send({ amount: 20_000, channel: 'orange_money', pin: '1234' }).expect(201);
-    expect(w.body.fee).toBe(300);
-    expect(await balance(u)).toBe(29_700);
+    expect(w.body.fee).toBe(200);
+    expect(await balance(u)).toBe(29_800);
     const tooMuch = await u.auth(request(app).post('/wallet/withdrawals')).send({ amount: 29_700, channel: 'wave', pin: '1234' });
     expect(tooMuch.status).toBe(409);
   });
@@ -184,12 +184,12 @@ describe('budget, projets, challenges, contrats', () => {
   });
 });
 
-describe('SMARTFIN+ et CRM', () => {
-  it('abonne un client à SMARTFIN+ avec 3 retraits gratuits par mois', async () => {
+describe('Smart Tontine+ et CRM', () => {
+  it('abonne un client à Smart Tontine+ avec 3 retraits gratuits par mois', async () => {
     const u = await signup('Premium');
     await fund(u, 20_000);
     await u.auth(request(app).post('/me/plan/subscribe')).expect(200);
-    expect(await balance(u)).toBe(19_000);
+    expect(await balance(u)).toBe(19_500);
     const q = await u.auth(request(app).get('/wallet/withdrawals/quote?amount=10000')).expect(200);
     expect(q.body.fee).toBe(0);
   });

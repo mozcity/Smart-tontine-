@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     env: {
       NODE_ENV: 'test',
-      DATABASE_URL: process.env.TEST_DATABASE_URL ?? 'postgres://smartfin:smartfin@localhost:5432/smartfin_test',
+      DATABASE_URL: process.env.TEST_DATABASE_URL ?? 'postgres://smarttontine:smarttontine@localhost:5432/smarttontine_test',
       JWT_SECRET: 'test-secret',
       PAYMENT_WEBHOOK_SECRET: 'test-webhook',
     },

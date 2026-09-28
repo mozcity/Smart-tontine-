@@ -48,7 +48,7 @@ router.post('/', async (req, res) => {
   if (total !== body.principal) throw badRequest('schedule_mismatch', `La somme des échéances (${total}) doit égaler le montant (${body.principal})`);
 
   const other = await one(pool, "SELECT id FROM users WHERE phone = $1 AND status = 'active'", [body.counterpartyPhone]);
-  if (!other) throw notFound('Utilisateur SMARTFIN');
+  if (!other) throw notFound('Utilisateur Smart Tontine');
   if (other.id === user.id) throw badRequest('self_contract', 'Un contrat nécessite deux personnes différentes');
   const [creditor, debtor] = body.myRole === 'creditor' ? [user.id, other.id] : [other.id, user.id];
 

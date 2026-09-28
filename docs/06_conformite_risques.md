@@ -4,15 +4,24 @@
 
 ## 6.1 Trois activités, trois régimes
 
-| Activité SMARTFIN | Nature réglementaire | Qui la porte au lancement |
+| Activité Smart Tontine | Nature réglementaire | Qui la porte au lancement |
 |---|---|---|
 | Détenir l'argent des clients (jeton, cotisations, cautions) | Réception de fonds du public / monnaie électronique : réservée aux établissements agréés BCEAO | **Banque ou EME partenaire** : compte de cantonnement |
-| Tontine en ligne | Épargne collective rotative entre membres ; SMARTFIN fournit l'outil et prend une commission de service, sans promesse de rendement | SMARTFIN (prestataire technique), fonds chez le partenaire agréé |
+| Tontine en ligne | Épargne collective rotative entre membres ; Smart Tontine fournit l'outil et prend une commission de service, sans promesse de rendement | Smart Tontine (prestataire technique), fonds chez le partenaire agréé |
 | **Crédit** (avance sur tontine, microcrédit) | Opération de crédit : réservée aux banques et aux **systèmes financiers décentralisés (SFD)** agréés (loi uniforme portant réglementation des SFD dans l'UEMOA) | **SFD / IMF partenaire** : prêteur en titre, finance le portefeuille |
 
-**SMARTFIN = apporteur d'affaires et prestataire technique.** SMARTFIN note les clients, distribue, verse et recouvre pour le compte du SFD, en vertu d'une convention qui fixe : la part des intérêts (modèle : 40 %), la garantie de première perte (modèle : 50 % des pertes), la politique de crédit validée par le SFD, le reporting et l'accès au bureau de crédit.
+**Smart Tontine = apporteur d'affaires et prestataire technique.** Smart Tontine note les clients, distribue, verse et recouvre pour le compte du SFD, en vertu d'une convention qui fixe : la part des intérêts (modèle : 40 %), la garantie de première perte (modèle : 50 % des pertes), la politique de crédit validée par le SFD, le reporting et l'accès au bureau de crédit.
 
 **Évolution (année 3+)** : demander un **agrément SFD propre** pour capter 100 % des intérêts. Cela suppose des fonds propres, un portefeuille financé et le respect des normes prudentielles (solvabilité, liquidité, division des risques, PAR).
+
+## 6.1 bis Spécificités du Burkina Faso (pays de lancement)
+
+- **Nouvelle loi sur la microfinance** (adoptée le 13 février 2025 par l'Assemblée législative de transition, transposition de la loi uniforme UMOA) : sociétés coopératives ou sociétés anonymes avec conseil d'administration ; supervision du ministre chargé des Finances et de la Commission bancaire ; **les SFD peuvent offrir des services de paiement et émettre de la monnaie électronique**. C'est la base du modèle G : cotisations prélevées sur les comptes SFD.
+- **Secteur SFD en 2024** (Commission bancaire de l'UMOA) : 47 grandes institutions et 120 petites, 725 Mds F de bilan, 397 Mds F de dépôts, 337 Mds F de crédits, **résultat en baisse de 34,8 %** (3,0 Mds F). Le risque de crédit est réel : politique de crédit prudente et garantie de première perte plafonnée à négocier.
+- **Mobile Money** : émetteurs listés par la BCEAO pour le Burkina : Orange Money (EME), Moov Money (UBA × Moov Africa), Wave (UBA et Orabank × Wave) ; Sank Money accessible via des agrégateurs locaux.
+- **Promotion de la finance inclusive** : l'ANPFI suit le secteur (120 SFD reconnus fin 2024) ; appui potentiel pour les programmes d'inclusion financière des femmes.
+- **Fiscalité** : IS 27,5 % retenu dans le modèle (à confirmer avec un expert-comptable burkinabè).
+- **Contexte sécuritaire** : déploiement concentré sur Ouagadougou et Bobo-Dioulasso au début ; plan de continuité (hébergement hors du pays, équipes à distance).
 
 ## 6.2 Règles de crédit déjà codées dans la plateforme
 
@@ -32,8 +41,8 @@
 - **Aucun membre ni organisateur ne détient la caisse** : tout est cantonné chez le partenaire agréé.
 - **Caution** obligatoire, transparente, rendue en fin de cycle.
 - **Ordre de passage** fixé avant le démarrage (tirage au sort cryptographique ou ordre accepté par tous), non modifiable ensuite.
-- **Pénalités de retard reversées au bénéficiaire**, pas à SMARTFIN : la plateforme ne profite pas des retards.
-- Conditions générales spécifiques : que se passe-t-il en cas de décès d'un membre, de départ, de litige (médiation SMARTFIN) ; **micro-assurance décès** proposée en option.
+- **Pénalités de retard reversées au bénéficiaire**, pas à Smart Tontine : la plateforme ne profite pas des retards.
+- Conditions générales spécifiques : que se passe-t-il en cas de décès d'un membre, de départ, de litige (médiation Smart Tontine) ; **micro-assurance décès** proposée en option.
 - Taille et montants plafonnés selon le niveau KYC (LBC/FT).
 
 ## 6.4 Autres obligations
@@ -42,7 +51,7 @@
 |---|---|---|
 | **KYC** | Identification proportionnée au risque | Niveaux 0-1-2 ; niveau 1 exigé pour le microcrédit |
 | **LBC/FT** | Surveillance, déclaration de soupçon (CENTIF) | Historique complet ; *à ajouter* : alertes (fractionnement, tontines fictives, remboursements anticipés inhabituels) |
-| **Données personnelles** | Loi ivoirienne n° 2013-450 ; déclaration/autorisation **ARTCI** ; données de crédit particulièrement sensibles | Score explicable, accès limité au back-office, classement public par prénom uniquement |
+| **Données personnelles** | Loi burkinabè sur la protection des données à caractère personnel (2021, référence exacte à confirmer) ; déclaration/autorisation auprès de la **CIL** (Commission de l'informatique et des libertés) ; données de crédit particulièrement sensibles | Score explicable, accès limité au back-office, classement public par prénom uniquement |
 | **Protection du consommateur** | Tarifs affichés, réclamations, recouvrement loyal | Grille publique `GET /pricing`, tickets, charte de recouvrement (chapitre 4.4) |
 | **Fiscalité** | IS 25 %, TVA selon régime sur les commissions | Revenus isolés dans `SYS_FEES` |
 

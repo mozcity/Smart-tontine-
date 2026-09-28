@@ -6,8 +6,9 @@ import { currentUser } from '../lib/auth.js';
 import { pricing } from '../pricing.js';
 import { post, systemAccount, walletOf } from '../services/ledger.js';
 import { track } from '../services/notify.js';
+import { chargePro, isPro } from '../services/pro.js';
 
-// Notifications, contenus « News & Tuto », abonnement SMARTFIN+ et support client.
+// Notifications, contenus « News & Tuto », abonnement Smart Tontine+ et support client.
 export const router = Router();
 
 router.get('/notifications', async (req, res) => {
@@ -27,11 +28,28 @@ router.post('/plan/subscribe', async (req, res) => {
   const user = currentUser(req);
   await withTx(async (client) => {
     const u = await one(client, 'SELECT plan FROM users WHERE id = $1 FOR UPDATE', [user.id]);
-    if (u.plan === 'plus') throw conflict('already_plus', 'Tu es déjà abonné(e) à SMARTFIN+');
+    if (u.plan === 'plus') throw conflict('already_plus', 'Tu es déjà abonné(e) à Smart Tontine+');
     await chargePlus(client, user.id);
   });
   await track(pool, user.id, 'plus_subscribed', {});
   res.json({ plan: 'plus' });
+});
+
+router.post('/pro/subscribe', async (req, res) => {
+  const user = currentUser(req);
+  await withTx(async (client) => {
+    await client.query('SELECT id FROM users WHERE id = $1 FOR UPDATE', [user.id]);
+    if (await isPro(client, user.id)) throw conflict('already_pro', 'Tu es déjà Organisateur Pro');
+    await chargePro(client, user.id);
+  });
+  await track(pool, user.id, 'pro_subscribed', {});
+  res.json({ pro: true });
+});
+
+router.post('/pro/cancel', async (req, res) => {
+  // Reste actif jusqu'à la date de renouvellement, sans reconduction.
+  await pool.query('UPDATE users SET pro_auto_renew = false WHERE id = $1', [currentUser(req).id]);
+  res.json({ ok: true });
 });
 
 router.post('/plan/cancel', async (req, res) => {
@@ -43,7 +61,7 @@ router.post('/plan/cancel', async (req, res) => {
 export async function chargePlus(client: import('pg').PoolClient, userId: string) {
   const wallet = await walletOf(client, userId);
   await post(client, {
-    type: 'subscription', amount: pricing.plus.monthlyPrice, initiatorId: userId, description: 'Abonnement SMARTFIN+',
+    type: 'subscription', amount: pricing.plus.monthlyPrice, initiatorId: userId, description: 'Abonnement Smart Tontine+',
     legs: [
       { accountId: wallet.id, amount: -pricing.plus.monthlyPrice },
       { accountId: await systemAccount(client, 'SYS_FEES'), amount: pricing.plus.monthlyPrice },

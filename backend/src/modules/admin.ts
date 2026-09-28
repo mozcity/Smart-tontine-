@@ -20,6 +20,7 @@ router.get('/kpis', async (_req, res) => {
             count(*) FILTER (WHERE created_at > now() - interval '30 days')::int AS new_30d,
             count(*) FILTER (WHERE last_active_at > now() - interval '30 days')::int AS mau,
             count(*) FILTER (WHERE plan = 'plus')::int AS plus_subscribers,
+            count(*) FILTER (WHERE pro_renews_at > now())::int AS pro_subscribers,
             count(*) FILTER (WHERE kyc_level > 0)::int AS kyc_verified
      FROM users WHERE role = 'customer'`);
   const flows = await one(pool,

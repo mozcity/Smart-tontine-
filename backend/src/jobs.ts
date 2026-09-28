@@ -6,6 +6,7 @@ import { pricing } from './pricing.js';
 import { closeOverdueRounds } from './modules/tontine.js';
 import { collectDueInstallments } from './modules/credit.js';
 import { sendReminders } from './services/reminders.js';
+import { chargePro } from './services/pro.js';
 
 /** Tâches périodiques (toutes les heures). En production : un worker dédié ou un cron. */
 export async function runJobs() {
@@ -31,7 +32,7 @@ export async function runJobs() {
     });
   }
 
-  // Renouvellement SMARTFIN+ (ou retour au plan gratuit si solde insuffisant / résiliation).
+  // Renouvellement Smart Tontine+ (ou retour au plan gratuit si solde insuffisant / résiliation).
   for (const { id } of await many(pool, "SELECT id FROM users WHERE plan = 'plus' AND (plan_renews_at IS NULL OR plan_renews_at <= now())")) {
     await withTx(async (client) => {
       const u = await one(client, 'SELECT u.plan_renews_at, a.balance FROM users u JOIN accounts a ON a.owner_id = u.id AND a.kind = \'wallet\' WHERE u.id = $1 FOR UPDATE OF u', [id]);
@@ -40,8 +41,22 @@ export async function runJobs() {
         results.plansRenewed++;
       } else {
         await client.query("UPDATE users SET plan = 'free', plan_renews_at = NULL WHERE id = $1", [id]);
-        await notify(client, id, 'SMARTFIN+ expiré', 'Recharge ton portefeuille pour réactiver tes avantages');
+        await notify(client, id, 'Smart Tontine+ expiré', 'Recharge ton portefeuille pour réactiver tes avantages');
         results.plansExpired++;
+      }
+    });
+  }
+
+  // Renouvellement Organisateur Pro (ou fin de l'abonnement si résilié / solde insuffisant).
+  for (const { id } of await many(pool, 'SELECT id FROM users WHERE pro_renews_at IS NOT NULL AND pro_renews_at <= now()')) {
+    await withTx(async (client) => {
+      const u = await one(client, `SELECT u.pro_auto_renew, a.balance FROM users u JOIN accounts a ON a.owner_id = u.id AND a.kind = 'wallet'
+                                   WHERE u.id = $1 FOR UPDATE OF u`, [id]);
+      if (u.pro_auto_renew && u.balance >= pricing.pro.monthlyPrice) {
+        await chargePro(client, id);
+      } else {
+        await client.query('UPDATE users SET pro_renews_at = NULL, pro_auto_renew = false WHERE id = $1', [id]);
+        await notify(client, id, 'Organisateur Pro expiré', 'Tes groupes restent actifs ; la création de nouveaux groupes est limitée à 2.');
       }
     });
   }

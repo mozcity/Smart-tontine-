@@ -57,7 +57,7 @@ export default function Credit() {
       <Card>
         <Row style={{ justifyContent: 'space-between' }}>
           <View>
-            <P muted>Mon score SMARTFIN</P>
+            <P muted>Mon score Smart Tontine</P>
             <Text style={{ fontSize: 34, fontWeight: '900', color: b.color }}>{o?.score ?? '—'}<Text style={{ fontSize: 14, color: colors.muted }}> / 1000</Text></Text>
           </View>
           <Text style={{ fontWeight: '700', color: b.color }}>{b.label}</Text>

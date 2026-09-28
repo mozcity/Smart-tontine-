@@ -7,7 +7,7 @@ import { Button, Card, Field, P, Screen, notifyError, notifyOk } from '@/compone
 
 export default function Transfert() {
   const { me } = useAuth();
-  const [toPhone, setToPhone] = useState('+225');
+  const [toPhone, setToPhone] = useState('+226');
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
   const [pin, setPin] = useState('');
@@ -26,7 +26,7 @@ export default function Transfert() {
   return (
     <Screen>
       <Card>
-        <P>Envoie de l'argent gratuitement à un autre utilisateur SMARTFIN.</P>
+        <P>Envoie de l'argent gratuitement à un autre utilisateur Smart Tontine.</P>
         <Field label="Numéro du destinataire" value={toPhone} onChangeText={setToPhone} keyboardType="phone-pad" />
         <Field label="Montant (FCFA)" value={amount} onChangeText={setAmount} keyboardType="number-pad" />
         <Field label="Motif (facultatif)" value={note} onChangeText={setNote} />

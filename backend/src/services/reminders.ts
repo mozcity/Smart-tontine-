@@ -7,7 +7,7 @@ async function remind(key: string, userId: string, phone: string, title: string,
   const inserted = await pool.query('INSERT INTO reminders_sent (key, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [key, userId]);
   if (!inserted.rowCount) return false;
   await notify(pool, userId, title, body);
-  await sms.send(phone, `SMARTFIN : ${body}`);
+  await sms.send(phone, `Smart Tontine : ${body}`);
   return true;
 }
 

@@ -26,7 +26,7 @@ export default function Support() {
       <Card>
         <H2>Besoin d'aide ?</H2>
         <Button title="💬 WhatsApp +225 07 48 55 32 68" variant="green" onPress={() => Linking.openURL('https://wa.me/2250748553268')} />
-        <Button title="✉️ contact@smartfin.app" variant="ghost" onPress={() => Linking.openURL('mailto:contact@smartfin.app')} />
+        <Button title="✉️ contact@smarttontine.app" variant="ghost" onPress={() => Linking.openURL('mailto:contact@smarttontine.app')} />
       </Card>
       <Card>
         <H2>Écrire au support</H2>

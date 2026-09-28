@@ -1,69 +1,93 @@
-# 2. Modèle financier
+# 2. Modèle financier et validation de la rentabilité
 
-Le modèle complet est dans **`finance/SMARTFIN_modele_financier.xlsx`** (généré par `finance/build_model.py`). Les 406 cellules calculées sont des formules reliées à l'onglet *Hypothèses* : modifiez une cellule bleue, tout se recalcule.
+Classeur : **`finance/SmartTontine_modeles_economiques.xlsx`**, généré par `finance/build_business_models.py`. Il contient environ 1 200 formules, zéro valeur codée en dur. Modifiez une cellule bleue de l'onglet *Hypothèses* : le déploiement, les 7 comptes de résultat et le verdict se recalculent.
 
 | Onglet | Contenu |
 |---|---|
-| Synthèse | Indicateurs clés sur 5 ans, besoin de financement, année d'équilibre |
-| Hypothèses | ~55 hypothèses commentées (tontines, microfinance, flux, tarifs, coûts). Les plus sensibles sont en jaune |
-| Projections | Clients → tontines et crédits → volumes → revenus → coûts directs (dont coût du risque) → charges → résultat → trésorerie → économie unitaire |
-| Investissement | Budget de lancement (62 M F) |
-| Sensibilité | EBITDA 2029 selon le coût d'encaissement et les frais de retrait |
+| **Comparatif** | Les 7 modèles face aux critères de rentabilité, verdict strict et verdict investisseur |
+| **Hypothèses** | Pays et calendrier, courbe d'adoption, coûts, prix, matrice des 7 modèles (sources et statut en commentaire ; en jaune, ce qui reste à valider) |
+| **Déploiement** | Membres actifs et cotisations, pays par pays |
+| **Modèles** | Compte de résultat 2027-2031 de chaque modèle : revenus, coûts variables, coûts fixes, EBITDA, trésorerie |
+| **Sensibilité G** | EBITDA 2031 du modèle G selon l'adoption et le coût Mobile Money |
 
-## 2.1 Scénario central
+## 2.1 Hypothèses de marché
 
-| (M FCFA sauf clients) | 2027 | 2028 | 2029 | 2030 | 2031 |
+| Pays | Lancement | Adultes 15+ | Coefficient de marché | Cotisation mensuelle moyenne |
+|---|---|---:|---:|---:|
+| **Burkina Faso** | **2027** | 12,9 M | 1,0 | 12 500 F |
+| Côte d'Ivoire | 2029 | 18,0 M | 0,7 | 20 000 F |
+| Mali | 2030 | 12,0 M | 0,7 | 12 500 F |
+| Niger | 2031 | 12,5 M | 0,6 | 10 000 F |
+| Sénégal | 2031 | 10,5 M | 0,5 (concurrence) | 20 000 F |
+| Bénin / Togo | 2032 | 13,0 M | 0,7 | 15 000 F |
+
+Règle d'expansion, dite « profondeur avant largeur » : **Burkina seul pendant 2 ans**, puis un pays par an. Un calendrier plus rapide (6 pays en 5 ans) a été testé : chaque pays coûte environ 57 M F par an avant d'être rentable, ce qui ruine tous les modèles.
+
+Adoption (part des adultes devenus membres actifs, selon l'ancienneté du pays) : 0,06 % → 0,23 % → 0,55 % → 0,9 % → 1,3 %. Au Burkina, cela donne ≈ 168 000 membres actifs en 5 ans ; à titre de repère, Maman Tontine revendique plus de 30 000 utilisateurs au Sénégal.
+
+## 2.2 Modèle G : compte de résultat
+
+| M FCFA (sauf membres) | 2027 | 2028 | 2029 | 2030 | 2031 |
 |---|---:|---:|---:|---:|---:|
-| Inscrits fin d'année | 25 000 | 90 000 | 220 000 | 400 000 | 650 000 |
-| Clients actifs | 4 375 | 23 000 | 69 750 | 148 800 | 262 500 |
-| **Membres de tontine actifs** | 1 750 | 11 500 | 38 362 | 89 280 | 157 500 |
-| **Pots de tontine versés** | 525 | 3 726 | 13 811 | 34 284 | 66 150 |
-| **Crédits versés** (avances + microcrédits) | 14 | 202 | 1 081 | 3 482 | 7 770 |
-| **Chiffre d'affaires** | **18** | **128** | **484** | **1 198** | **2 394** |
-| Marge brute | (4) | 30 | 191 | 564 | 1 271 |
-| **EBITDA** | **(151)** | **(245)** | **(276)** | **(90)** | **407** |
-| Trésorerie cumulée (hors levée) | (213) | (458) | (734) | (824) | (519) |
+| Membres actifs grand public | 7 740 | 29 670 | 78 510 | 150 120 | 263 970 |
+| Membres SFD gérés (B2B) | 5 000 | 30 000 | 80 000 | 150 000 | 250 000 |
+| Pots de tontine versés | 1 161 | 4 450 | 12 457 | 25 126 | 45 981 |
+| **Chiffre d'affaires** | **32** | **131** | **356** | **692** | **1 217** |
+| Marge sur coûts variables | 10 | 55 | 170 | 369 | 678 |
+| Coûts fixes | 152 | 187 | 278 | 354 | 487 |
+| **EBITDA** | **(142)** | **(132)** | **(108)** | **15** | **191** |
+| Trésorerie cumulée | (187) | (319) | (427) | (416) | (277) |
 
-- **Équilibre d'EBITDA : 2031** (quasi atteint en 2030).
-- **Besoin de financement : ≈ 824 M FCFA** (creux fin 2030). **Levée recommandée ≈ 1,07 Md FCFA (≈ 1,6 M€)** avec 30 % de marge, en trois tours :
-  - *Pré-amorçage* (150-250 M F) : lancement Abidjan, 50 tontines pilotes, premiers crédits ;
-  - *Amorçage* (400-600 M F) : Côte d'Ivoire entière, montée en charge du crédit ;
-  - *Série A* : expansion UEMOA, éventuellement fonds propres pour un agrément SFD propre.
+- **EBITDA positif en 2030** (année 4), avec une marge de 15,7 % en 2031.
+- **Besoin de financement : 427 M F.** Levée recommandée avec 30 % de marge : **≈ 555 M F (≈ 0,85 M€)** :
+  - **pré-amorçage 2027 : 150 à 200 M F** (subventions et concours, love money, business angels). Il finance le pilote de Ouagadougou et la signature du premier SFD ;
+  - **amorçage 2028 : 350 à 400 M F** (fonds d'amorçage ouest-africains, investisseurs d'impact en inclusion financière). Il finance la montée en charge au Burkina et l'ouverture de la Côte d'Ivoire.
+- **Marge par membre et par an** (hors acquisition) : ≈ 1 600 F, pour un coût d'acquisition d'environ 1 000 F. Chaque membre rembourse son acquisition en moins d'un an.
 
-## 2.2 Le financement du crédit ne pèse pas sur SMARTFIN
+## 2.3 Pourquoi les autres modèles échouent (détail au chapitre 1.2)
 
-Les prêts sont financés par le **SFD partenaire** (ligne de crédit). SMARTFIN ne mobilise que sa garantie de première perte, soit 50 % des pertes, déjà comptée en coût du risque. Ordre de grandeur de l'encours moyen à refinancer par le SFD (estimation hors modèle) : **≈ 0,2 Md F en 2029** et **≈ 1,5 Md F en 2031**. C'est un argument de négociation : le partenaire gagne 60 % des intérêts sur un portefeuille déjà noté.
+| | A | B | C | D | E | F | **G** |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Chiffre d'affaires 2031 (M F) | 523 | 799 | 275 | 848 | 242 | 1 096 | **1 217** |
+| EBITDA 2031 (M F) | −582 | −306 | −439 | −315 | −143 | −101 | **+191** |
+| Besoin de financement (M F) | 1 737 | 1 168 | 1 403 | 1 231 | 770 | 874 | **427** |
+| Marge par membre (F/an) | 90 | 1 135 | 716 | 1 216 | 835 | 1 420 | **1 599** |
 
-## 2.3 Économie unitaire (par client actif et par an)
+## 2.4 Ce qui rend G rentable
 
-| FCFA | 2027 | 2029 | 2031 |
-|---|---:|---:|---:|
-| Revenu par actif | 4 192 | 6 940 | 9 120 |
-| Coûts directs par actif | 5 015 | 4 207 | 4 279 |
-| Marge brute par actif | (823) | 2 733 | 4 841 |
-| Coût d'acquisition par actif | 4 286 | 2 667 | 2 000 |
-| **LTV / CAC** | < 0 | **3,1x** | **7,3x** |
+| Scénario (EBITDA 2031) | M F |
+|---|---:|
+| G complet | **191** |
+| sans la réduction des frais Mobile Money | 26 |
+| avec le canal SFD à 50 % au lieu de 100 % | 102 |
+| sans siège resserré | 154 |
 
-La tontine améliore nettement l'économie unitaire : un membre de tontine cotise chaque mois, génère une commission à chaque pot et devient éligible au crédit.
+**Le levier décisif est le coût Mobile Money.** Sans prélèvement sur le compte SFD ni tarifs négociés, le modèle ne dégage que 26 M F en 2031 et n'atteint l'équilibre qu'en 2031.
 
-## 2.4 Leviers (effet sur l'EBITDA 2029)
+## 2.5 Tests de résistance du modèle G
 
-| Levier | Variation | Effet |
-|---|---|---:|
-| Coût d'encaissement opérateurs | 0,8 % → 0,5 % | **+63 M F** |
-| Part des actifs en tontine | +10 points | +25 M F |
-| Part des intérêts négociée avec le SFD | 40 % → 60 % | +8 M F |
-| Pertes sur microcrédit | 3 % → 6 % | −10 M F |
-| Conversion SMARTFIN+ | +1 point | +8 M F |
+| Scénario dégradé | EBITDA 2031 | 1er EBITDA positif | Besoin | Verdict investisseur |
+|---|---:|---|---:|---|
+| Central | 191 M | 2030 | 427 M | ✔ |
+| Adoption −25 % | 66 M | 2031 | 520 M | ✘ |
+| Frais Mobile Money réduits de 20 % seulement | 108 M | 2031 | 500 M | ✘ |
+| Cotisations moyennes −20 % | 94 M | 2031 | 504 M | ✘ |
+| Licence SFD à 50 F au lieu de 75 F | 116 M | 2031 | 491 M | ✘ |
+| Pertes sur crédit 6 % au lieu de 3 % | 163 M | 2030 | 434 M | ✘ (marge < 15 %) |
+| Coût d'acquisition 1 500 F | 134 M | 2031 | 487 M | ✘ |
+| Potentiel SFD −40 % | 120 M | 2031 | 480 M | ✘ |
+| Adoption −25 % **et** frais Mobile Money −20 % seulement | 4 M | 2031 | 586 M | ✘ |
+| *Hausse : commission 1,5 %* | *421 M* | *2030* | *337 M* | *✔* |
 
-## 2.5 Hypothèses à valider avant la levée
+**Lecture.** Dans chaque scénario dégradé, le modèle G reste **rentable en 2031** et le besoin de financement reste **sous 600 M F**. Le risque porte sur le calendrier (un an de retard), pas sur la viabilité. Seul le cumul de deux mauvaises nouvelles ramène l'entreprise à l'équilibre tout juste. D'où l'importance de sécuriser **le SFD partenaire et les tarifs opérateurs avant la levée d'amorçage**.
 
-| Hypothèse | Valeur modèle | Comment la valider |
+## 2.6 Hypothèses à valider en priorité (pilote de 6 mois à Ouagadougou)
+
+| Hypothèse | Valeur du modèle | Comment la valider |
 |---|---|---|
-| Part des actifs en tontine, cotisation moyenne | 40-60 % ; 25 000 à 35 000 F/mois | Pilote avec 50 tontines réelles |
-| Taux d'impayé de tontine | couvert par caution | Suivi « impayés couverts » dans le back-office |
-| Part des intérêts SMARTFIN / SFD, garantie de première perte | 40 % ; 50 % des pertes | Term sheet avec 3 SFD |
-| Pertes sur microcrédit | 4 % → 3 % | Premiers 200 prêts pilotes (PAR30, défauts) |
-| Coût d'encaissement | 1 % → 0,7 % | Devis agrégateurs et opérateurs |
-| Rémunération du float | 3 % | Offre écrite de la banque partenaire |
-| CAC | 1 500 → 1 000 F | Tests par canal ; les organisateurs de tontine doivent le faire baisser |
+| Licence SFD et prélèvement sur compte d'épargne | 75 F/membre/mois | Lettre d'intention puis convention avec 1 SFD (RCPB, Crédit Mutuel du Burkina Faso, Baobab… ; liste officielle des SFD agréés publiée par la Commission bancaire de l'UMOA) |
+| Frais Mobile Money | −40 % par rapport à 1 % + 0,5 % | Devis Orange Money, Moov Money, Wave, agrégateurs locaux |
+| Cotisation mensuelle moyenne | 12 500 F | 30 tontines pilotes (marchés, bureaux, groupements) |
+| Adoption et coût d'acquisition | 0,06 % des adultes la 1re année ; 1 000 F | Organisateurs Pro et parrainage : mesure du coût par canal |
+| Conversion Organisateur Pro | 15 % des groupes | Offre testée sur les 30 tontines pilotes |
+| Pertes sur crédit | 3 % | 100 premières avances sur tontine (risque faible), puis microcrédits |

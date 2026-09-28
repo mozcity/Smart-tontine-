@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SMARTFIN — Back-office</title>
+<title>Smart Tontine — Back-office</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -72,9 +72,9 @@
 </head>
 <body>
 <section id="login" class="card">
-  <h2>Back-office SMARTFIN</h2>
+  <h2>Back-office Smart Tontine</h2>
   <p class="muted">Connexion par code SMS (comptes support et admin).</p>
-  <input id="phone" placeholder="+2250748553268" autocomplete="tel">
+  <input id="phone" placeholder="+22670000000" autocomplete="tel">
   <button class="btn" id="sendCode">Recevoir le code</button>
   <div id="codeBox" class="hidden">
     <input id="code" placeholder="Code à 6 chiffres" inputmode="numeric">
@@ -153,7 +153,7 @@ const int = (n) => new Intl.NumberFormat('fr-FR').format(n ?? 0);
 const date = (d) => d ? new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const SEG = { nouveau: 'Nouveau', sans_depot: 'Sans dépôt', actif: 'Actif', epargnant: 'Épargnant', dormant: 'Dormant', vip: 'VIP' };
-const TYPES = { deposit: 'Dépôt', withdrawal: 'Retrait', transfer: 'Transfert', ecaisse_lock: 'E-caisse', ecaisse_break: 'E-caisse cassée', ecaisse_release: 'E-caisse débloquée', cagnotte_contribution: 'Cagnotte', cagnotte_withdrawal: 'Retrait cagnotte', subscription: 'SMARTFIN+', referral_bonus: 'Parrainage', projet_contribution: 'Projet', challenge_saving: 'Challenge', contrat_repayment: 'Échéance contrat', contrat_disbursement: 'Prêt versé', reversal: 'Annulation', tontine_contribution: 'Cotisation tontine', tontine_payout: 'Pot tontine', tontine_guarantee: 'Caution tontine', tontine_guarantee_return: 'Caution rendue', loan_disbursement: 'Crédit versé', loan_repayment: 'Remboursement crédit' };
+const TYPES = { deposit: 'Dépôt', withdrawal: 'Retrait', transfer: 'Transfert', ecaisse_lock: 'E-caisse', ecaisse_break: 'E-caisse cassée', ecaisse_release: 'E-caisse débloquée', cagnotte_contribution: 'Cagnotte', cagnotte_withdrawal: 'Retrait cagnotte', subscription: 'Smart Tontine+', referral_bonus: 'Parrainage', projet_contribution: 'Projet', challenge_saving: 'Challenge', contrat_repayment: 'Échéance contrat', contrat_disbursement: 'Prêt versé', reversal: 'Annulation', tontine_contribution: 'Cotisation tontine', tontine_payout: 'Pot tontine', tontine_guarantee: 'Caution tontine', tontine_guarantee_return: 'Caution rendue', loan_disbursement: 'Crédit versé', loan_repayment: 'Remboursement crédit' };
 const PRODUCT = { avance_tontine: 'Avance sur tontine', microcredit: 'Microcrédit' };
 const LOAN_STATUS = { active: 'En cours', repaid: 'Remboursé', defaulted: 'En défaut' };
 const pct = (x) => x == null ? '—' : Math.round(x * 1000) / 10 + ' %';
@@ -244,7 +244,8 @@ async function loadDashboard() {
       ${tile('Encours clients', fcfa(k.aum.total), fcfa(k.aum.locked_savings) + ' épargnés')}
       ${tile('Revenus 30 j', fcfa(k.revenue.last_30d), fcfa(k.revenue.total) + ' au total')}
       ${tile('Dépôts 30 j', fcfa(k.flows.deposits_30d), int(k.flows.deposits_count_30d) + ' dépôts')}
-      ${tile('SMARTFIN+', int(k.users.plus_subscribers), 'abonnés payants')}
+      ${tile('Smart Tontine+', int(k.users.plus_subscribers), 'abonnés payants')}
+      ${tile('Organisateurs Pro', int(k.users.pro_subscribers), '2 000 F / mois')}
       ${tile('Tickets ouverts', int(k.tickets.open), 'support')}
     </div>
     <h2>Dépôts par jour — 30 derniers jours</h2>
@@ -254,7 +255,7 @@ async function loadDashboard() {
     <div class="two" style="margin-top:16px">
       <div class="card"><h3>Entonnoir d'activation</h3>${hbars([
         { l: 'Inscrits', v: k.funnel.signups }, { l: '1er dépôt', v: k.funnel.deposited },
-        { l: 'Épargne active', v: k.funnel.saving }, { l: 'Abonnés SMARTFIN+', v: k.funnel.paying }], (r) => r.l, (r) => r.v)}</div>
+        { l: 'Épargne active', v: k.funnel.saving }, { l: 'Abonnés Smart Tontine+', v: k.funnel.paying }], (r) => r.l, (r) => r.v)}</div>
       <div class="card"><h3>Segments</h3>${hbars(k.segments, (r) => SEG[r.segment] || r.segment, (r) => r.n)}</div>
       <div class="card"><h3>Canaux d'acquisition (inscrits → ayant déposé)</h3>
         <table><tr><th>Canal</th><th class="num">Inscrits</th><th class="num">Convertis</th><th class="num">Taux</th></tr>
@@ -347,7 +348,7 @@ async function openCustomer(id) {
       </div>
     </div>
     <div class="two" style="margin-top:12px">
-      <div><h3>Score SMARTFIN : ${d.score.score} / 1000</h3>${d.score.factors.map((f) => `<div class="muted">${f.points > 0 ? '+' : ''}${f.points} · ${esc(f.label)}</div>`).join('')}</div>
+      <div><h3>Score Smart Tontine : ${d.score.score} / 1000</h3>${d.score.factors.map((f) => `<div class="muted">${f.points > 0 ? '+' : ''}${f.points} · ${esc(f.label)}</div>`).join('')}</div>
       <div><h3>Crédits</h3>${list(d.loans, (l) => `<div>${PRODUCT[l.product]} — ${fcfa(l.principal)} · reste ${fcfa(l.outstanding)} · <span class="pill">${LOAN_STATUS[l.status]}</span></div>`)}</div>
     </div>
     <h3 style="margin-top:20px">Dernières transactions</h3>

@@ -5,7 +5,7 @@ import { runJobs } from './jobs.js';
 
 await migrate();
 createApp().listen(config.port, () => {
-  console.log(`SMARTFIN API sur http://localhost:${config.port} — back-office : http://localhost:${config.port}/admin`);
+  console.log(`Smart Tontine API sur http://localhost:${config.port} — back-office : http://localhost:${config.port}/admin`);
 });
 
 const HOUR = 60 * 60 * 1000;

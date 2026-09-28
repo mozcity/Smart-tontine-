@@ -30,7 +30,7 @@ export function assertUnderUsury(monthlyRate: number) {
 export interface Score { score: number; factors: { label: string; points: number }[] }
 
 /**
- * Score SMARTFIN (0-1000) : il valorise la discipline observée dans l'app,
+ * Score Smart Tontine (0-1000) : il valorise la discipline observée dans l'app,
  * au premier rang desquelles les cotisations de tontine payées à l'heure.
  */
 export async function creditScore(db: Db, userId: string): Promise<Score> {

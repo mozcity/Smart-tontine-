@@ -8,7 +8,7 @@ import { Button, Field, colors, notifyError } from '@/components/ui';
 export default function Login() {
   const { signIn } = useAuth();
   const [step, setStep] = useState<'phone' | 'code'>('phone');
-  const [phone, setPhone] = useState('+225');
+  const [phone, setPhone] = useState('+226');
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
   const [referral, setReferral] = useState('');
@@ -37,7 +37,7 @@ export default function Login() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.brand }}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, justifyContent: 'center', padding: 24 }}>
-        <Text style={{ color: '#fff', fontSize: 34, fontWeight: '900', letterSpacing: 1 }}>SMARTFIN</Text>
+        <Text style={{ color: '#fff', fontSize: 34, fontWeight: '900', letterSpacing: 1 }}>Smart Tontine</Text>
         <View style={{ backgroundColor: colors.green, alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, marginTop: 12 }}>
           <Text style={{ color: '#fff', fontSize: 20, fontWeight: '800' }}>Gère ton argent</Text>
         </View>
@@ -61,7 +61,7 @@ export default function Login() {
           )}
         </View>
         <Text style={{ color: '#C9C8F0', fontSize: 12, marginTop: 16, textAlign: 'center' }}>
-          En continuant, tu acceptes les conditions d'utilisation et la politique de confidentialité SMARTFIN.
+          En continuant, tu acceptes les conditions d'utilisation et la politique de confidentialité Smart Tontine.
         </Text>
       </KeyboardAvoidingView>
     </SafeAreaView>
