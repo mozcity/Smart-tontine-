@@ -81,6 +81,8 @@ Levier testé puis écarté : garder l'argent dans l'application (« recirculati
 | **Licence SFD** | **75 F par membre géré et par mois** + 1 % de frais d'apport sur les crédits accordés via la plateforme | SFD |
 | Avance sur tontine / microcrédit | 1,5 %/mois (18 %/an, sous le taux d'usure) ; **40 % des intérêts** pour Smart Tontine, 60 % pour le SFD | emprunteur |
 | Micro-assurance (décès, santé) | commission de distribution de 20 % | assureur |
+| **Licence partenaire** (associations, commerçants, entreprises, tontiniers) | 75 F par membre actif et par mois, minimum 10 000 F/mois ; le partenaire peut prendre 0 à 3 % de frais de gestion sur ses pots | partenaire |
+| **Commission fournisseur** (tontines et plans d'achat de biens) | 3 % du prix, payée à la réception | commerçant partenaire |
 
 ## 1.5 D'où vient le chiffre d'affaires (modèle G, 2031 : 1 217 M F)
 

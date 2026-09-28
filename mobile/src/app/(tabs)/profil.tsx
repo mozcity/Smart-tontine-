@@ -55,6 +55,9 @@ export default function Profil() {
         </Card>
       ))}
 
+      <Button title="🏢 Espace partenaire (association, commerçant, entreprise…)" onPress={() => router.push('/partenaire')} />
+      <Button title="🛵 Mes biens : plans d'achat et commandes" variant="ghost" onPress={() => router.push('/biens')} />
+      <Button title="🚀 Challenges d'épargne" variant="ghost" onPress={() => router.push('/challenges')} />
       <Button title="Mes contrats de prêt entre proches" variant="ghost" onPress={() => router.push('/contrats')} />
       <Button title="Aide & support" variant="ghost" onPress={() => router.push('/support')} />
       <Button title="Se déconnecter" variant="danger" onPress={signOut} />

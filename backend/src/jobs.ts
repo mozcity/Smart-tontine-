@@ -7,11 +7,18 @@ import { closeOverdueRounds } from './modules/tontine.js';
 import { collectDueInstallments } from './modules/credit.js';
 import { sendReminders } from './services/reminders.js';
 import { chargePro } from './services/pro.js';
+import { autoConfirmOrders } from './modules/goods.js';
+import { invoicePartners } from './modules/partners.js';
 
 /** Tâches périodiques (toutes les heures). En production : un worker dédié ou un cron. */
 export async function runJobs() {
   const results = { ecaissesReleased: 0, plansRenewed: 0, plansExpired: 0, challengesExpired: 0, tontineRoundsClosed: 0,
-    credit: { autoDebited: 0, penalized: 0, defaulted: 0 }, reminders: 0 };
+    credit: { autoDebited: 0, penalized: 0, defaulted: 0 }, reminders: 0, ordersAutoConfirmed: 0, partnersInvoiced: 0 };
+
+  // Biens expédiés sans réclamation : le séquestre paie le fournisseur après le délai prévu.
+  results.ordersAutoConfirmed = await autoConfirmOrders();
+  // Licence partenaire du mois écoulé (une seule facture par mois et par partenaire).
+  results.partnersInvoiced = await invoicePartners();
 
   // Rappels J-1 et J0 (cotisations de tontine et échéances de crédit), envoyés une seule fois.
   results.reminders = await sendReminders();

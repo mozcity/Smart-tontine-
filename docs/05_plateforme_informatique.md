@@ -115,7 +115,7 @@ cp .env.example .env              # variables par défaut : PostgreSQL local, pa
 npm install
 npm run seed                      # schéma + démo : tontine à 4 en cours, avance sur tontine (Burkina : admin +22670000000)
 npm run dev                       # http://localhost:4000 · back-office : http://localhost:4000/admin
-npm test                          # 28 tests de bout en bout (base smarttontine_test)
+npm test                          # 35 tests de bout en bout (base smarttontine_test)
 
 # Application mobile
 cd ../mobile

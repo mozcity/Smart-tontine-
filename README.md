@@ -12,7 +12,7 @@ Références : **Maman Tontine** (expérience tontine au Sénégal) et **MaTonti
 |---|---|
 | [`docs/`](docs/) | Dossier stratégique : comparatif Sénégal + 7 chapitres |
 | [`finance/`](finance/) | `SmartTontine_modeles_economiques.xlsx` : 7 modèles économiques chiffrés et validés (Burkina puis UEMOA), tests de résistance, et son générateur |
-| [`backend/`](backend/) | API Node.js/TypeScript + PostgreSQL : moteur de tontine, scoring et crédit, coffres de groupe, rappels automatiques, Organisateur Pro, grand livre en partie double, back-office CRM web, 29 tests de bout en bout |
+| [`backend/`](backend/) | API Node.js/TypeScript + PostgreSQL : moteur de tontine, scoring et crédit, coffres de groupe, rappels automatiques, Organisateur Pro, tontines de biens, espaces partenaires, grand livre en partie double, back-office CRM web, 35 tests de bout en bout |
 | [`mobile/`](mobile/) | Application Expo / React Native (Android, iOS, web) reprenant l'interface de l'affiche |
 
 ## Dossier stratégique
@@ -25,6 +25,7 @@ Références : **Maman Tontine** (expérience tontine au Sénégal) et **MaTonti
 5. [Plateforme informatique et app](docs/05_plateforme_informatique.md) — architecture, grand livre, flux d'argent, API, sécurité, hébergement
 6. [Conformité et risques](docs/06_conformite_risques.md) — montage avec un établissement agréé BCEAO, obligations, registre des risques
 7. [Organisation et feuille de route](docs/07_feuille_de_route.md) — équipe, trimestres, facteurs clés de succès, 10 prochaines actions
+8. [Tontines de biens et espaces partenaires](docs/08_biens_et_partenaires.md) — biens en individuel / groupe privé / groupe public, séquestre, partenaires à leur logo, revenus
 
 ## Chiffres clés (modèle G retenu, modifiable dans l'Excel)
 
@@ -38,6 +39,9 @@ Références : **Maman Tontine** (expérience tontine au Sénégal) et **MaTonti
 | Fonction | App mobile | API | Back-office |
 |---|---|---|---|
 | **Tontine rotative** : création, invitation par code, caution, tirage au sort, cotisation, versement automatique du pot, pénalité de retard, clôture des tours échus par les cautions | ✅ | ✅ | ✅ |
+| **Tontines de biens matériels** : individuel (plan d'achat), groupe privé ou public ; catalogue des commerçants ; paiement au séquestre libéré à la réception | ✅ | ✅ | — |
+| **Espaces partenaires** à leur logo et leurs couleurs : plusieurs tontines et coffres, équipe, tableau de bord, frais de gestion, catalogue, licence mensuelle | ✅ | ✅ | ✅ validation |
+| **Découvrir** : tontines publiques d'argent et de biens | ✅ | ✅ | — |
 | **Score Smart Tontine** (0-1000, facteurs expliqués) | ✅ | ✅ | ✅ |
 | **Avance sur tontine** (≤ 50 % du futur pot, remboursée sur le pot) | ✅ | ✅ | ✅ |
 | **Microcrédit** (score ≥ 550, échéancier, prélèvement auto, pénalités, défaut, PAR30) | ✅ | ✅ | ✅ |

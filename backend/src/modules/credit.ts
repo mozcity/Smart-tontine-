@@ -33,7 +33,7 @@ async function advanceOffers(db: Db, userId: string) {
             EXISTS (SELECT 1 FROM loans l WHERE l.tontine_round_id = r.id AND l.status = 'active') AS has_advance
      FROM tontine_rounds r JOIN tontines t ON t.id = r.tontine_id
      JOIN tontine_members m ON m.tontine_id = t.id AND m.user_id = $1
-     WHERE r.beneficiary_id = $1 AND r.status = 'open' AND t.status = 'active' AND r.due_date > CURRENT_DATE`, [userId]);
+     WHERE r.beneficiary_id = $1 AND r.status = 'open' AND t.status = 'active' AND t.kind = 'argent' AND r.due_date > CURRENT_DATE`, [userId]);
   return rounds.map((r) => {
     const pot = r.contribution_amount * r.members;
     const maxAmount = Math.floor((pot * pricing.credit.advance.maxShareOfPot) / 1000) * 1000;

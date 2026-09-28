@@ -15,7 +15,7 @@ const SHORTCUTS: { label: string; glyph: string; href: Href; isNew?: boolean }[]
   { label: 'Transfert', glyph: '💸', href: '/transfert' },
   { label: 'Retrait', glyph: '🏧', href: '/retrait' },
   { label: 'Tontine', glyph: '🔄', href: '/tontines', isNew: true },
-  { label: 'Challenge', glyph: '🚀', href: '/challenges' },
+  { label: 'Biens', glyph: '🛵', href: '/biens' },
 ];
 
 const SECTIONS = [

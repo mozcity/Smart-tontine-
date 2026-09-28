@@ -173,6 +173,28 @@ router.get('/credit', async (_req, res) => {
   res.json({ portfolio, totals, onTimeRate: onTime.due ? onTime.on_time / onTime.due : null, income, tontines, loans, overdueRounds });
 });
 
+// ───── Partenaires (validation KYB, suivi) ─────
+router.get('/partners', async (_req, res) => {
+  res.json(await many(pool,
+    `SELECT p.id, p.name, p.type, p.city, p.phone, p.status, p.logo, p.primary_color, p.management_fee_rate, p.created_at,
+            a.balance, u.full_name AS owner, u.phone AS owner_phone,
+            (SELECT count(*)::int FROM tontines WHERE partner_id = p.id) AS tontines,
+            (SELECT count(*)::int FROM cagnottes WHERE partner_id = p.id) AS coffres,
+            (SELECT count(*)::int FROM goods WHERE partner_id = p.id AND active) AS goods,
+            (SELECT count(*)::int FROM partner_invoices WHERE partner_id = p.id AND status = 'due') AS due_invoices
+     FROM partners p JOIN accounts a ON a.id = p.account_id JOIN users u ON u.id = p.created_by
+     ORDER BY p.status = 'pending' DESC, p.created_at DESC`));
+});
+
+router.patch('/partners/:id', requireRole('admin'), async (req, res) => {
+  const { status } = z.object({ status: z.enum(['active', 'suspended']) }).parse(req.body);
+  const r = await pool.query('UPDATE partners SET status = $2 WHERE id = $1 RETURNING created_by, name', [req.params.id, status]);
+  if (!r.rowCount) throw notFound('Partenaire');
+  await notify(pool, r.rows[0].created_by, status === 'active' ? 'Espace partenaire validé ✅' : 'Espace partenaire suspendu',
+    status === 'active' ? `« ${r.rows[0].name} » peut organiser ses tontines et vendre ses biens.` : 'Contacte le support Smart Tontine.');
+  res.json({ ok: true });
+});
+
 // ───── Support ─────
 router.get('/tickets', async (req, res) => {
   const { status } = z.object({ status: z.enum(['open', 'pending', 'closed']).optional() }).parse(req.query);

@@ -12,6 +12,13 @@ export const pricing = {
   // Organisateur Pro : pour les trésoriers de tontines, associations, GIE. La version gratuite
   // permet de gérer 2 tontines ou coffres de groupe à la fois ; Pro lève la limite et ajoute les exports.
   pro: { monthlyPrice: 2000, freeOrganizerLimit: 2 },
+  // Espace partenaire (association, commerçant, entreprise, tontinier, SFD) : licence par membre
+  // actif dans ses groupes, avec un forfait minimum. Le partenaire peut prendre ses propres frais
+  // de gestion sur chaque pot (plafonnés), versés sur son compte partenaire.
+  partner: { perMemberMonthly: 75, minimumMonthly: 10_000, maxManagementFeeRate: 0.03 },
+  // Tontines et plans d'achat de biens : le fournisseur partenaire paie une commission sur chaque
+  // vente ; l'argent reste au séquestre jusqu'à la confirmation de réception.
+  goods: { supplierCommissionRate: 0.03, autoConfirmDays: 7 },
   referral: { referrerBonus: 500, minFirstDeposit: 5000 },
   tontine: {
     commissionRate: 0.01,      // prélevé sur chaque pot versé au bénéficiaire du tour

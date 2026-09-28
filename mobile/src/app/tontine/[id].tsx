@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Text, View } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
+import { PartnerBrand, brandColor, type Brand } from '@/components/PartnerBrand';
 import { api } from '@/lib/api';
 import { useApi } from '@/lib/useApi';
 import { useAuth } from '@/lib/auth';
@@ -11,7 +12,10 @@ import { InviteCard } from '@/components/InviteCard';
 interface Detail {
   id: string; name: string; description: string | null; status: string; organizer_id: string; contribution_amount: number;
   frequency: 'weekly' | 'monthly'; max_members: number; guarantee_amount: number; balance: number; pot: number;
-  me: { position: number | null; status: string; guarantee_status: string };
+  me: { position: number | null; status: string; guarantee_status: string } | null;
+  manager: boolean; partner: Brand | null; kind: 'argent' | 'bien'; visibility: 'private' | 'public';
+  good_label: string | null; good_price: number | null; good_id: string | null;
+  orders: { id: string; status: string; amount: number; beneficiary_id: string }[];
   members: { id: string; full_name: string | null; phone: string; position: number | null; status: string }[];
   rounds: { id: string; number: number; beneficiary_id: string; due_date: string; status: string; payout_amount: number | null;
     contributions: { userId: string; source: string; late: boolean }[] | null }[];
@@ -32,19 +36,22 @@ export default function TontineDetail() {
 
   if (!data) return <Screen><P>Chargement…</P></Screen>;
   const name = (uid: string) => data.members.find((m) => m.id === uid)?.full_name ?? '—';
-  const isOrganizer = data.organizer_id === me?.id;
+  const isOrganizer = data.manager;
+  const ORDER: Record<string, string> = { pending: '📦 Commandé, en préparation', shipped: '🚚 Expédié / prêt', delivered: '✅ Reçu', cancelled: 'Annulé (remboursé)' };
   const current = data.rounds.find((r) => r.status === 'open');
   const iPaid = (r: Detail['rounds'][number]) => r.contributions?.some((c) => c.userId === me?.id);
 
   return (
     <Screen onRefresh={reload}>
-      <H1>🔄 {data.name}</H1>
-      <Card style={{ backgroundColor: colors.brand }}>
-        <Text style={{ color: '#C9C8F0' }}>Pot à chaque tour</Text>
-        <Text style={{ color: '#fff', fontSize: 26, fontWeight: '800' }}>{fcfa(data.pot)}</Text>
+      <PartnerBrand brand={data.partner} />
+      <H1>{data.kind === 'bien' ? '🛵' : '🔄'} {data.name}</H1>
+      <Card style={{ backgroundColor: brandColor(data.partner) }}>
+        <Text style={{ color: '#ffffffcc' }}>{data.kind === 'bien' ? 'Bien reçu à chaque tour' : 'Pot à chaque tour'}</Text>
+        <Text style={{ color: '#fff', fontSize: 26, fontWeight: '800' }}>{data.kind === 'bien' ? data.good_label : fcfa(data.pot)}</Text>
+        {data.kind === 'bien' && <Text style={{ color: '#ffffffcc' }}>Valeur {fcfa(data.good_price)} · {data.good_id ? 'fournisseur partenaire, paiement au séquestre' : 'pot versé au bénéficiaire pour l\'achat'}</Text>}
         <Text style={{ color: '#C9C8F0', fontSize: 12 }}>
           {fcfa(data.contribution_amount)} par {data.frequency === 'weekly' ? 'semaine' : 'mois'} · caution {fcfa(data.guarantee_amount)}
-          {data.me.position ? ` · ton tour : n° ${data.me.position}` : ''}
+          {data.me?.position ? ` · ton tour : n° ${data.me.position}` : ''} · {data.visibility === 'public' ? 'publique' : 'privée'}
         </Text>
       </Card>
 
@@ -65,7 +72,7 @@ export default function TontineDetail() {
         <Card>
           <H2>Tour {current.number} — pour {current.beneficiary_id === me?.id ? 'toi 🎉' : name(current.beneficiary_id)}</H2>
           <P>Échéance le {shortDate(current.due_date)} · {current.contributions?.length ?? 0}/{data.members.length} cotisations reçues</P>
-          {iPaid(current)
+          {!data.me ? <P muted>Tu gères cette tontine sans y cotiser.</P> : iPaid(current)
             ? <Text style={{ color: colors.green, fontWeight: '700' }}>✔ Ta cotisation est payée</Text>
             : <Button title={`Cotiser ${fcfa(data.contribution_amount)}${today() > current.due_date ? ' (+5 % de retard)' : ''}`} variant="green" loading={busy}
                 onPress={() => run(`/tontines/${id}/rounds/${current.number}/contribute`, (r) => r.status === 'paid_out' ? 'Tour complet : le pot a été versé !' : 'Cotisation enregistrée ✅')} />}
@@ -73,6 +80,22 @@ export default function TontineDetail() {
             <Button title="Clôturer le tour (cautions des retardataires)" variant="ghost" onPress={() => run(`/tontines/${id}/rounds/${current.number}/close`)} />
           )}
         </Card>
+      )}
+
+      {data.orders.length > 0 && (
+        <>
+          <H2>Livraisons des biens</H2>
+          <Card>
+            {data.orders.map((o) => (
+              <Row key={o.id} style={{ justifyContent: 'space-between' }}>
+                <Text style={{ color: colors.ink }}>{o.beneficiary_id === me?.id ? 'Toi' : name(o.beneficiary_id)}</Text>
+                <Text style={{ color: colors.ink2 }}>{ORDER[o.status]}</Text>
+              </Row>
+            ))}
+            {data.orders.some((o) => o.beneficiary_id === me?.id && o.status !== 'delivered' && o.status !== 'cancelled') &&
+              <Button title="Confirmer la réception dans « Mes biens »" variant="ghost" onPress={() => router.push('/biens')} />}
+          </Card>
+        </>
       )}
 
       <H2>Calendrier</H2>

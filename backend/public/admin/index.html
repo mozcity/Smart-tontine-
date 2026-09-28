@@ -89,6 +89,7 @@
     <nav id="tabs">
       <button data-tab="dashboard" class="on">Tableau de bord</button>
       <button data-tab="microfinance">Tontines &amp; crédit</button>
+      <button data-tab="partners">Partenaires</button>
       <button data-tab="customers">Clients</button>
       <button data-tab="tickets">Support</button>
       <button data-tab="campaigns">Campagnes</button>
@@ -141,6 +142,7 @@
     </section>
     <section data-view="finance" class="hidden"></section>
     <section data-view="microfinance" class="hidden"></section>
+    <section data-view="partners" class="hidden"></section>
   </main>
 </div>
 
@@ -191,7 +193,7 @@ function logout() { token = null; try { localStorage.removeItem('sf_admin_token'
 $('#logout button').onclick = logout;
 
 // ───── Navigation ─────
-const loaders = { dashboard: loadDashboard, microfinance: loadMicrofinance, customers: loadCustomers, tickets: loadTickets, campaigns: loadCampaigns, finance: loadFinance };
+const loaders = { dashboard: loadDashboard, microfinance: loadMicrofinance, partners: loadPartners, customers: loadCustomers, tickets: loadTickets, campaigns: loadCampaigns, finance: loadFinance };
 $('#tabs').onclick = (e) => {
   const tab = e.target.dataset?.tab; if (!tab) return;
   document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
@@ -302,6 +304,27 @@ async function loadMicrofinance() {
         <td class="num">${fcfa(l.principal)}</td><td class="num">${fcfa(l.outstanding)}</td><td>${l.next_due ? date(l.next_due) : '—'}</td>
         <td class="num">${l.score_at_grant}</td><td><span class="pill">${LOAN_STATUS[l.status]}</span></td></tr>`).join('') || '<tr><td colspan="8" class="muted">Aucun crédit.</td></tr>'}
     </table></div>`;
+}
+
+// ───── Partenaires (validation KYB) ─────
+const PTYPE = { association: 'Association / GIE', commercant: 'Commerçant', entreprise: 'Entreprise', tontinier: 'Tontinier pro', sfd: 'SFD', autre: 'Autre' };
+const PSTATUS = { pending: '⏳ À valider', active: '✅ Actif', suspended: '⛔ Suspendu' };
+async function loadPartners() {
+  const rows = await api('/admin/api/partners');
+  $('[data-view=partners]').innerHTML = `<div class="card scroll"><h3>Espaces partenaires (${rows.length})</h3>
+    <p class="muted">Vérifier l'identité du responsable et l'existence de la structure (récépissé d'association, RCCM, agrément SFD) avant de valider.</p>
+    <table><tr><th>Partenaire</th><th>Type</th><th>Responsable</th><th class="num">Tontines</th><th class="num">Coffres</th><th class="num">Biens</th><th class="num">Compte</th><th>Statut</th><th></th></tr>
+    ${rows.map((p) => `<tr><td><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:${esc(p.primary_color)}"></span>
+        ${p.logo ? `<img src="${esc(p.logo)}" alt="" style="width:24px;height:24px;border-radius:4px;vertical-align:middle">` : ''} <b>${esc(p.name)}</b><br><span class="muted">${esc(p.city || '')}</span></td>
+      <td>${PTYPE[p.type] || p.type}</td><td>${esc(p.owner || '')}<br><span class="muted">${esc(p.owner_phone)}</span></td>
+      <td class="num">${p.tontines}</td><td class="num">${p.coffres}</td><td class="num">${p.goods}</td><td class="num">${fcfa(p.balance)}${p.due_invoices ? `<br><span class="ko">${p.due_invoices} facture(s) due(s)</span>` : ''}</td>
+      <td>${PSTATUS[p.status]}</td>
+      <td>${p.status !== 'active' ? `<button class="btn" data-pact="${p.id}" data-status="active">Valider</button>` : `<button class="btn secondary" data-pact="${p.id}" data-status="suspended">Suspendre</button>`}</td></tr>`).join('') || '<tr><td colspan="9" class="muted">Aucun partenaire.</td></tr>'}
+    </table></div>`;
+  document.querySelectorAll('[data-pact]').forEach((b) => b.onclick = async () => {
+    await api('/admin/api/partners/' + b.dataset.pact, { method: 'PATCH', body: JSON.stringify({ status: b.dataset.status }) });
+    loadPartners();
+  });
 }
 
 // ───── Clients ─────

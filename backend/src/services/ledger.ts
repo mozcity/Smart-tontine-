@@ -67,7 +67,7 @@ export async function applyLegs(client: pg.PoolClient, txId: string, legs: Leg[]
 }
 
 const systemCache = new Map<string, string>();
-export async function systemAccount(db: Db, code: 'SYS_FLOAT' | 'SYS_FEES' | 'SYS_REWARDS' | 'SYS_CREDIT' | 'SYS_CREDIT_INCOME'): Promise<string> {
+export async function systemAccount(db: Db, code: 'SYS_FLOAT' | 'SYS_FEES' | 'SYS_REWARDS' | 'SYS_CREDIT' | 'SYS_CREDIT_INCOME' | 'SYS_ESCROW'): Promise<string> {
   const cached = systemCache.get(code);
   if (cached) return cached;
   const row = await one(db, 'SELECT id FROM accounts WHERE code = $1', [code]);

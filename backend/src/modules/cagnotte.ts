@@ -8,6 +8,7 @@ import { fee, pricing } from '../pricing.js';
 import { createAccount, post, systemAccount, walletOf } from '../services/ledger.js';
 import { notify, track } from '../services/notify.js';
 import { assertCanOrganize, isPro } from '../services/pro.js';
+import { assertActivePartner, BRANDING_SQL } from '../services/partners.js';
 
 // Cagnotte+ / coffre de groupe : caisse commune d'une association, d'un dahira, d'une famille,
 // d'un GIE… Cotisations suivies période par période (payé / partiel / impayé). Tout retrait exige
@@ -23,6 +24,7 @@ async function membership(db: pg.PoolClient | pg.Pool, cagnotteId: string, userI
 router.get('/', async (req, res) => {
   res.json(await many(pool,
     `SELECT c.id, c.name, c.category, c.visibility, c.contribution_amount, c.frequency, c.target_amount, c.status, a.balance, m.role,
+            (SELECT ${BRANDING_SQL} FROM partners p WHERE p.id = c.partner_id) AS partner,
             (SELECT count(*)::int FROM cagnotte_members WHERE cagnotte_id = c.id) AS members
      FROM cagnottes c JOIN cagnotte_members m ON m.cagnotte_id = c.id AND m.user_id = $1
      JOIN accounts a ON a.id = c.account_id ORDER BY c.created_at DESC`, [currentUser(req).id]));
@@ -39,15 +41,18 @@ router.post('/', async (req, res) => {
     requiredApprovals: z.number().int().min(1).max(5).default(2),
     category: z.enum(['association', 'dahira', 'religieux', 'famille', 'gie', 'asc', 'projet', 'autre']).default('autre'),
     visibility: z.enum(['private', 'public']).default('private'),
+    partnerId: z.uuid().optional(),
   }).parse(req.body);
-  await assertCanOrganize(pool, user.id);
+  // Coffre d'un partenaire (association, entreprise…) : couvert par sa licence, pas de limite Pro.
+  if (body.partnerId) await assertActivePartner(pool, body.partnerId, user.id);
+  else await assertCanOrganize(pool, user.id);
   const c = await withTx(async (client) => {
     const accountId = await createAccount(client, null, 'cagnotte');
     const row = await one(client,
-      `INSERT INTO cagnottes (account_id, name, description, target_amount, contribution_amount, frequency, required_approvals, created_by, category, visibility)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+      `INSERT INTO cagnottes (account_id, name, description, target_amount, contribution_amount, frequency, required_approvals, created_by, category, visibility, partner_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
       [accountId, body.name, body.description ?? null, body.targetAmount ?? null, body.contributionAmount ?? null,
-        body.frequency, body.requiredApprovals, user.id, body.category, body.visibility]);
+        body.frequency, body.requiredApprovals, user.id, body.category, body.visibility, body.partnerId ?? null]);
     await client.query("INSERT INTO cagnotte_members (cagnotte_id, user_id, role) VALUES ($1, $2, 'admin')", [row.id, user.id]);
     return row;
   });
@@ -59,6 +64,7 @@ router.post('/', async (req, res) => {
 router.get('/:id/preview', async (req, res) => {
   const c = await one(pool,
     `SELECT c.id, c.name, c.description, c.category, c.visibility, c.contribution_amount, c.frequency, c.status, u.full_name AS organizer,
+            (SELECT ${BRANDING_SQL} FROM partners p WHERE p.id = c.partner_id) AS partner,
             (SELECT count(*)::int FROM cagnotte_members WHERE cagnotte_id = c.id) AS members
      FROM cagnottes c JOIN users u ON u.id = c.created_by WHERE c.id = $1`, [req.params.id]);
   if (!c) throw notFound('Coffre');
@@ -130,7 +136,8 @@ router.get('/:id', async (req, res) => {
   const id = req.params.id as string;
   await membership(pool, id, currentUser(req).id);
   const cagnotte = await one(pool,
-    'SELECT c.*, a.balance FROM cagnottes c JOIN accounts a ON a.id = c.account_id WHERE c.id = $1', [id]);
+    `SELECT c.*, a.balance, (SELECT ${BRANDING_SQL} FROM partners p WHERE p.id = c.partner_id) AS partner
+     FROM cagnottes c JOIN accounts a ON a.id = c.account_id WHERE c.id = $1`, [id]);
   const members = await many(pool,
     `SELECT u.id, u.full_name, u.phone, m.role,
             COALESCE((SELECT sum(t.amount) FROM transactions t WHERE t.type = 'cagnotte_contribution'

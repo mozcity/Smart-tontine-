@@ -26,7 +26,13 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Smart Tontine utilise tes photos pour le logo de ton espace partenaire et les images de tes biens."
+        }
+      ]
     ],
     "scheme": "smarttontine",
     "experiments": {

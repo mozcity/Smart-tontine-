@@ -82,6 +82,19 @@ async function demoTontine() {
   for (const tk of [tokens[0], tokens[2]]) await call(`/cagnottes/${coffre.id}/join`, {}, tk);
   await call(`/cagnottes/${coffre.id}/contribute`, { amount: 5_000 }, tokens[1]);
   await call(`/cagnottes/${coffre.id}/contribute`, { amount: 2_500 }, tokens[0]);
+
+  // Partenaire commerçant validé, avec son catalogue et une tontine de moto publique.
+  const vendeur = await call('/partners', { name: 'Ets Sawadogo Motos', type: 'commercant', city: 'Ouagadougou', primaryColor: '#C0392B',
+    description: 'Motos et pièces détachées, Ouagadougou — financement en tontine.' }, tokens[2]);
+  await pool.query("UPDATE partners SET status = 'active' WHERE id = $1", [vendeur.id]);
+  const moto = await call(`/goods/partners/${vendeur.id}`, { name: 'Moto Sanili 125', category: 'moto', price: 450_000, stock: 10,
+    description: 'Garantie 6 mois, immatriculation incluse.' }, tokens[2]);
+  await call(`/goods/partners/${vendeur.id}`, { name: 'Réfrigérateur 150 L', category: 'electromenager', price: 180_000, stock: 5 }, tokens[2]);
+  await call(`/goods/partners/${vendeur.id}`, { name: 'Téléphone Android 64 Go', category: 'telephone', price: 65_000 }, tokens[2]);
+  await call('/tontines', { name: 'Tontine moto des fonctionnaires', kind: 'bien', goodId: moto.id, frequency: 'monthly', maxMembers: 10,
+    visibility: 'public', partnerId: vendeur.id, description: 'Une moto par mois pendant 10 mois.' }, tokens[2]);
+  // Partenaire association (en attente de validation : visible dans le back-office).
+  await call('/partners', { name: 'Association Wend-Panga', type: 'association', city: 'Bobo-Dioulasso', primaryColor: '#1F6F43', managementFeeRate: 0.01 }, tokens[0]);
   server.close();
 }
 
