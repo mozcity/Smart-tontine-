@@ -33,6 +33,7 @@ function RootStack() {
         <Stack.Screen name="partenaire/[id]" options={{ title: 'Mon espace partenaire' }} />
         <Stack.Screen name="historique" options={{ title: 'Historique' }} />
         <Stack.Screen name="support" options={{ title: 'Aide & support' }} />
+        <Stack.Screen name="identite" options={{ title: 'Mon identité' }} />
       </Stack.Protected>
     </Stack>
   );

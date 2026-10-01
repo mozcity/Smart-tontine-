@@ -82,6 +82,49 @@ router.post('/deposits/:reference/simulate', async (req, res) => {
   res.json(await settleDeposit(req.params.reference as string, true, `MOCK-${req.params.reference}`));
 });
 
+/**
+ * Décide d'un dépôt en interrogeant l'agrégateur (serveur-à-serveur) quand il le permet.
+ * `claimed` = ce qu'annonce le webhook ; il n'est utilisé que si le fournisseur n'a pas de vérification.
+ * Un montant encaissé différent du montant attendu n'est jamais crédité : il part en rapprochement.
+ */
+export async function verifyAndSettle(ref: string, claimed?: { success: boolean; providerRef?: string }) {
+  const provider = paymentProvider();
+  if (!provider.verify) {
+    if (!claimed) return { status: 'pending' as const };
+    return settleDeposit(ref, claimed.success, claimed.providerRef);
+  }
+  const tx = await one(pool, "SELECT id, amount, status FROM transactions WHERE reference = $1 AND type = 'deposit'", [ref]);
+  if (!tx) throw notFound('Transaction');
+  if (tx.status !== 'pending') return { status: tx.status, alreadyProcessed: true };
+  const v = await provider.verify(ref);
+  if (v.status === 'pending') return { status: 'pending' as const };
+  if (v.status === 'success' && v.amount !== undefined && v.amount !== tx.amount) {
+    await pool.query(`UPDATE transactions SET meta = meta || jsonb_build_object('verification', 'amount_mismatch', 'paidAmount', $2::bigint) WHERE id = $1`, [tx.id, v.amount]);
+    console.error(`Dépôt ${ref} : montant encaissé ${v.amount} ≠ attendu ${tx.amount}, à rapprocher`);
+    return { status: 'pending' as const, mismatch: true };
+  }
+  return settleDeposit(ref, v.status === 'success', v.providerRef);
+}
+
+/** Rattrapage : dépôts restés en attente (webhook perdu) vérifiés auprès de l'agrégateur ; abandon après 48 h. */
+export async function reconcilePendingDeposits() {
+  let settled = 0;
+  const pending = await many(pool,
+    `SELECT reference, created_at FROM transactions WHERE type = 'deposit' AND status = 'pending'
+     AND created_at < now() - interval '15 minutes' AND NOT (meta ? 'verification') ORDER BY created_at LIMIT 200`);
+  for (const p of pending) {
+    try {
+      const r = await verifyAndSettle(p.reference);
+      if (r.status === 'completed' || r.status === 'failed') settled++;
+      else if (new Date(p.created_at).getTime() < Date.now() - 48 * 3600_000) {
+        await pool.query("UPDATE transactions SET status = 'failed', completed_at = now() WHERE reference = $1 AND status = 'pending'", [p.reference]);
+        settled++;
+      }
+    } catch (e) { console.error('Rapprochement du dépôt', p.reference, e); }
+  }
+  return settled;
+}
+
 /** Appelé par le webhook de l'agrégateur. Idempotent : un dépôt n'est crédité qu'une fois. */
 export async function settleDeposit(ref: string, success: boolean, providerRef?: string) {
   return withTx(async (client) => {

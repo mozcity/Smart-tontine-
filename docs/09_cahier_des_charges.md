@@ -87,7 +87,8 @@ Priorités : **P1** indispensable au lancement · **P2** dans les 6 mois · **P3
 | F-AUTH-02 | Code PIN à 4 chiffres, exigé pour toute sortie d'argent ou tout engagement (retrait, transfert, crédit, confirmation de réception…) | P1 |
 | F-AUTH-03 | **Verrouillage du PIN** après 5 erreurs pendant 30 minutes, avec notification | P1 |
 | F-AUTH-04 | Parrainage par code, canal d'acquisition enregistré | P1 |
-| F-AUTH-05 | Niveaux KYC 0 / 1 / 2 avec plafonds de solde ; KYC 1 requis pour le crédit | P1 |
+| F-AUTH-05 | Niveaux KYC 0 / 1 / 2 avec plafonds de solde **et de dépôts mensuels** ; KYC 1 requis pour le crédit | P1 |
+| F-AUTH-07 | **Vérification d'identité en ligne** (app et web) : niveau 1 = pièce recto/verso + selfie avec la pièce (photo prise à l'appareil, compressée) ; niveau 2 = + justificatif de domicile ou de revenus ; un seul dossier en attente ; refus motivé et notifié | P1 |
 | F-AUTH-06 | Session web et mobile par jeton signé ; suspension du compte effective immédiatement | P1 |
 
 ### 3.2 Portefeuille (« Mon jeton »)
@@ -164,6 +165,8 @@ Priorités : **P1** indispensable au lancement · **P2** dans les 6 mois · **P3
 | F-BO-04 | Support : tickets, réponses | P1 |
 | F-BO-05 | Campagnes SMS / notifications par segment, actualités | P2 |
 | F-BO-06 | Finance : contrôle du grand livre, retraits à rapprocher (confirmer / annuler) | P1 |
+| F-BO-07 | **Revue KYC** : file des dossiers, photos, validation (admin uniquement) ou refus motivé ; chaque consultation des photos est tracée | P1 |
+| F-BO-08 | **Double authentification (TOTP)** des comptes support et admin, obligatoire en production ; réinitialisation par un autre admin | P1 |
 
 ---
 
@@ -172,7 +175,7 @@ Priorités : **P1** indispensable au lancement · **P2** dans les 6 mois · **P3
 | Réf. | Domaine | Exigence |
 |---|---|---|
 | NF-01 | **Intégrité financière** | Grand livre en partie double ; montants en entiers FCFA ; aucune écriture modifiable ; contrôle quotidien automatique ; solde client jamais négatif (contrainte en base) |
-| NF-02 | **Sécurité** | HTTPS partout ; OTP et PIN hachés (scrypt) ; verrouillage du PIN ; jeton en Keychain / Keystore sur mobile ; validation stricte des entrées ; en-têtes de sécurité ; limitation du débit sur les routes d'authentification et publiques ; webhooks signés HMAC ; secrets hors du code ; 2FA pour le back-office (P2) ; test d'intrusion avant lancement |
+| NF-02 | **Sécurité** | HTTPS partout ; OTP et PIN hachés (scrypt) ; verrouillage du PIN ; jeton en Keychain / Keystore sur mobile ; validation stricte des entrées ; en-têtes de sécurité ; limitation du débit sur les routes d'authentification et publiques ; webhooks signés HMAC ; secrets hors du code ; **2FA (TOTP) pour le back-office**, obligatoire en production ; **vérification serveur-à-serveur de chaque paiement** avant crédit ; test d'intrusion avant lancement |
 | NF-03 | **Données personnelles** | Déclaration à la CIL (Burkina) ; minimisation ; hébergement conforme aux exigences BCEAO et du partenaire bancaire ; droit d'accès et de suppression |
 | NF-04 | **Performance** | API : p95 < 300 ms sur les lectures, < 800 ms sur les opérations d'argent ; site public : premier affichage < 2,5 s en 3G ; bundle web initial < 250 Ko gzip |
 | NF-05 | **Disponibilité** | 99,5 % mensuel en phase 1 ; sauvegardes PostgreSQL point-in-time, rétention 30 jours ; RPO ≤ 5 min, RTO ≤ 4 h |
@@ -254,8 +257,11 @@ Le détail est au [chapitre 10](10_architecture_technique.md).
 | R8 | Un visiteur consulte les tarifs et une tontine publique sans compte, puis s'inscrit et adhère | Parcours complet sur le web |
 | R9 | Un prospect envoie une demande « Devenir partenaire » | Demande visible dans le back-office, statut modifiable |
 | R10 | Contrôle du grand livre | `somme des soldes = 0` et chaque solde égal à la somme de ses écritures |
+| R11 | Un membre envoie pièce + selfie ; un admin valide | Niveau KYC 1, plafonds relevés, condition « identité » du crédit levée |
+| R12 | Webhook « succès » pour un paiement que l'agrégateur déclare refusé, ou d'un montant différent | Aucun crédit ; dépôt refusé ou mis en rapprochement |
+| R13 | Agent du back-office avec 2FA active, sans code | Accès refusé ; code déjà utilisé refusé ; verrouillage après 5 erreurs |
 
-Chaque scénario R1 à R10 est couvert par un **test automatisé** dans `backend/tests` et exécuté par l'intégration continue.
+Chaque scénario R1 à R13 est couvert par un **test automatisé** dans `backend/tests` et exécuté par l'intégration continue.
 
 ---
 

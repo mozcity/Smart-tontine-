@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router';
 import { api } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { date, fcfa, parseAmount, pct } from '../../lib/format';
@@ -60,7 +61,7 @@ function Microcredit({ offer, onDone }: { offer: Offers['microcredit']; onDone: 
     <div className="card stack-sm">
       <h2>Microcrédit</h2>
       {!offer.eligible ? (
-        <><p className="muted small">Pas encore accessible :</p>{offer.reasons.map((r) => <div key={r} className="notice warn small">{r}</div>)}</>
+        <><p className="muted small">Pas encore accessible :</p>{offer.reasons.map((r) => <div key={r} className="notice warn small">{r}{/identité/i.test(r) && <> — <Link to="/app/identite">vérifier mon identité</Link></>}</div>)}</>
       ) : (
         <>
           <p className="small">Jusqu’à <b>{fcfa(offer.maxAmount)}</b> · {pct(offer.monthlyRate, 1)} par mois sur capital restant dû ({pct(offer.apr)} / an)</p>

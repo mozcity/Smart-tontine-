@@ -28,10 +28,19 @@ export interface PayoutResult {
 
 /**
  * Tout agrégateur (CinetPay, PayDunya, Wave Business, Orange Money API…) implémente
- * cette interface. La confirmation définitive d'un encaissement arrive toujours par webhook.
+ * cette interface. Le webhook déclenche le traitement ; la décision repose sur `verify` quand il existe.
  */
+export interface VerificationResult {
+  status: 'success' | 'failed' | 'pending';
+  /** Montant réellement encaissé selon l'agrégateur (contrôlé avant tout crédit). */
+  amount?: number;
+  providerRef?: string;
+}
+
 export interface PaymentProvider {
   name: string;
   collect(req: CollectionRequest): Promise<CollectionResult>;
   payout(req: PayoutRequest): Promise<PayoutResult>;
+  /** Interroge l'agrégateur serveur-à-serveur : un webhook seul ne suffit jamais à créditer un compte. */
+  verify?(reference: string): Promise<VerificationResult>;
 }

@@ -22,6 +22,7 @@ export default function Profil() {
     <Screen onRefresh={() => { void refresh(); void notifs.reload(); }}>
       <H1>{me?.full_name ?? 'Mon profil'}</H1>
       <P muted>{me?.phone} · vérification d'identité niveau {me?.kyc_level} · 🏅 {me?.points} points</P>
+      {(me?.kyc_level ?? 0) < 2 && <Button title="🪪 Vérifier mon identité (plafonds, crédit)" variant="ghost" onPress={() => router.push('/identite')} />}
 
       <Card style={{ backgroundColor: me?.plan === 'plus' ? colors.green : colors.brand }}>
         <Text style={{ color: '#fff', fontWeight: '800', fontSize: 18 }}>Smart Tontine+ {me?.plan === 'plus' ? '✓ actif' : ''}</Text>

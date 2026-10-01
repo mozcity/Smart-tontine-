@@ -96,9 +96,10 @@ Ajouté avec la plateforme web (détails au [chapitre 10](10_architecture_techni
 
 À faire avant la mise en production :
 - limitation de débit globale (reverse proxy / WAF) et journalisation centralisée ;
-- vérification serveur-à-serveur de chaque paiement auprès de l'agrégateur avant crédit (l'emplacement est marqué dans `modules/webhooks.ts`) ;
 - test d'intrusion externe (budgété : 5 M F) ;
-- chiffrement des sauvegardes, rotation des secrets, 2FA pour les comptes back-office.
+- chiffrement des sauvegardes, rotation des secrets.
+
+Ajouté ensuite (préparation au lancement) : **vérification d'identité en ligne**, **2FA du back-office**, **vérification serveur-à-serveur des paiements** et rattrapage des webhooks perdus (chapitre 10.3).
 
 ## 5.6 Hébergement et exploitation
 
@@ -119,7 +120,7 @@ cp .env.example .env              # variables par défaut : PostgreSQL local, pa
 npm install
 npm run seed                      # schéma + démo : tontine à 4 en cours, avance sur tontine (Burkina : admin +22670000000)
 npm run dev                       # http://localhost:4000 · back-office : http://localhost:4000/admin
-npm test                          # 41 tests de bout en bout (base smarttontine_test)
+npm test                          # 46 tests de bout en bout (base smarttontine_test)
 
 # Application mobile
 cd ../mobile

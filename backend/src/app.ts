@@ -4,7 +4,7 @@ import cors from 'cors';
 import path from 'node:path';
 import { existsSync } from 'node:fs';
 import { errorHandler, notFound } from './lib/errors.js';
-import { requireAuth, requireRole } from './lib/auth.js';
+import { requireAuth, requireMfa, requireRole } from './lib/auth.js';
 import { pricing } from './pricing.js';
 import { config, projectRoot } from './config.js';
 import { rateLimit } from './lib/rateLimit.js';
@@ -24,6 +24,7 @@ import { router as credit } from './modules/credit.js';
 import { router as partners } from './modules/partners.js';
 import { router as goods } from './modules/goods.js';
 import { router as publicApi } from './modules/public.js';
+import { router as kyc } from './modules/kyc.js';
 
 export function createApp() {
   const app = express();
@@ -34,6 +35,8 @@ export function createApp() {
   app.use(helmet({ contentSecurityPolicy: false }));
   app.use(cors());
   // Le corps brut est conservé pour vérifier la signature HMAC des webhooks.
+  // Corps plus gros (jusqu'à 2 Mo) seulement là où l'on envoie des photos : dossier KYC, logos, biens.
+  app.use(['/me/kyc', '/partners', '/goods'], express.json({ limit: '2mb' }));
   app.use(express.json({ limit: '100kb', verify: (req, _res, buf) => { (req as any).rawBody = buf.toString('utf8'); } }));
 
   app.get('/health', (_req, res) => { res.json({ ok: true, service: 'smart-tontine-api' }); });
@@ -41,6 +44,7 @@ export function createApp() {
 
   app.use('/public', rateLimit({ name: 'public', windowMs: 60_000, max: 120, enabled: limitsOn }), publicApi);
   app.use('/auth', rateLimit({ name: 'auth', windowMs: 60_000, max: 30, enabled: limitsOn }), auth);
+  app.use('/webhooks/cinetpay', express.urlencoded({ extended: false, limit: '20kb' }));
   app.use('/webhooks', webhooks);
   app.use('/wallet', requireAuth, wallet);
   app.use('/ecaisses', requireAuth, ecaisse);
@@ -53,8 +57,9 @@ export function createApp() {
   app.use('/projets', requireAuth, projets);
   app.use('/challenges', requireAuth, challenges);
   app.use('/contrats', requireAuth, contrats);
+  app.use('/me/kyc', requireAuth, kyc);
   app.use('/me', requireAuth, account);
-  app.use('/admin/api', requireAuth, requireRole('support', 'admin'), admin);
+  app.use('/admin/api', requireAuth, requireRole('support', 'admin'), requireMfa, admin);
   app.use('/admin', express.static(path.join(projectRoot, 'public', 'admin')));
 
   // Plateforme web (site public, espace membre, portail partenaire) : build Vite servi par l'API

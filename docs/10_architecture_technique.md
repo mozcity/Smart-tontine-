@@ -53,7 +53,7 @@ Complément du [cahier des charges](09_cahier_des_charges.md). Ce chapitre décr
 | **Plateforme web** | `web/` | React 19, TypeScript, Vite 8, React Router 7 | Site public, espace membre, portail partenaire |
 | App mobile | `mobile/` | Expo SDK 57, React Native 0.86, Expo Router | Membres, organisateurs, partenaires |
 | Back-office | `backend/public/admin` | HTML + JS sans dépendance | Équipe Smart Tontine |
-| Tests | `backend/tests`, `web/src/**/*.test.ts(x)` | Vitest, Supertest, Testing Library | 41 tests API de bout en bout + tests web |
+| Tests | `backend/tests`, `web/src/**/*.test.ts(x)` | Vitest, Supertest, Testing Library | 46 tests API de bout en bout + tests web |
 
 ### Plateforme web (`web/`)
 
@@ -91,6 +91,11 @@ Choix de conception :
 | `GET /partners/:id/statement[?from&to]`, `GET /partners/:id/statement.csv` | Propriétaire : relevé avec solde après chaque opération |
 | `GET/PATCH /admin/api/leads` | Support / admin : suivi des demandes (nouvelle, contactée, signée, perdue) |
 | `POST /wallet/deposits/:reference/simulate` | **Démo uniquement** (fournisseur simulé, hors production) |
+| `GET/POST /me/kyc` | Membre : état de la vérification, envoi du dossier (photos ≤ 500 Ko chacune) |
+| `GET /admin/api/kyc`, `GET /admin/api/kyc/:id`, `POST /admin/api/kyc/:id/decision` | Support : file et dossiers (consultation tracée) ; admin : décision |
+| `GET /auth/mfa`, `POST /auth/mfa/setup`, `POST /auth/mfa/enable`, `POST /auth/mfa/verify` | Agents : double authentification TOTP |
+| `POST /admin/api/staff/:id/mfa/reset` | Admin : réinitialiser la 2FA d'un agent |
+| `POST /webhooks/cinetpay` | Notification CinetPay : seule la référence est lue, puis la transaction est vérifiée auprès de CinetPay |
 
 ## 10.3 Sécurité
 
@@ -106,10 +111,13 @@ Choix de conception :
 | Injection | Requêtes paramétrées, validation Zod de toutes les entrées | partout |
 | Clickjacking, MIME | Helmet (API), en-têtes nginx (`X-Frame-Options`, `nosniff`) | `app.ts`, `web/nginx.conf` |
 | Jeton volé sur mobile | Keychain / Keystore (`expo-secure-store`) | `mobile/src/lib/api.ts` |
+| Accès au back-office avec un téléphone volé | **2FA TOTP** (Google/Microsoft Authenticator, Aegis) : secret chiffré AES-256-GCM, code à usage unique (anti-rejeu), verrouillage 15 min après 5 erreurs, session back-office de 12 h ; obligatoire en production (`ADMIN_MFA_REQUIRED`) | `lib/totp.ts`, `requireMfa` |
+| Faux paiement / webhook falsifié ou rejoué | **Vérification serveur-à-serveur** auprès de l'agrégateur avant tout crédit (`verify`), contrôle du montant encaissé ; écart → rapprochement manuel ; rattrapage horaire des webhooks perdus, abandon après 48 h | `verifyAndSettle`, `reconcilePendingDeposits` |
+| Fraude à l'identité | Dossier KYC (pièce + selfie, justificatif au niveau 2) revu par un admin ; consultation des photos tracée ; un seul dossier en attente | `modules/kyc.ts` |
+| Requêtes volumineuses | 100 Ko par défaut ; 2 Mo uniquement sur les routes de photos (`/me/kyc`, `/partners`, `/goods`) ; erreur 413 propre | `app.ts`, `lib/errors.ts` |
 
 À ajouter avant l'ouverture au public :
-- 2FA pour le back-office ;
-- vérification serveur-à-serveur des paiements auprès de l'agrégateur ;
+- stockage objet chiffré pour les photos KYC (aujourd'hui en base) ;
 - CSP stricte sur le site ;
 - test d'intrusion externe ;
 - journalisation centralisée.
@@ -139,7 +147,7 @@ Choix de conception :
 - Les correctifs sont publiés à distance par `eas update --channel production`.
 
 **Intégration continue** (`.github/workflows/ci.yml`), bloquante sur chaque push :
-- **API** : PostgreSQL de test, `typecheck`, puis les 41 tests de bout en bout ;
+- **API** : PostgreSQL de test, `typecheck`, puis les 46 tests de bout en bout ;
 - **web** : tests puis build ;
 - **mobile** : vérification des types.
 
@@ -188,3 +196,5 @@ Comptes de démonstration (connexion par OTP, code affiché à l'écran en déve
 | Fiche tontine ![](captures/web-07-app-tontine-detail.png) | Crédit ![](captures/web-09-app-credit.png) |
 | Portail partenaire ![](captures/web-11-partenaire-tableau-de-bord.png) | Finances partenaire ![](captures/web-13-partenaire-finances.png) |
 | Tontine de bien d'un partenaire ![](captures/web-14-partenaire-creer-tontine-bien.png) | Back-office : demandes ![](captures/web-18-admin-demandes.png) |
+| Vérification d'identité (web) ![](captures/web-21-web-identite.png) | Revue KYC (back-office) ![](captures/web-20-admin-kyc.png) |
+| Activation de la 2FA ![](captures/web-19-admin-2fa.png) | Vérification d'identité (app) ![](captures/web-23-mobile-identite.png) |

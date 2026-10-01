@@ -80,6 +80,17 @@
     <input id="code" placeholder="Code à 6 chiffres" inputmode="numeric">
     <button class="btn" id="verify">Se connecter</button>
   </div>
+  <div id="mfaBox" class="hidden">
+    <p id="mfaIntro" class="muted"></p>
+    <div id="mfaSetup" class="hidden">
+      <p>1. Dans Google Authenticator, Microsoft Authenticator ou Aegis : « Ajouter un compte » → « Saisir une clé ».</p>
+      <p>Clé : <code id="mfaSecret" style="font-size:16px;letter-spacing:.08em"></code></p>
+      <p class="muted">Sur téléphone : <a id="mfaLink">ouvrir directement dans l'application</a>.</p>
+      <p>2. Saisissez le code à 6 chiffres affiché :</p>
+    </div>
+    <input id="mfaCode" placeholder="Code à 6 chiffres" inputmode="numeric" autocomplete="one-time-code">
+    <button class="btn" id="mfaBtn">Valider</button>
+  </div>
   <p id="loginMsg" class="muted"></p>
 </section>
 
@@ -90,12 +101,13 @@
       <button data-tab="dashboard" class="on">Tableau de bord</button>
       <button data-tab="microfinance">Tontines &amp; crédit</button>
       <button data-tab="partners">Partenaires &amp; demandes</button>
+      <button data-tab="kyc">Identité (KYC)</button>
       <button data-tab="customers">Clients</button>
       <button data-tab="tickets">Support</button>
       <button data-tab="campaigns">Campagnes</button>
       <button data-tab="finance">Finance</button>
     </nav>
-    <nav id="logout"><button>Déconnexion</button></nav>
+    <nav id="logout"><button id="mfaHeader" class="hidden">🔐 Activer la 2FA</button> <button id="logoutBtn">Déconnexion</button></nav>
   </header>
   <main>
     <section data-view="dashboard"></section>
@@ -141,6 +153,10 @@
       </div>
     </section>
     <section data-view="finance" class="hidden"></section>
+    <section data-view="kyc" class="hidden">
+      <div class="row"><select id="kycStatus"><option value="pending">À vérifier</option><option value="approved">Validés</option><option value="rejected">Refusés</option></select></div>
+      <div class="card scroll" id="kycList"></div>
+    </section>
     <section data-view="microfinance" class="hidden"></section>
     <section data-view="partners" class="hidden"></section>
   </main>
@@ -167,9 +183,44 @@ async function api(path, opts = {}) {
   const res = await fetch(path, { ...opts, headers: { 'content-type': 'application/json', ...(token ? { authorization: 'Bearer ' + token } : {}) } });
   if (res.status === 401) { logout(); throw new Error('Session expirée'); }
   const body = res.status === 204 ? null : await res.json();
+  if (res.status === 403 && (body?.error === 'mfa_required' || body?.error === 'mfa_setup_required')) { showMfa(body.error); throw new Error(body.message); }
   if (!res.ok) throw new Error(body?.message || 'Erreur');
   return body;
 }
+
+// ───── Double authentification (TOTP) ─────
+async function showMfa(kind) {
+  $('#app').classList.add('hidden'); $('#login').classList.remove('hidden');
+  $('#codeBox').classList.add('hidden'); $('#mfaBox').classList.remove('hidden'); $('#mfaCode').value = ''; $('#loginMsg').textContent = '';
+  $('#phone').classList.add('hidden'); $('#sendCode').classList.add('hidden');
+  const setup = kind === 'mfa_setup_required' || kind === 'setup';
+  $('#mfaSetup').classList.toggle('hidden', !setup);
+  $('#mfaIntro').textContent = setup ? 'Activez la double authentification pour protéger le back-office.' : 'Saisissez le code de votre application d\'authentification.';
+  if (setup) {
+    const r = await api('/auth/mfa/setup', { method: 'POST', body: '{}' });
+    $('#mfaSecret').textContent = r.secret.match(/.{1,4}/g).join(' ');
+    $('#mfaLink').href = r.otpauthUrl;
+  }
+  $('#mfaBtn').onclick = async () => {
+    try {
+      const r = await api(setup ? '/auth/mfa/enable' : '/auth/mfa/verify', { method: 'POST', body: JSON.stringify({ code: $('#mfaCode').value.trim() }) });
+      token = r.token; try { localStorage.setItem('sf_admin_token', token); } catch {}
+      $('#mfaBox').classList.add('hidden'); $('#loginMsg').textContent = '';
+      start();
+    } catch (e) { $('#loginMsg').textContent = e.message; }
+  };
+}
+async function afterLogin() {
+  const me = await api('/auth/me');
+  if (!['admin', 'support'].includes(me.role)) { token = null; throw new Error('Ce compte n\'a pas accès au back-office'); }
+  try { localStorage.setItem('sf_admin_token', token); } catch {}
+  const mfa = await api('/auth/mfa');
+  if (mfa.enrolled && !mfa.verified) return showMfa('mfa_required');
+  if (!mfa.enrolled && mfa.required) return showMfa('setup');
+  $('#mfaHeader').classList.toggle('hidden', mfa.enrolled);
+  start();
+}
+$('#mfaHeader').onclick = () => showMfa('setup');
 
 // ───── Connexion ─────
 $('#sendCode').onclick = async () => {
@@ -183,17 +234,14 @@ $('#verify').onclick = async () => {
   try {
     const r = await api('/auth/otp/verify', { method: 'POST', body: JSON.stringify({ phone: $('#phone').value.trim(), code: $('#code').value.trim() }) });
     token = r.token;
-    const me = await api('/auth/me');
-    if (!['admin', 'support'].includes(me.role)) { token = null; throw new Error('Ce compte n\'a pas accès au back-office'); }
-    try { localStorage.setItem('sf_admin_token', token); } catch {}
-    start();
+    await afterLogin();
   } catch (e) { $('#loginMsg').textContent = e.message; }
 };
-function logout() { token = null; try { localStorage.removeItem('sf_admin_token'); } catch {} $('#app').classList.add('hidden'); $('#login').classList.remove('hidden'); }
-$('#logout button').onclick = logout;
+function logout() { $('#phone').classList.remove('hidden'); $('#sendCode').classList.remove('hidden'); $('#mfaBox').classList.add('hidden'); token = null; try { localStorage.removeItem('sf_admin_token'); } catch {} $('#app').classList.add('hidden'); $('#login').classList.remove('hidden'); }
+$('#logoutBtn').onclick = logout;
 
 // ───── Navigation ─────
-const loaders = { dashboard: loadDashboard, microfinance: loadMicrofinance, partners: loadPartners, customers: loadCustomers, tickets: loadTickets, campaigns: loadCampaigns, finance: loadFinance };
+const loaders = { kyc: loadKyc, dashboard: loadDashboard, microfinance: loadMicrofinance, partners: loadPartners, customers: loadCustomers, tickets: loadTickets, campaigns: loadCampaigns, finance: loadFinance };
 $('#tabs').onclick = (e) => {
   const tab = e.target.dataset?.tab; if (!tab) return;
   document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
@@ -346,6 +394,42 @@ async function loadPartners() {
   });
 }
 
+// ───── Vérification d'identité (KYC) ─────
+const IDTYPE = { cnib: 'CNIB', passeport: 'Passeport', carte_consulaire: 'Carte consulaire', permis: 'Permis', carte_electeur: 'Carte d\'électeur', autre: 'Autre' };
+$('#kycStatus').onchange = loadKyc;
+async function loadKyc() {
+  const status = $('#kycStatus').value;
+  const rows = await api('/admin/api/kyc?status=' + status);
+  $('#kycList').innerHTML = `<h3>Dossiers ${$('#kycStatus').selectedOptions[0].text.toLowerCase()} (${rows.length})</h3>
+    <table><tr><th>Reçu le</th><th>Membre</th><th>Nom sur la pièce</th><th>Pièce</th><th>Niveau demandé</th><th>Niveau actuel</th><th></th></tr>
+    ${rows.map((k) => `<tr><td>${date(k.created_at)}</td><td><b>${esc(k.account_name || '')}</b><br><span class="muted">${esc(k.phone)}</span></td>
+      <td>${esc(k.full_name)}${k.birth_date ? `<br><span class="muted">né(e) le ${date(k.birth_date)}</span>` : ''}</td><td>${IDTYPE[k.id_type]}<br><span class="muted">${esc(k.id_number)}</span></td>
+      <td class="num">${k.level}</td><td class="num">${k.kyc_level}</td>
+      <td>${status === 'pending' ? `<button class="btn" data-kyc="${k.id}">Examiner</button>` : `${esc(k.reviewer || '')}${k.reason ? `<br><span class="muted">${esc(k.reason)}</span>` : ''}`}</td></tr>`).join('') || '<tr><td colspan="7" class="muted">Aucun dossier.</td></tr>'}
+    </table>`;
+  document.querySelectorAll('[data-kyc]').forEach((b) => b.onclick = () => openKyc(b.dataset.kyc));
+}
+async function openKyc(id) {
+  const k = await api('/admin/api/kyc/' + id);
+  const img = (label, src) => src ? `<figure style="margin:0"><figcaption class="muted">${label}</figcaption><img src="${esc(src)}" alt="${label}" style="width:100%;border-radius:10px;border:1px solid var(--line)"></figure>` : '';
+  $('#drawerBody').innerHTML = `<h2>Dossier KYC niveau ${k.level} — ${esc(k.full_name)}</h2>
+    <p class="muted">${esc(k.phone)} · compte « ${esc(k.account_name || '')} » · ${IDTYPE[k.id_type]} n° ${esc(k.id_number)}${k.birth_date ? ' · né(e) le ' + date(k.birth_date) : ''}</p>
+    <p>Contrôler : nom identique au compte, pièce lisible et non expirée, visage du selfie identique à la photo de la pièce${k.level === 2 ? ', justificatif récent (moins de 3 mois) au même nom' : ''}.</p>
+    <div class="two">${img('Pièce — recto', k.id_front)}${img('Pièce — verso', k.id_back)}${img('Selfie avec la pièce', k.selfie)}${img('Justificatif', k.proof_of_address)}</div>
+    <div class="row" style="margin-top:16px"><button class="btn" id="kycOk">Valider le niveau ${k.level}</button>
+      <input id="kycReason" placeholder="Motif du refus (visible par le membre)" style="flex:1;min-width:220px"><button class="btn secondary" id="kycKo">Refuser</button></div>
+    <p id="kycMsg" class="ko"></p>`;
+  const decide = async (decision) => {
+    try {
+      await api(`/admin/api/kyc/${id}/decision`, { method: 'POST', body: JSON.stringify({ decision, reason: $('#kycReason').value.trim() || undefined }) });
+      $('#drawer').close(); loadKyc();
+    } catch (e) { $('#kycMsg').textContent = e.message; }
+  };
+  $('#kycOk').onclick = () => decide('approve');
+  $('#kycKo').onclick = () => decide('reject');
+  if (!$('#drawer').open) $('#drawer').showModal();
+}
+
 // ───── Clients ─────
 let searchTimer;
 $('#search').oninput = () => { clearTimeout(searchTimer); searchTimer = setTimeout(loadCustomers, 300); };
@@ -459,7 +543,7 @@ async function loadFinance() {
   document.querySelectorAll('[data-reverse]').forEach((b) => b.onclick = async () => { if (confirm('Recréditer le client ?')) { await api(`/admin/api/withdrawals/${b.dataset.reverse}/reverse`, { method: 'POST' }); loadFinance(); } });
 }
 
-if (token) api('/auth/me').then((me) => ['admin', 'support'].includes(me.role) ? start() : logout()).catch(logout);
+if (token) afterLogin().catch(() => {});
 </script>
 </body>
 </html>

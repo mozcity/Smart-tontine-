@@ -21,6 +21,15 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     res.status(400).json({ error: 'validation', message: 'Données invalides', details: err.issues });
     return;
   }
+  // Erreurs du lecteur de corps JSON (Express) : trop gros ou mal formé.
+  if (err?.type === 'entity.too.large') {
+    res.status(413).json({ error: 'payload_too_large', message: 'Fichier ou requête trop volumineux' });
+    return;
+  }
+  if (err?.type === 'entity.parse.failed') {
+    res.status(400).json({ error: 'invalid_json', message: 'Requête mal formée' });
+    return;
+  }
   // Violation de contrainte CHECK sur le solde (course entre deux débits)
   if (err?.code === '23514' && String(err?.constraint).includes('balance')) {
     res.status(409).json({ error: 'insufficient_funds', message: 'Solde insuffisant' });

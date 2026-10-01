@@ -13,5 +13,6 @@ RUN npm ci --omit=dev
 COPY --from=build /app/dist ./dist
 COPY migrations ./migrations
 COPY public ./public
+COPY demo ./demo
 EXPOSE 4000
 CMD ["node", "dist/src/server.js"]

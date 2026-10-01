@@ -30,6 +30,18 @@ export function cinetpayProvider(opts: { apiKey: string; siteId: string; notifyU
       if (body.code !== '201' || !body.data) throw new Error(`CinetPay : ${body.message}`);
       return { providerRef: body.data.payment_token, paymentUrl: body.data.payment_url };
     },
+    async verify(reference) {
+      // https://docs.cinetpay.com — vérification d'une transaction (« /v2/payment/check »).
+      const res = await fetch('https://api-checkout.cinetpay.com/v2/payment/check', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ apikey: opts.apiKey, site_id: opts.siteId, transaction_id: reference }),
+      });
+      const body = (await res.json()) as { code: string; data?: { status?: string; amount?: string | number; payment_method?: string; operator_id?: string } };
+      const st = body.data?.status ?? '';
+      const status = body.code === '00' && st === 'ACCEPTED' ? 'success' : ['REFUSED', 'CANCELED', 'CANCELLED'].includes(st) ? 'failed' : 'pending';
+      return { status, amount: body.data?.amount !== undefined ? Number(body.data.amount) : undefined, providerRef: body.data?.operator_id };
+    },
     async payout() {
       // Les transferts sortants passent par l'API « Transfert » de CinetPay (compte marchand dédié,
       // liste de contacts, solde de transfert). À brancher lors de l'ouverture du compte marchand.

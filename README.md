@@ -12,7 +12,7 @@ Références : **Maman Tontine** (expérience tontine au Sénégal) et **MaTonti
 |---|---|
 | [`docs/`](docs/) | Dossier stratégique : comparatif Sénégal + 7 chapitres |
 | [`finance/`](finance/) | `SmartTontine_modeles_economiques.xlsx` : 7 modèles économiques chiffrés et validés (Burkina puis UEMOA), tests de résistance, et son générateur |
-| [`backend/`](backend/) | API Node.js/TypeScript + PostgreSQL : moteur de tontine, scoring et crédit, coffres de groupe, rappels automatiques, Organisateur Pro, tontines de biens, espaces partenaires, grand livre en partie double, API publique du site, back-office CRM web, 41 tests de bout en bout |
+| [`backend/`](backend/) | API Node.js/TypeScript + PostgreSQL : moteur de tontine, scoring et crédit, coffres de groupe, rappels automatiques, Organisateur Pro, tontines de biens, espaces partenaires, grand livre en partie double, API publique du site, back-office CRM web, 46 tests de bout en bout |
 | [`web/`](web/) | **Plateforme web** React : site public (vitrine, tarifs, tontines publiques, catalogue, vitrines partenaires, « Devenir partenaire »), espace membre, **portail partenaire** |
 | [`mobile/`](mobile/) | Application Expo / React Native (Android, iOS) reprenant l'interface de l'affiche, profils de build EAS |
 
@@ -64,6 +64,9 @@ Références : **Maman Tontine** (expérience tontine au Sénégal) et **MaTonti
 | **Demandes « Devenir partenaire / SFD »** | — | ✅ | ✅ | ✅ suivi |
 | **Portail partenaire** : membres, relevé et export CSV, catalogue, commandes, équipe, marque | relevé | ✅ | ✅ | — |
 | **Sécurité** : verrouillage du PIN, plafond mensuel KYC, limitation de débit | ✅ | ✅ | ✅ | — |
+| **Vérification d'identité (KYC)** : pièce + selfie, justificatif ; revue et décision motivée | ✅ | ✅ | ✅ | ✅ revue |
+| **Double authentification** du back-office (TOTP) | — | — | ✅ | ✅ |
+| **Paiements vérifiés** auprès de l'agrégateur avant crédit, rattrapage des webhooks perdus | — | — | ✅ | — |
 
 ## Démarrage rapide
 
@@ -80,4 +83,4 @@ Détails : [docs/10_architecture_technique.md](docs/10_architecture_technique.md
 
 ## Ce qui reste à faire avant un lancement réel
 
-Les paiements sont **simulés** (`PAYMENT_PROVIDER=mock`), les SMS s'affichent dans la console et la ligne de crédit du SFD est un compte comptable (`SYS_CREDIT`). Avant d'ouvrir au public : banque/EME agréé BCEAO **et convention avec un SFD agréé** (crédit), contrat de prêt électronique au nom du SFD, connexion au bureau d'information sur le crédit, intégration réelle de l'agrégateur (collecte **et** payout) avec vérification serveur-à-serveur, fournisseur SMS, test d'intrusion, plafond mensuel KYC, verrouillage du PIN, alertes LBC/FT, et validation juridique. Liste complète : chapitres 5.5, 6 et 7.4.
+Les paiements sont **simulés** (`PAYMENT_PROVIDER=mock`), les SMS s'affichent dans la console et la ligne de crédit du SFD est un compte comptable (`SYS_CREDIT`). Avant d'ouvrir au public : banque/EME agréé BCEAO **et convention avec un SFD agréé** (crédit), contrat de prêt électronique au nom du SFD, connexion au bureau d'information sur le crédit, comptes marchands réels de l'agrégateur (la collecte CinetPay et sa vérification serveur-à-serveur sont codées ; le payout reste à brancher), fournisseur SMS, stockage objet chiffré des photos KYC, test d'intrusion, alertes LBC/FT, et validation juridique. Liste complète : chapitres 5.5, 6 et 7.4.

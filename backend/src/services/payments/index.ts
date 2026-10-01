@@ -12,7 +12,7 @@ export function paymentProvider(): PaymentProvider {
     provider = cinetpayProvider({
       apiKey: process.env.CINETPAY_API_KEY ?? '',
       siteId: process.env.CINETPAY_SITE_ID ?? '',
-      notifyUrl: `${base}/webhooks/payments`,
+      notifyUrl: `${base}/webhooks/cinetpay`,
       returnUrl: 'smarttontine://depot/retour',
     });
   } else {

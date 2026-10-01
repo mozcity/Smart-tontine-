@@ -10,6 +10,7 @@ import Biens from './Biens';
 import Coffres from './Coffres';
 import CoffreDetail from './CoffreDetail';
 import Profil from './Profil';
+import Identite from './Identite';
 import NotFound from '../public/NotFound';
 
 const items: (NavItem | 'sep')[] = [
@@ -21,6 +22,7 @@ const items: (NavItem | 'sep')[] = [
   { to: '/app/coffres', label: 'Coffres de groupe', icon: '👥' },
   'sep',
   { to: '/app/profil', label: 'Profil et aide', icon: '👤' },
+  { to: '/app/identite', label: 'Vérification d’identité', icon: '🪪' },
 ];
 
 export default function MemberApp() {
@@ -38,6 +40,7 @@ export default function MemberApp() {
         <Route path="coffres" element={<Coffres />} />
         <Route path="coffres/:id" element={<CoffreDetail />} />
         <Route path="profil" element={<Profil />} />
+        <Route path="identite" element={<Identite />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Shell>

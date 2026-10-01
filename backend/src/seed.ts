@@ -5,6 +5,9 @@ import { referralCode } from './lib/crypto.js';
 import { createAccount, post, systemAccount, walletOf } from './services/ledger.js';
 import { createApp } from './app.js';
 import type { AddressInfo } from 'node:net';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { projectRoot } from './config.js';
 
 await migrate();
 
@@ -102,6 +105,12 @@ async function demoTontine() {
     `INSERT INTO leads (kind, name, organization, partner_type, phone, city, members, message) VALUES
      ('sfd', 'Awa Ouédraogo', 'Caisse populaire de Tanghin', 'sfd', '+22670112233', 'Ouagadougou', 3500, 'Numériser nos groupes d''épargne'),
      ('partenaire', 'Boureima Traoré', 'GIE des maraîchers de Bama', 'association', '+22676554433', 'Bobo-Dioulasso', 120, NULL)`);
+  // Dossier KYC en attente (images « SPÉCIMEN ») : onglet « Identité (KYC) » du back-office.
+  const img = (f: string) => 'data:image/jpeg;base64,' + readFileSync(path.join(projectRoot, 'demo', f)).toString('base64');
+  await pool.query(
+    `INSERT INTO kyc_submissions (user_id, level, id_type, id_number, full_name, birth_date, id_front, id_back, selfie)
+     VALUES ($1, 1, 'cnib', 'B10293847', 'Awa Kaboré', '1991-03-12', $2, $3, $4)`,
+    [fatou.id, img('kyc-recto.jpg'), img('kyc-verso.jpg'), img('kyc-selfie.jpg')]);
   server.close();
 }
 

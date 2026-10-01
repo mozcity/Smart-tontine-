@@ -29,6 +29,8 @@ export const config = {
   otpMaxAttempts: 5,
   pinMaxAttempts: 5,
   pinLockMinutes: 30,
+  // Double authentification obligatoire pour le back-office (toujours en production, sauf ADMIN_MFA_REQUIRED=false explicite).
+  adminMfaRequired: (process.env.ADMIN_MFA_REQUIRED ?? (env === 'production' ? 'true' : 'false')) === 'true',
   // Plateforme web (build Vite) servie par l'API si le dossier existe ; sinon hébergée à part (CDN).
   webDist: process.env.WEB_DIST ?? '',
 };

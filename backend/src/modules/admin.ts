@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { many, one, pool } from '../db.js';
-import { notFound } from '../lib/errors.js';
+import { many, one, pool, withTx } from '../db.js';
+import { conflict, notFound } from '../lib/errors.js';
 import { currentUser, requireRole } from '../lib/auth.js';
 import { notify } from '../services/notify.js';
 import { reverseWithdrawal } from './wallet.js';
@@ -121,6 +121,55 @@ router.patch('/customers/:id', requireRole('admin'), async (req, res) => {
     [req.params.id, body.status ?? null, body.kycLevel ?? null]);
   if (!r.rowCount) throw notFound('Client');
   if (body.kycLevel) await notify(pool, req.params.id as string, 'Identité vérifiée ✅', 'Tes plafonds ont été relevés');
+  res.json({ ok: true });
+});
+
+// ───── Vérification d'identité (KYC) ─────
+router.get('/kyc', async (req, res) => {
+  const { status } = z.object({ status: z.enum(['pending', 'approved', 'rejected']).default('pending') }).parse(req.query);
+  res.json(await many(pool,
+    `SELECT k.id, k.user_id, k.level, k.id_type, k.id_number, k.full_name, k.birth_date, k.status, k.reason, k.created_at, k.reviewed_at,
+            u.phone, u.full_name AS account_name, u.kyc_level, r.full_name AS reviewer
+     FROM kyc_submissions k JOIN users u ON u.id = k.user_id LEFT JOIN users r ON r.id = k.reviewed_by
+     WHERE k.status = $1 ORDER BY k.created_at ${status === 'pending' ? 'ASC' : 'DESC'} LIMIT 200`, [status]));
+});
+
+/** Dossier complet avec les photos ; chaque consultation est tracée (protection des données). */
+router.get('/kyc/:id', async (req, res) => {
+  const k = await one(pool,
+    `SELECT k.*, u.phone, u.full_name AS account_name, u.kyc_level FROM kyc_submissions k JOIN users u ON u.id = k.user_id WHERE k.id = $1`, [req.params.id]);
+  if (!k) throw notFound('Dossier KYC');
+  await pool.query("INSERT INTO user_events (user_id, name, props) VALUES ($1, 'kyc_viewed', $2)", [k.user_id, { by: currentUser(req).id, submission: k.id }]);
+  res.json(k);
+});
+
+router.post('/kyc/:id/decision', requireRole('admin'), async (req, res) => {
+  const body = z.object({ decision: z.enum(['approve', 'reject']), reason: z.string().trim().max(300).optional() })
+    .refine((b) => b.decision === 'approve' || (b.reason && b.reason.length >= 3), 'Indique le motif du refus').parse(req.body);
+  const out = await withTx(async (client) => {
+    const k = await one(client, 'SELECT * FROM kyc_submissions WHERE id = $1 FOR UPDATE', [req.params.id]);
+    if (!k) throw notFound('Dossier KYC');
+    if (k.status !== 'pending') throw conflict('already_reviewed', 'Dossier déjà traité');
+    const status = body.decision === 'approve' ? 'approved' : 'rejected';
+    await client.query('UPDATE kyc_submissions SET status = $2, reason = $3, reviewed_by = $4, reviewed_at = now() WHERE id = $1',
+      [k.id, status, body.reason ?? null, currentUser(req).id]);
+    if (status === 'approved') {
+      await client.query('UPDATE users SET kyc_level = GREATEST(kyc_level, $2) WHERE id = $1', [k.user_id, k.level]);
+      await notify(client, k.user_id, 'Identité vérifiée ✅', `Niveau ${k.level} validé : tes plafonds sont relevés${k.level >= 1 ? ' et le crédit t\'est ouvert selon ton score' : ''}.`);
+    } else {
+      await notify(client, k.user_id, 'Vérification d\'identité refusée', `Motif : ${body.reason}. Tu peux envoyer un nouveau dossier.`);
+    }
+    return { status };
+  });
+  res.json(out);
+});
+
+/** Réinitialise la double authentification d'un agent (téléphone perdu). */
+router.post('/staff/:id/mfa/reset', requireRole('admin'), async (req, res) => {
+  const r = await pool.query(
+    `UPDATE users SET totp_secret = NULL, totp_enabled_at = NULL, totp_last_step = NULL, mfa_failed_attempts = 0, mfa_locked_until = NULL
+     WHERE id = $1 AND role IN ('support', 'admin')`, [req.params.id]);
+  if (!r.rowCount) throw notFound('Agent');
   res.json({ ok: true });
 });
 

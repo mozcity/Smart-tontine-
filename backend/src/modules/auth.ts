@@ -5,6 +5,7 @@ import { one, pool, withTx } from '../db.js';
 import { badRequest, HttpError } from '../lib/errors.js';
 import { hashSecret, otpCode, referralCode, verifySecret } from '../lib/crypto.js';
 import { requireAuth, currentUser, signToken } from '../lib/auth.js';
+import { matchTotp, newTotpSecret, openSecret, otpauthUrl, sealSecret } from '../lib/totp.js';
 import { createAccount } from '../services/ledger.js';
 import { sms } from '../services/sms.js';
 import { notify, track } from '../services/notify.js';
@@ -94,6 +95,60 @@ router.put('/me/pin', requireAuth, async (req, res) => {
   if (row.pin_hash) await assertPin(user.id, body.currentPin); // le changement de PIN compte aussi les erreurs
   await pool.query('UPDATE users SET pin_hash = $2, pin_failed_attempts = 0, pin_locked_until = NULL WHERE id = $1', [user.id, hashSecret(body.pin)]);
   res.json({ ok: true });
+});
+
+// ───── Double authentification (TOTP) — comptes support et admin ─────
+const staffOnly = (role: string) => { if (role !== 'support' && role !== 'admin') throw new HttpError(403, 'forbidden', 'Réservé aux comptes du back-office'); };
+
+router.get('/mfa', requireAuth, async (req, res) => {
+  const u = currentUser(req);
+  res.json({ enrolled: !!u.mfaEnrolled, verified: !!u.mfa, required: config.adminMfaRequired && (u.role === 'support' || u.role === 'admin') });
+});
+
+/** Génère un secret (non actif tant qu'un premier code n'a pas été validé). */
+router.post('/mfa/setup', requireAuth, async (req, res) => {
+  const u = currentUser(req);
+  staffOnly(u.role);
+  if (u.mfaEnrolled) throw new HttpError(409, 'mfa_already_enabled', 'Double authentification déjà active');
+  const secret = newTotpSecret();
+  const row = await one(pool, 'UPDATE users SET totp_secret = $2 WHERE id = $1 RETURNING phone', [u.id, sealSecret(secret)]);
+  res.json({ secret, otpauthUrl: otpauthUrl(secret, row.phone) });
+});
+
+/** Contrôle un code TOTP : verrouillage 15 min après 5 erreurs, un même code ne sert qu'une fois. */
+async function checkTotp(userId: string, code: string) {
+  const row = await one(pool, 'SELECT totp_secret, totp_last_step, mfa_failed_attempts, mfa_locked_until FROM users WHERE id = $1', [userId]);
+  if (!row?.totp_secret) throw badRequest('mfa_not_setup', 'Commence par configurer la double authentification');
+  if (row.mfa_locked_until && new Date(row.mfa_locked_until) > new Date()) {
+    throw new HttpError(423, 'mfa_locked', 'Trop d\'erreurs : réessaie dans 15 minutes');
+  }
+  const step = matchTotp(openSecret(row.totp_secret), code);
+  if (step === null || (row.totp_last_step !== null && step <= row.totp_last_step)) {
+    await pool.query(
+      `UPDATE users SET mfa_failed_attempts = mfa_failed_attempts + 1,
+         mfa_locked_until = CASE WHEN mfa_failed_attempts + 1 >= 5 THEN now() + interval '15 minutes' END WHERE id = $1`, [userId]);
+    throw badRequest('mfa_invalid', 'Code incorrect ou déjà utilisé');
+  }
+  await pool.query('UPDATE users SET totp_last_step = $2, mfa_failed_attempts = 0, mfa_locked_until = NULL WHERE id = $1', [userId, step]);
+}
+
+router.post('/mfa/enable', requireAuth, async (req, res) => {
+  const u = currentUser(req);
+  staffOnly(u.role);
+  if (u.mfaEnrolled) throw new HttpError(409, 'mfa_already_enabled', 'Double authentification déjà active');
+  const { code } = z.object({ code: z.string() }).parse(req.body);
+  await checkTotp(u.id, code);
+  await pool.query('UPDATE users SET totp_enabled_at = now() WHERE id = $1', [u.id]);
+  await track(pool, u.id, 'mfa_enabled', {});
+  res.json({ token: signToken(u, true) });
+});
+
+router.post('/mfa/verify', requireAuth, async (req, res) => {
+  const u = currentUser(req);
+  if (!u.mfaEnrolled) throw badRequest('mfa_not_setup', 'Double authentification non activée');
+  const { code } = z.object({ code: z.string() }).parse(req.body);
+  await checkTotp(u.id, code);
+  res.json({ token: signToken(u, true) });
 });
 
 /**

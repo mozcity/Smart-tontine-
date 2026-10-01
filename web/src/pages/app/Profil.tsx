@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { useApi } from '../../lib/useApi';
@@ -29,7 +30,7 @@ export default function Profil() {
           <Field label="Nom complet"><Input value={f.fullName} onChange={(e) => setF({ ...f, fullName: e.target.value })} /></Field>
           <Field label="E-mail"><Input type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></Field>
           <Button onClick={async () => { if (await act(() => api('/auth/me', { method: 'PATCH', body: { fullName: f.fullName || undefined, email: f.email || undefined } }), 'Profil enregistré')) void refresh(); }}>Enregistrer</Button>
-          <p className="xs">Pour passer au niveau KYC supérieur (plafonds plus élevés, crédit), envoyez votre pièce d’identité depuis l’application mobile ou au support.</p>
+          <p className="xs">Vérification d’identité : niveau {me.kyc_level}. {me.kyc_level < 2 && <Link to="/app/identite">Relever mes plafonds et débloquer le crédit →</Link>}</p>
         </div>
         <div className="card stack-sm">
           <h2>Code PIN</h2>
