@@ -37,7 +37,7 @@ export default function CagnotteDetail() {
   if (!data) return <Screen><P>Chargement…</P></Screen>;
   return (
     <Screen onRefresh={reload}>
-      <H1>🐷 {data.name}</H1>
+      <H1>{data.name}</H1>
       <Card style={{ backgroundColor: colors.brand }}>
         <Text style={{ color: '#C9C8F0' }}>Solde du coffre</Text>
         <Text style={{ color: '#fff', fontSize: 26, fontWeight: '800' }}>{fcfa(data.balance)}</Text>
@@ -47,7 +47,7 @@ export default function CagnotteDetail() {
       <Card>
         <H2>Cotiser</H2>
         <Field label="Montant (FCFA)" value={amount} onChangeText={setAmount} keyboardType="number-pad" placeholder={data.contribution_amount ? String(data.contribution_amount) : '5 000'} />
-        <Button title="Cotiser depuis mon jeton" variant="green" onPress={() => run(`/cagnottes/${id}/contribute`, { amount: parseAmount(amount) || data.contribution_amount }, 'Cotisation enregistrée ✅')} />
+        <Button title="Cotiser depuis mon jeton" variant="green" onPress={() => run(`/cagnottes/${id}/contribute`, { amount: parseAmount(amount) || data.contribution_amount }, 'Cotisation enregistrée ')} />
       </Card>
 
       {!!table.data?.expected && (
@@ -107,7 +107,7 @@ export default function CagnotteDetail() {
           <Card key={w.id}>
             <Row style={{ justifyContent: 'space-between' }}>
               <Text style={{ fontWeight: '700' }}>{fcfa(w.amount)} → {nameOf(w.beneficiary_id)}</Text>
-              <Text>{w.status === 'pending' ? `⏳ ${approvals}/${data.required_approvals}` : w.status === 'executed' ? '✅ Versé' : '❌ Refusé'}</Text>
+              <Text>{w.status === 'pending' ? `${approvals}/${data.required_approvals}` : w.status === 'executed' ? 'Versé' : 'Refusé'}</Text>
             </Row>
             <P muted>{w.reason ?? 'Sans motif'} · {shortDate(w.created_at)}</P>
             {w.status === 'pending' && isAdmin && !voted && (

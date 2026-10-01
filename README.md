@@ -29,6 +29,7 @@ Références : **Maman Tontine** (expérience tontine au Sénégal) et **MaTonti
 8. [Tontines de biens et espaces partenaires](docs/08_biens_et_partenaires.md) — biens en individuel / groupe privé / groupe public, séquestre, partenaires à leur logo, revenus
 9. [**Cahier des charges**](docs/09_cahier_des_charges.md) — objectifs, acteurs et droits, exigences fonctionnelles et non fonctionnelles, livrables, lots, critères de recette
 10. [**Architecture technique**](docs/10_architecture_technique.md) — composants, plateforme web, sécurité, environnements, Docker, intégration continue, EAS, exploitation
+11. [**Design UX/UI**](docs/11_design_ux_ui.md) — principes, identité visuelle, navigation, composants, parcours clés, captures web et app
 
 ## Chiffres clés (modèle G retenu, modifiable dans l'Excel)
 

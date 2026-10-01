@@ -1,3 +1,4 @@
+import { ImagePlus } from 'lucide-react-native';
 import { Image, Pressable, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { colors, notifyError } from '@/components/ui';
@@ -21,7 +22,7 @@ export function ImageField({ label, value, onChange, aspect = [1, 1] }: {
       <Pressable onPress={pick} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }} accessibilityRole="button">
         {value
           ? <Image source={{ uri: value }} style={{ width: 64, height: 64, borderRadius: 10 }} />
-          : <View style={{ width: 64, height: 64, borderRadius: 10, backgroundColor: colors.brandSoft, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 24 }}>🖼️</Text></View>}
+          : <View style={{ width: 64, height: 64, borderRadius: 10, backgroundColor: colors.brandSoft, alignItems: 'center', justifyContent: 'center' }}><ImagePlus size={26} color={colors.brand} /></View>}
         <Text style={{ color: colors.brand, fontWeight: '700' }}>{value ? 'Changer l\'image' : 'Choisir une image'}</Text>
         {value && <Text onPress={() => onChange(null)} style={{ color: colors.danger }}>Retirer</Text>}
       </Pressable>

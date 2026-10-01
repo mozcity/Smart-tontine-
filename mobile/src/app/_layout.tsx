@@ -3,7 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '@/lib/auth';
-import { colors } from '@/components/ui';
+import { PinProvider, colors } from '@/components/ui';
 
 function RootStack() {
   const { ready, me } = useAuth();
@@ -11,7 +11,7 @@ function RootStack() {
     return <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.brand }}><ActivityIndicator color="#fff" /></View>;
   }
   return (
-    <Stack screenOptions={{ headerTintColor: colors.brand, headerTitleStyle: { fontWeight: '700' }, headerBackButtonDisplayMode: 'minimal' }}>
+    <Stack screenOptions={{ headerTintColor: colors.ink, headerTitleStyle: { fontWeight: '700', color: colors.ink }, headerBackButtonDisplayMode: 'minimal', headerShadowVisible: false, headerStyle: { backgroundColor: colors.bg }, contentStyle: { backgroundColor: colors.bg } }}>
       <Stack.Protected guard={!me}>
         <Stack.Screen name="login" options={{ headerShown: false }} />
       </Stack.Protected>
@@ -43,8 +43,10 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <StatusBar style="dark" />
-        <RootStack />
+        <PinProvider>
+          <StatusBar style="dark" />
+          <RootStack />
+        </PinProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );

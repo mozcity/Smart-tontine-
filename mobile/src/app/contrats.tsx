@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Text } from 'react-native';
 import { api } from '@/lib/api';
+import { usePin } from '@/lib/pin';
 import { useApi } from '@/lib/useApi';
 import { useAuth } from '@/lib/auth';
 import { fcfa, parseAmount, shortDate } from '@/lib/format';
@@ -11,13 +12,13 @@ interface Contrat {
   creator_id: string; counterparty_id: string; creditor_id: string; debtor_id: string; creditor_name: string; debtor_name: string;
   echeances: { id: string; due_on: string; amount: number; paid_at: string | null }[];
 }
-const STATUS: Record<string, string> = { draft: '✍️ À signer', active: '🟢 Actif', completed: '✅ Soldé', cancelled: 'Annulé' };
+const STATUS: Record<string, string> = { draft: 'À signer', active: 'Actif', completed: 'Soldé', cancelled: 'Annulé' };
 
 export default function Contrats() {
   const { me } = useAuth();
   const list = useApi<Contrat[]>('/contrats');
   const [form, setForm] = useState({ phone: '+226', title: '', amount: '', months: '2', role: 'creditor' as 'creditor' | 'debtor' });
-  const [pin, setPin] = useState('');
+  const askPin = usePin();
 
   async function create() {
     const principal = parseAmount(form.amount);
@@ -51,7 +52,6 @@ export default function Contrats() {
         <Button title="Proposer le contrat" onPress={create} disabled={form.title.length < 2 || parseAmount(form.amount) < 500} />
       </Card>
 
-      <Field label="Code PIN (signature et remboursements)" value={pin} onChangeText={setPin} keyboardType="number-pad" secureTextEntry maxLength={4} />
       {list.data?.length === 0 && <Empty text="Aucun contrat." />}
       {list.data?.map((c) => (
         <Card key={c.id}>
@@ -60,13 +60,13 @@ export default function Contrats() {
             <Text>{STATUS[c.status]}</Text>
           </Row>
           <P>{c.creditor_name} → {c.debtor_name} · {fcfa(c.principal)} · remboursé {fcfa(c.repaid)}</P>
-          {c.status === 'draft' && c.counterparty_id === me?.id && <Button title="Signer" variant="green" onPress={() => run(`/contrats/${c.id}/sign`, { pin })} disabled={pin.length !== 4} />}
+          {c.status === 'draft' && c.counterparty_id === me?.id && <Button title="Signer" variant="green" onPress={async () => { const pin = await askPin(`Signer le contrat « ${c.title} »`); if (pin) await run(`/contrats/${c.id}/sign`, { pin }); }} />}
           {c.status === 'draft' && <Button title="Annuler" variant="ghost" onPress={() => run(`/contrats/${c.id}/cancel`)} />}
           {c.echeances?.map((e) => (
             <Row key={e.id} style={{ justifyContent: 'space-between' }}>
-              <Text style={{ color: e.paid_at ? colors.green : colors.ink2 }}>{e.paid_at ? '✅' : '🗓️'} {shortDate(e.due_on)} — {fcfa(e.amount)}</Text>
+              <Text style={{ color: e.paid_at ? colors.green : colors.ink2 }}>{e.paid_at ? 'Payé · ' : ''}{shortDate(e.due_on)} — {fcfa(e.amount)}</Text>
               {c.status === 'active' && !e.paid_at && c.debtor_id === me?.id && (
-                <Text style={{ color: colors.brand, fontWeight: '700' }} onPress={() => pin.length === 4 ? run(`/contrats/${c.id}/echeances/${e.id}/pay`, { pin }) : notifyError(new Error('Saisis ton code PIN'))}>Payer</Text>
+                <Text style={{ color: colors.brand, fontWeight: '700' }} onPress={async () => { const pin = await askPin(`Payer l'échéance de ${fcfa(e.amount)}`); if (pin) await run(`/contrats/${c.id}/echeances/${e.id}/pay`, { pin }); }}>Payer</Text>
               )}
             </Row>
           ))}

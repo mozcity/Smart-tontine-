@@ -1,3 +1,4 @@
+import { Camera } from 'lucide-react-native';
 import { useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import { api } from '@/lib/api';
@@ -35,7 +36,7 @@ export default function Identite() {
     setSending(true);
     try {
       await api('/me/kyc', { body: { level, idType, idNumber: f.idNumber.trim().toUpperCase(), fullName: f.fullName.trim(), ...photos } });
-      notifyOk('Dossier envoyé ✅', 'Vérification sous 48 h ouvrées. Tu recevras une notification.');
+      notifyOk('Dossier envoyé ', 'Vérification sous 48 h ouvrées. Tu recevras une notification.');
       await reload(); await refresh();
     } catch (e) { notifyError(e); } finally { setSending(false); }
   }
@@ -46,7 +47,7 @@ export default function Identite() {
       <Row>
         {photos[key]
           ? <Image source={{ uri: photos[key] }} style={{ width: 96, height: 64, borderRadius: 8 }} />
-          : <View style={{ width: 96, height: 64, borderRadius: 8, backgroundColor: colors.brandSoft, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 22 }}>📷</Text></View>}
+          : <View style={{ width: 96, height: 64, borderRadius: 8, backgroundColor: colors.brandSoft, alignItems: 'center', justifyContent: 'center' }}><Camera size={24} color={colors.brand} /></View>}
         <Pressable onPress={() => shoot(key, 'camera')} accessibilityRole="button"><Text style={{ color: colors.brand, fontWeight: '700' }}>Prendre la photo</Text></Pressable>
         <Pressable onPress={() => shoot(key, 'library')} accessibilityRole="button"><Text style={{ color: colors.ink2 }}>Galerie</Text></Pressable>
       </Row>
@@ -58,14 +59,14 @@ export default function Identite() {
       <H1>Vérification d'identité</H1>
       <P muted>Niveau actuel : {k.level} · solde max. {fcfa(k.limits[k.level].balance)} · dépôts {fcfa(k.limits[k.level].monthlyInflow)} / mois{k.level >= 1 ? ' · crédit ouvert' : ''}</P>
       {k.pending ? (
-        <Card style={{ backgroundColor: colors.brandSoft }}><P>⏳ Dossier de niveau {k.pending.level} envoyé le {shortDate(k.pending.created_at)} : vérification sous 48 h ouvrées.</P></Card>
+        <Card style={{ backgroundColor: colors.brandSoft }}><P>Dossier de niveau {k.pending.level} envoyé le {shortDate(k.pending.created_at)} : vérification sous 48 h ouvrées.</P></Card>
       ) : k.level >= 2 ? (
-        <Card style={{ backgroundColor: colors.greenSoft }}><P>✅ Identité vérifiée au niveau maximal.</P></Card>
+        <Card style={{ backgroundColor: colors.greenSoft }}><P>Identité vérifiée au niveau maximal.</P></Card>
       ) : (
         <Card>
           <H2>Passer au niveau {level}</H2>
           <P muted>Débloque : solde jusqu'à {fcfa(k.limits[level].balance)}, {fcfa(k.limits[level].monthlyInflow)} de dépôts par mois{level === 1 ? ' et le crédit' : ''}. À fournir : {k.requirements[level].join(' · ')}.</P>
-          {k.last?.status === 'rejected' && <P>⚠️ Dossier précédent refusé : {k.last.reason}</P>}
+          {k.last?.status === 'rejected' && <P>Dossier précédent refusé : {k.last.reason}</P>}
           <Segmented options={ID_TYPES} value={idType} onChange={setIdType} />
           <Field label="Numéro de la pièce" value={f.idNumber} onChangeText={(idNumber) => setF({ ...f, idNumber })} autoCapitalize="characters" />
           <Field label="Nom complet (comme sur la pièce)" value={f.fullName} onChangeText={(fullName) => setF({ ...f, fullName })} />

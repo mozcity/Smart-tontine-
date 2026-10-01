@@ -68,7 +68,7 @@ export default function Budget() {
             <Text style={{ color: c.alert === 'depasse' ? colors.danger : colors.ink2 }}>{fcfa(c.spent)}{c.planned ? ` / ${fcfa(c.planned)}` : ''}</Text>
           </Row>
           {c.planned > 0 && <Progress value={(100 * c.spent) / c.planned} />}
-          {c.alert === 'attention' && <P>⚠️ Plus de 80 % du budget utilisé</P>}
+          {c.alert === 'attention' && <P>Plus de 80 % du budget utilisé</P>}
           {c.alert === 'depasse' && <P>🚨 Budget dépassé de {fcfa(-c.remaining)}</P>}
         </Card>
       ))}

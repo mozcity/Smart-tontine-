@@ -1,5 +1,6 @@
+import { CheckCircle2, Circle } from 'lucide-react-native';
 import { useState } from 'react';
-import { Text } from 'react-native';
+import { Pressable, Text } from 'react-native';
 import { api } from '@/lib/api';
 import { useApi } from '@/lib/useApi';
 import { fcfa, parseAmount } from '@/lib/format';
@@ -52,9 +53,10 @@ export default function Projets() {
           <Progress value={p.progress} />
           <P>{fcfa(p.balance)} / {fcfa(p.target_amount)}</P>
           {p.steps?.map((st) => (
-            <Text key={st.id} onPress={() => !st.done_at && run(`/projets/${p.id}/steps/${st.id}/done`)} style={{ color: st.done_at ? colors.green : colors.ink2 }}>
-              {st.done_at ? '✅' : '⬜'} {st.title}
-            </Text>
+            <Pressable key={st.id} onPress={() => !st.done_at && run(`/projets/${p.id}/steps/${st.id}/done`)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }} accessibilityRole="checkbox" accessibilityState={{ checked: !!st.done_at }}>
+              {st.done_at ? <CheckCircle2 size={20} color={colors.green} /> : <Circle size={20} color={colors.lineStrong} />}
+              <Text style={{ color: st.done_at ? colors.greenDark : colors.ink2, textDecorationLine: st.done_at ? 'line-through' : 'none' }}>{st.title}</Text>
+            </Pressable>
           ))}
           {p.status === 'active' && (
             <>
@@ -65,7 +67,7 @@ export default function Projets() {
               </Row>
             </>
           )}
-          {p.status !== 'active' && <P muted>{p.status === 'achieved' ? '🎉 Projet réalisé' : 'Projet clôturé'}</P>}
+          {p.status !== 'active' && <P muted>{p.status === 'achieved' ? 'Projet réalisé' : 'Projet clôturé'}</P>}
         </Card>
       ))}
     </Screen>

@@ -181,7 +181,7 @@ Priorités : **P1** indispensable au lancement · **P2** dans les 6 mois · **P3
 | NF-05 | **Disponibilité** | 99,5 % mensuel en phase 1 ; sauvegardes PostgreSQL point-in-time, rétention 30 jours ; RPO ≤ 5 min, RTO ≤ 4 h |
 | NF-06 | **Montée en charge** | 250 000 membres et 50 opérations d'argent / seconde en pointe (objectif 2031) sans refonte : API sans état, mise à l'échelle horizontale |
 | NF-07 | **Compatibilité** | Android 8+ (priorité), iOS 15+ ; navigateurs récents (Chrome, Safari, Firefox, Edge) ; écrans dès 360 px de large |
-| NF-08 | **Accessibilité** | Français simple, gros boutons, contrastes AA ; langues locales (mooré, dioula) en P2 |
+| NF-08 | **Accessibilité et ergonomie** | Français simple, zones tactiles ≥ 44 px, contrastes AA (4,5:1), code PIN sur clavier, récapitulatif avant toute sortie d'argent, mode sombre (web) ; système de design commun web/app ([chapitre 11](11_design_ux_ui.md)) ; langues locales (mooré, dioula) en P2 |
 | NF-09 | **Traçabilité** | Chaque mouvement d'argent a une référence unique, un initiateur et des métadonnées ; événements métier journalisés pour le CRM |
 | NF-10 | **Qualité** | Tests automatisés de bout en bout sur une vraie base ; intégration continue bloquante ; typage strict TypeScript sur tous les composants |
 | NF-11 | **Exploitabilité** | Configuration par variables d'environnement ; conteneurs Docker ; point de santé `/health` ; journaux structurés |
@@ -225,6 +225,7 @@ Le détail est au [chapitre 10](10_architecture_technique.md).
 | L6 | Conteneurs, Docker Compose, intégration continue | `docker-compose.yml`, `*/Dockerfile`, `.github/workflows` |
 | L7 | Documentation d'exploitation (démarrage, variables, déploiement) | `README.md`, `docs/10` |
 | L8 | Données de démonstration | `backend/src/seed.ts` |
+| L9 | Système de design et maquettes (captures) web et app | `docs/11_design_ux_ui.md`, `web/src/styles.css`, `*/components/ui.tsx` |
 
 ---
 

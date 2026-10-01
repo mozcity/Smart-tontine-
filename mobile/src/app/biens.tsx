@@ -1,7 +1,9 @@
+import { Package } from 'lucide-react-native';
 import { useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { api } from '@/lib/api';
+import { usePin } from '@/lib/pin';
 import { useApi } from '@/lib/useApi';
 import { useAuth } from '@/lib/auth';
 import { fcfa, parseAmount, shortDate } from '@/lib/format';
@@ -13,12 +15,12 @@ interface Plan { id: string; label: string; target_amount: number; balance: numb
 interface Order { id: string; good_name: string; image: string | null; amount: number; status: string; delivery_note: string | null; created_at: string; partner: Brand }
 
 const CATEGORIES = [
-  { value: '', label: 'Tout' }, { value: 'moto', label: '🛵 Motos' }, { value: 'electromenager', label: '🧊 Électroménager' },
-  { value: 'telephone', label: '📱 Téléphones' }, { value: 'mobilier', label: '🛋️ Mobilier' }, { value: 'cuisine', label: '🍲 Cuisine' },
-  { value: 'textile', label: '👗 Pagnes' }, { value: 'alimentaire', label: '🌾 Vivres' }, { value: 'materiel_pro', label: '🧰 Matériel pro' },
+  { value: '', label: 'Tout' }, { value: 'moto', label: 'Motos' }, { value: 'electromenager', label: 'Électroménager' },
+  { value: 'telephone', label: 'Téléphones' }, { value: 'mobilier', label: 'Mobilier' }, { value: 'cuisine', label: 'Cuisine' },
+  { value: 'textile', label: 'Pagnes' }, { value: 'alimentaire', label: 'Vivres' }, { value: 'materiel_pro', label: 'Matériel pro' },
 ];
 const FREQ: Record<string, string> = { daily: 'par jour', weekly: 'par semaine', monthly: 'par mois', free: 'à ton rythme' };
-const ORDER: Record<string, string> = { pending: '📦 Commandé', shipped: '🚚 Expédié / prêt', delivered: '✅ Reçu', cancelled: '↩️ Annulé, remboursé' };
+const ORDER: Record<string, string> = { pending: 'Commandé', shipped: 'Expédié / prêt', delivered: 'Reçu', cancelled: 'Annulé, remboursé' };
 
 export default function Biens() {
   const { me } = useAuth();
@@ -28,12 +30,11 @@ export default function Biens() {
   const plans = useApi<Plan[]>('/goods/plans');
   const orders = useApi<Order[]>('/goods/orders');
   const [pay, setPay] = useState<Record<string, string>>({});
-  const [pin, setPin] = useState('');
+  const askPin = usePin();
   const [custom, setCustom] = useState({ label: '', price: '', frequency: 'weekly' as 'daily' | 'weekly' | 'monthly' });
 
   async function run(path: string, body: Record<string, unknown>, ok?: string) {
     try {
-      if (body.pin && !me?.has_pin) await api('/auth/me/pin', { method: 'PUT', body: { pin } });
       await api(path, { body });
       if (ok) notifyOk(ok);
       await Promise.all([plans.reload(), orders.reload(), catalog.reload()]);
@@ -59,7 +60,7 @@ export default function Biens() {
             <Card key={g.id}>
               <PartnerBrand brand={g.partner} size="sm" />
               <Row style={{ alignItems: 'flex-start' }}>
-                {g.image ? <Image source={{ uri: g.image }} style={{ width: 72, height: 72, borderRadius: 10 }} /> : <Text style={{ fontSize: 40 }}>📦</Text>}
+                {g.image ? <Image source={{ uri: g.image }} style={{ width: 72, height: 72, borderRadius: 10 }} /> : <View style={{ width: 72, height: 72, borderRadius: 14, backgroundColor: colors.goldSoft, alignItems: 'center', justifyContent: 'center' }}><Package size={32} color={colors.gold} /></View>}
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontWeight: '800', color: colors.ink }}>{g.name}</Text>
                   <Text style={{ fontWeight: '800', color: colors.brand }}>{fcfa(g.price)}</Text>
@@ -83,8 +84,8 @@ export default function Biens() {
           {plans.data?.map((p) => (
             <Card key={p.id}>
               <Row style={{ justifyContent: 'space-between' }}>
-                <Text style={{ fontWeight: '700', color: colors.ink, flex: 1 }}>🎯 {p.label}</Text>
-                <Text style={{ color: colors.ink2 }}>{p.status === 'active' ? `${p.progress} %` : p.status === 'completed' ? '✅ Atteint' : 'Annulé'}</Text>
+                <Text style={{ fontWeight: '700', color: colors.ink, flex: 1 }}>{p.label}</Text>
+                <Text style={{ color: colors.ink2 }}>{p.status === 'active' ? `${p.progress} %` : p.status === 'completed' ? 'Atteint' : 'Annulé'}</Text>
               </Row>
               <Progress value={p.progress} />
               <P>{fcfa(p.balance)} / {fcfa(p.target_amount)} · {FREQ[p.frequency]}{p.installment_amount ? ` (${fcfa(p.installment_amount)})` : ''}</P>
@@ -114,7 +115,6 @@ export default function Biens() {
       {tab === 'commandes' && (
         <>
           {orders.data?.length === 0 && <Empty text="Aucune commande." />}
-          <Field label="Code PIN (pour confirmer une réception)" value={pin} onChangeText={setPin} keyboardType="number-pad" secureTextEntry maxLength={4} />
           {orders.data?.map((o) => (
             <Card key={o.id}>
               <PartnerBrand brand={o.partner} size="sm" />
@@ -124,8 +124,8 @@ export default function Biens() {
               </Row>
               <P muted>{fcfa(o.amount)} au séquestre · commandé le {shortDate(o.created_at)}{o.delivery_note ? ` · ${o.delivery_note}` : ''}</P>
               {(o.status === 'pending' || o.status === 'shipped') && (
-                <Button title="J'ai reçu mon bien" variant="green" disabled={pin.length !== 4}
-                  onPress={() => run(`/goods/orders/${o.id}/confirm`, { pin }, 'Merci ! Le fournisseur est payé.')} />
+                <Button title="J'ai reçu mon bien" variant="green"
+                  onPress={async () => { const pin = await askPin('Je confirme avoir reçu mon bien : le fournisseur sera payé.'); if (pin) await run(`/goods/orders/${o.id}/confirm`, { pin }, 'Merci ! Le fournisseur est payé.'); }} />
               )}
             </Card>
           ))}

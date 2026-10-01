@@ -1,22 +1,19 @@
-import { Text, View } from 'react-native';
+import { ArrowDownLeft, ArrowUpRight, HandCoins, Lock, PiggyBank, RefreshCcw, Repeat, ShoppingBag, Sparkles, Users } from 'lucide-react-native';
+import { Text } from 'react-native';
 import { fcfa, shortDate, TX_LABELS } from '@/lib/format';
-import { Card, colors } from '@/components/ui';
+import { ListItem, colors, type Icon } from '@/components/ui';
 
-export function HistoryRow({ type, description, amount, created_at }: { type: string; description: string; amount: number; created_at: string }) {
+const ICONS: [RegExp, Icon][] = [
+  [/^tontine/, RefreshCcw], [/^loan|^contrat/, HandCoins], [/^cagnotte/, Users], [/^goods/, ShoppingBag], [/^ecaisse|^projet|^challenge/, PiggyBank],
+  [/guarantee/, Lock], [/referral|reward|subscription/, Sparkles], [/transfer/, Repeat],
+];
+
+/** Ligne d'historique : icône selon l'opération, montant vert pour une entrée. */
+export function HistoryRow({ type, description, amount, created_at, last }: { type: string; description: string; amount: number; created_at: string; last?: boolean }) {
   const positive = amount > 0;
+  const icon = ICONS.find(([re]) => re.test(type))?.[1] ?? (positive ? ArrowDownLeft : ArrowUpRight);
   return (
-    <Card style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12 }}>
-      <View style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: positive ? colors.greenSoft : colors.dangerSoft, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontSize: 20 }}>{positive ? '⬇️' : '⬆️'}</Text>
-      </View>
-      <View style={{ flex: 1 }}>
-        <Text style={{ fontWeight: '600', color: colors.ink }}>{TX_LABELS[type] ?? description}</Text>
-        <Text style={{ fontSize: 12, color: colors.muted }} numberOfLines={1}>{description}</Text>
-      </View>
-      <View style={{ alignItems: 'flex-end' }}>
-        <Text style={{ fontWeight: '700', color: positive ? colors.green : colors.danger }}>{positive ? '+' : ''}{fcfa(amount)}</Text>
-        <Text style={{ fontSize: 11, color: colors.muted }}>{shortDate(created_at)}</Text>
-      </View>
-    </Card>
+    <ListItem icon={icon} tone={positive ? 'green' : 'brand'} title={TX_LABELS[type] ?? description} subtitle={`${shortDate(created_at)} · ${description}`} last={last}
+      right={<Text style={{ fontWeight: '800', color: positive ? colors.greenDark : colors.ink, fontVariant: ['tabular-nums'] }}>{positive ? '+' : '−'}{fcfa(Math.abs(amount))}</Text>} />
   );
 }

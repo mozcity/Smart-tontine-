@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, Text } from 'react-native';
 import { api } from '@/lib/api';
+import { usePin } from '@/lib/pin';
 import { useApi } from '@/lib/useApi';
 import { fcfa, parseAmount, shortDate } from '@/lib/format';
 import { Button, Card, Empty, Field, H2, P, Row, Screen, colors, notifyError, notifyOk } from '@/components/ui';
@@ -13,7 +14,7 @@ export default function EcaisseScreen() {
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [days, setDays] = useState(90);
-  const [pin, setPin] = useState('');
+  const askPin = usePin();
   const [loading, setLoading] = useState(false);
 
   async function create() {
@@ -28,6 +29,8 @@ export default function EcaisseScreen() {
   }
 
   async function breakIt(e: Ecaisse) {
+    const pin = await askPin(`Casser « ${e.name} » avant l'échéance (pénalité de 2 %)`);
+    if (!pin) return;
     try {
       const r = await api<{ returned: number; penalty: number }>(`/ecaisses/${e.id}/break`, { body: { pin } });
       notifyOk('E-caisse cassée', `${fcfa(r.returned)} rendus (pénalité ${fcfa(r.penalty)})`);
@@ -62,8 +65,7 @@ export default function EcaisseScreen() {
             <Text style={{ fontWeight: '800', color: colors.brand }}>{fcfa(e.balance)}</Text>
           </Row>
           <P muted>Déblocage le {shortDate(e.unlock_at)}</P>
-          <Field label="Code PIN (pour casser la caisse)" value={pin} onChangeText={setPin} keyboardType="number-pad" secureTextEntry maxLength={4} />
-          <Button title="Casser la caisse (−2 %)" variant="ghost" onPress={() => breakIt(e)} disabled={pin.length !== 4} />
+          <Button title="Casser la caisse (−2 %)" variant="ghost" onPress={() => breakIt(e)} />
         </Card>
       ))}
     </Screen>

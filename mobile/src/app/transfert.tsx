@@ -1,38 +1,44 @@
 import { useState } from 'react';
 import { router } from 'expo-router';
+import { Send } from 'lucide-react-native';
 import { api } from '@/lib/api';
 import { fcfa, parseAmount } from '@/lib/format';
 import { useAuth } from '@/lib/auth';
-import { Button, Card, Field, P, Screen, notifyError, notifyOk } from '@/components/ui';
+import { usePin } from '@/lib/pin';
+import { AmountInput, Button, Card, Field, P, Recap, Screen, notifyError, notifyOk } from '@/components/ui';
 
 export default function Transfert() {
-  const { me } = useAuth();
+  const { me, refresh } = useAuth();
+  const askPin = usePin();
   const [toPhone, setToPhone] = useState('+226');
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
-  const [pin, setPin] = useState('');
   const [loading, setLoading] = useState(false);
+  const a = parseAmount(amount);
+  const phone = toPhone.replace(/\s/g, '');
 
   async function submit() {
+    const pin = await askPin(`Envoyer ${fcfa(a)} au ${phone}`);
+    if (!pin) return;
     setLoading(true);
     try {
-      if (!me?.has_pin) await api('/auth/me/pin', { method: 'PUT', body: { pin } });
-      const r = await api<{ to: string }>('/wallet/transfers', { body: { toPhone: toPhone.replace(/\s/g, ''), amount: parseAmount(amount), note: note || undefined, pin } });
-      notifyOk('Transfert réussi', `${fcfa(parseAmount(amount))} envoyés à ${r.to ?? toPhone}`);
+      const r = await api<{ to: string }>('/wallet/transfers', { body: { toPhone: phone, amount: a, note: note || undefined, pin } });
+      notifyOk('Transfert réussi', `${fcfa(a)} envoyés à ${r.to ?? phone}`);
+      await refresh();
       router.back();
     } catch (e) { notifyError(e); } finally { setLoading(false); }
   }
 
   return (
-    <Screen>
-      <Card>
-        <P>Envoie de l'argent gratuitement à un autre utilisateur Smart Tontine.</P>
+    <Screen edges={[]}>
+      <Card style={{ gap: 18 }}>
         <Field label="Numéro du destinataire" value={toPhone} onChangeText={setToPhone} keyboardType="phone-pad" />
-        <Field label="Montant (FCFA)" value={amount} onChangeText={setAmount} keyboardType="number-pad" />
-        <Field label="Motif (facultatif)" value={note} onChangeText={setNote} />
-        <Field label={me?.has_pin ? 'Code PIN' : 'Choisis ton code PIN (4 chiffres)'} value={pin} onChangeText={setPin} keyboardType="number-pad" secureTextEntry maxLength={4} />
-        <Button title="Envoyer" variant="green" onPress={submit} loading={loading} disabled={parseAmount(amount) < 100 || pin.length !== 4} />
+        <AmountInput value={amount} onChange={setAmount} chips={[1000, 5000, 10000].filter((c) => c <= (me?.wallet_balance ?? 0))} />
+        <Field label="Motif (facultatif)" value={note} onChangeText={setNote} placeholder="Pour la cotisation de juin" />
+        {a >= 100 && <Recap rows={[['Destinataire', phone], ['Frais', 'Gratuit'], ['Montant envoyé', fcfa(a), true]]} />}
+        <Button title="Envoyer" icon={Send} variant="green" onPress={submit} loading={loading} disabled={a < 100 || phone.length < 10} />
       </Card>
+      <P muted style={{ textAlign: 'center' }}>Gratuit et immédiat entre membres Smart Tontine.</P>
     </Screen>
   );
 }

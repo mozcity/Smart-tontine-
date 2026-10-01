@@ -25,7 +25,7 @@ export default function Support() {
     <Screen onRefresh={list.reload}>
       <Card>
         <H2>Besoin d'aide ?</H2>
-        <Button title="💬 WhatsApp +225 07 48 55 32 68" variant="green" onPress={() => Linking.openURL('https://wa.me/2250748553268')} />
+        <Button title="WhatsApp +225 07 48 55 32 68" variant="green" onPress={() => Linking.openURL('https://wa.me/2250748553268')} />
         <Button title="✉️ contact@smarttontine.app" variant="ghost" onPress={() => Linking.openURL('mailto:contact@smarttontine.app')} />
       </Card>
       <Card>

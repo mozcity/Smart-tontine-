@@ -41,7 +41,7 @@ export default function Rejoindre() {
   return (
     <Screen>
       <PartnerBrand brand={target.partner} />
-      <H1>{target.target === 'tontine' ? (target.good_label ? '🛵' : '🔄') : '🐷'} {target.name}</H1>
+      <H1>{target.name}</H1>
       <Card>
         <P>Organisé par {target.organizer ?? '—'} · {target.members} membre(s)</P>
         {target.target === 'tontine' ? (

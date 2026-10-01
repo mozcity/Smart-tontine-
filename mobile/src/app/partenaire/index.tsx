@@ -11,11 +11,11 @@ interface Mine { id: string; name: string; type: string; logo: string | null; pr
 
 const TYPES = [
   { value: 'association', label: '🤝 Association / GIE' }, { value: 'commercant', label: '🏪 Commerçant (vend des biens)' },
-  { value: 'entreprise', label: '🏢 Entreprise (salariés)' }, { value: 'tontinier', label: '👑 Tontinier professionnel' },
+  { value: 'entreprise', label: 'Entreprise (salariés)' }, { value: 'tontinier', label: 'Tontinier professionnel' },
   { value: 'sfd', label: '🏦 SFD / microfinance' }, { value: 'autre', label: 'Autre' },
 ];
 const COLORS = ['#2F2C8F', '#1F6F43', '#C0392B', '#D35400', '#8E44AD', '#16A085', '#2C3E50', '#B7950B'];
-const STATUS: Record<string, string> = { pending: '⏳ En attente de validation', active: '✅ Actif', suspended: '⛔ Suspendu' };
+const STATUS: Record<string, string> = { pending: 'En attente de validation', active: 'Actif', suspended: 'Suspendu' };
 
 export default function PartnerHome() {
   const mine = useApi<Mine[]>('/partners/mine');

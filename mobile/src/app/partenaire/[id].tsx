@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { api } from '@/lib/api';
+import { usePin } from '@/lib/pin';
 import { useApi } from '@/lib/useApi';
 import { useAuth } from '@/lib/auth';
 import { fcfa, parseAmount, shortDate } from '@/lib/format';
@@ -25,7 +26,7 @@ const TABS = [
   { value: 'groupes', label: 'Groupes' }, { value: 'biens', label: 'Biens' }, { value: 'equipe', label: 'Équipe' }, { value: 'compte', label: 'Compte' },
 ] as const;
 const CATEGORIES = ['moto', 'electromenager', 'telephone', 'mobilier', 'cuisine', 'textile', 'alimentaire', 'materiel_pro', 'autre'];
-const ORDER: Record<string, string> = { pending: 'À préparer', shipped: 'Expédié', delivered: 'Reçu ✅', cancelled: 'Annulé' };
+const ORDER: Record<string, string> = { pending: 'À préparer', shipped: 'Expédié', delivered: 'Reçu ', cancelled: 'Annulé' };
 
 export default function PartnerDashboard() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -37,7 +38,8 @@ export default function PartnerDashboard() {
   const [good, setGood] = useState({ name: '', price: '', category: 'moto', stock: '' });
   const [goodImage, setGoodImage] = useState<string | null>(null);
   const [staffPhone, setStaffPhone] = useState('+226');
-  const [money, setMoney] = useState({ topup: '', withdraw: '', pin: '' });
+  const [money, setMoney] = useState({ topup: '', withdraw: '' });
+  const askPin = usePin();
   const [logo, setLogo] = useState<string | null>(null);
 
   async function run(path: string, body: Record<string, unknown>, ok?: string, method?: string) {
@@ -55,7 +57,7 @@ export default function PartnerDashboard() {
       <PartnerBrand brand={brand} />
       {!active && (
         <Card style={{ backgroundColor: '#FFF4E0' }}>
-          <P>{p.status === 'pending' ? '⏳ Espace en cours de validation par Smart Tontine (vérification de ta structure). Tu pourras ensuite créer tes groupes et ton catalogue.' : '⛔ Espace suspendu : contacte le support.'}</P>
+          <P>{p.status === 'pending' ? 'Espace en cours de validation par Smart Tontine (vérification de ta structure). Tu pourras ensuite créer tes groupes et ton catalogue.' : 'Espace suspendu : contacte le support.'}</P>
         </Card>
       )}
       <Row>
@@ -95,10 +97,10 @@ export default function PartnerDashboard() {
             <Pressable key={t.id} onPress={() => router.push({ pathname: '/tontine/[id]', params: { id: t.id } })}>
               <Card>
                 <Row style={{ justifyContent: 'space-between' }}>
-                  <Text style={{ fontWeight: '700', color: colors.ink, flex: 1 }}>{t.kind === 'bien' ? '🛵' : '🔄'} {t.name}</Text>
+                  <Text style={{ fontWeight: '700', color: colors.ink, flex: 1 }}>{t.kind === 'bien' ? '' : ''} {t.name}</Text>
                   <Text style={{ fontSize: 12, color: colors.ink2 }}>{t.visibility === 'public' ? '🌍' : '🔒'} {t.status === 'recruiting' ? 'Recrutement' : t.status === 'active' ? 'En cours' : 'Terminée'}</Text>
                 </Row>
-                <P muted>{t.members}/{t.max_members} membres · {fcfa(t.contribution_amount)} par tour{t.good_label ? ` · ${t.good_label}` : ''}{t.defaulters ? ` · ⚠️ ${t.defaulters} impayé(s)` : ''}</P>
+                <P muted>{t.members}/{t.max_members} membres · {fcfa(t.contribution_amount)} par tour{t.good_label ? ` · ${t.good_label}` : ''}{t.defaulters ? ` · ${t.defaulters} impayé(s)` : ''}</P>
                 {t.current_round && <P muted>Tour {t.current_round.number} · {t.current_round.paid}/{t.members} cotisations · échéance {shortDate(t.current_round.due_date)}</P>}
               </Card>
             </Pressable>
@@ -106,7 +108,7 @@ export default function PartnerDashboard() {
           <H2>Coffres de groupe ({data.coffres.length})</H2>
           {data.coffres.map((c) => (
             <Pressable key={c.id} onPress={() => router.push({ pathname: '/cagnotte/[id]', params: { id: c.id } })}>
-              <Card><Row style={{ justifyContent: 'space-between' }}><Text style={{ fontWeight: '700', color: colors.ink }}>🐷 {c.name}</Text><Text style={{ fontWeight: '800', color: colors.brand }}>{fcfa(c.balance)}</Text></Row>
+              <Card><Row style={{ justifyContent: 'space-between' }}><Text style={{ fontWeight: '700', color: colors.ink }}>{c.name}</Text><Text style={{ fontWeight: '800', color: colors.brand }}>{fcfa(c.balance)}</Text></Row>
                 <P muted>{c.members} membre(s)</P></Card>
             </Pressable>
           ))}
@@ -203,9 +205,8 @@ export default function PartnerDashboard() {
               <Button title="Alimenter le compte partenaire" variant="ghost" disabled={parseAmount(money.topup) < 100}
                 onPress={() => run(`/partners/${p.id}/topup`, { amount: parseAmount(money.topup) }, 'Compte alimenté (factures dues réglées)')} />
               <Field label="Retirer vers Orange Money (FCFA)" value={money.withdraw} onChangeText={(withdraw) => setMoney({ ...money, withdraw })} keyboardType="number-pad" />
-              <Field label="Code PIN" value={money.pin} onChangeText={(pin) => setMoney({ ...money, pin })} keyboardType="number-pad" secureTextEntry maxLength={4} />
-              <Button title="Retirer (frais 1 %)" disabled={parseAmount(money.withdraw) < 100 || money.pin.length !== 4}
-                onPress={() => run(`/partners/${p.id}/withdraw`, { amount: parseAmount(money.withdraw), channel: 'orange_money', pin: money.pin }, 'Retrait envoyé')} />
+              <Button title="Retirer (frais 1 %)" disabled={parseAmount(money.withdraw) < 100}
+                onPress={async () => { const pin = await askPin(`Retrait de ${fcfa(parseAmount(money.withdraw))} du compte partenaire`); if (pin) await run(`/partners/${p.id}/withdraw`, { amount: parseAmount(money.withdraw), channel: 'orange_money', pin }, 'Retrait envoyé'); }} />
             </Card>
           )}
           {owner && <Statement partnerId={p.id} />}

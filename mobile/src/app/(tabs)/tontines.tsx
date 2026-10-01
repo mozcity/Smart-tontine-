@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { Compass, KeyRound, Plus, RefreshCcw, ShoppingBag } from 'lucide-react-native';
 import { PartnerBrand, type Brand } from '@/components/PartnerBrand';
 import { CreateTontineForm } from '@/components/CreateTontineForm';
-import { router } from 'expo-router';
 import { api } from '@/lib/api';
 import { useApi } from '@/lib/useApi';
-import { useAuth } from '@/lib/auth';
 import { fcfa, shortDate } from '@/lib/format';
-import { Button, Card, Empty, Field, H1, H2, P, Row, Screen, Segmented, colors, notifyError } from '@/components/ui';
+import { Badge, Button, Card, EmptyState, Field, H1, H2, IconBadge, P, Progress, Recap, Ring, Screen, Segmented, colors, notifyError, type Tone } from '@/components/ui';
 
 interface TontineItem {
   id: string; name: string; kind: 'argent' | 'bien'; good_label: string | null; partner: Brand | null; contribution_amount: number; frequency: 'weekly' | 'monthly'; max_members: number; members: number;
@@ -21,14 +21,14 @@ interface PublicTontine {
 interface Preview { id: string; name: string; organizer: string; contribution_amount: number; frequency: string; members: number; max_members: number; guarantee_amount: number; pot: number; status: string }
 
 const FREQ: Record<string, string> = { weekly: 'semaine', monthly: 'mois' };
-const STATUS: Record<string, string> = { recruiting: '👥 Recrutement', active: '🟢 En cours', completed: '✅ Terminée', cancelled: 'Annulée' };
+const STATUS: Record<string, [string, Tone]> = { recruiting: ['Recrutement', 'blue'], active: ['En cours', 'green'], completed: ['Terminée', 'muted'], cancelled: ['Annulée', 'muted'] };
+type Mode = 'mine' | 'discover' | 'join' | 'create';
 
 export default function Tontines() {
-  const { me } = useAuth();
   const list = useApi<TontineItem[]>('/tontines');
-  const [mode, setMode] = useState<'discover' | 'join' | 'create'>('discover');
+  const [mode, setMode] = useState<Mode>('mine');
   const [kindFilter, setKindFilter] = useState<'tous' | 'argent' | 'bien'>('tous');
-  const discover = useApi<PublicTontine[]>(`/tontines/public${kindFilter === 'tous' ? '' : `?kind=${kindFilter}`}`);
+  const discover = useApi<PublicTontine[]>(mode === 'discover' ? `/tontines/public${kindFilter === 'tous' ? '' : `?kind=${kindFilter}`}` : null);
   const [code, setCode] = useState('');
   const [preview, setPreview] = useState<Preview | null>(null);
 
@@ -36,79 +36,98 @@ export default function Tontines() {
     try { setPreview(await api<Preview>(`/tontines/${code.trim().split('/').pop()}/preview`)); } catch (e) { notifyError(e); }
   }
   async function join() {
-    try { await api(`/tontines/${preview!.id}/join`, { body: {} }); setPreview(null); setCode(''); await list.reload(); } catch (e) { notifyError(e); }
+    try { await api(`/tontines/${preview!.id}/join`, { body: {} }); const id = preview!.id; setPreview(null); setCode(''); await list.reload(); router.push({ pathname: '/tontine/[id]', params: { id } }); } catch (e) { notifyError(e); }
   }
+  const open = (id: string) => router.push({ pathname: '/tontine/[id]', params: { id } });
+
   return (
     <Screen onRefresh={list.reload}>
-      <H1>Mes tontines</H1>
-      <P>Cotise à chaque tour et reçois tout le pot quand vient ton tour. Chaque cotisation à l'heure fait monter ton score de crédit.</P>
-      {list.data?.length === 0 && <Empty text="Tu ne participes à aucune tontine pour l'instant." />}
-      {list.data?.map((t) => {
-        const r = t.current_round;
-        const mine = r?.beneficiary_id === me?.id;
-        return (
-          <Pressable key={t.id} onPress={() => router.push({ pathname: '/tontine/[id]', params: { id: t.id } })}>
-            <Card>
-              <Row style={{ justifyContent: 'space-between' }}>
-                <Text style={{ fontWeight: '700', color: colors.ink, flex: 1 }}>{t.kind === 'bien' ? '🛵' : '🔄'} {t.name}</Text>
-                <Text style={{ fontSize: 12 }}>{STATUS[t.status]}</Text>
-              </Row>
-              {t.partner && <PartnerBrand brand={t.partner} size="sm" />}
-              <P>{fcfa(t.contribution_amount)} / {FREQ[t.frequency]} · {t.members}/{t.max_members} membres · {t.kind === 'bien' ? `bien : ${t.good_label}` : `pot ${fcfa(t.contribution_amount * t.max_members)}`}</P>
-              {t.status === 'active' && r && (
-                <View style={{ backgroundColor: r.paid ? colors.greenSoft : colors.dangerSoft, borderRadius: 10, padding: 10 }}>
-                  <Text style={{ color: colors.ink, fontWeight: '600' }}>
-                    Tour {r.number} · échéance {shortDate(r.due_date)} {mine ? '· 🎉 c\'est ton tour' : ''}
-                  </Text>
-                  <Text style={{ color: r.paid ? colors.green : colors.danger }}>{r.paid ? '✔ Cotisation payée' : '⏳ Cotisation à payer'}</Text>
-                </View>
-              )}
-              {t.my_turn && t.status === 'active' && <P muted>Ton tour : n° {t.position} le {shortDate(t.my_turn)}</P>}
-            </Card>
-          </Pressable>
-        );
-      })}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <H1>Tontines</H1>
+        <Pressable onPress={() => setMode('create')} accessibilityLabel="Créer une tontine"
+          style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center' }}>
+          <Plus size={24} color="#fff" strokeWidth={2.5} />
+        </Pressable>
+      </View>
+      <Segmented options={[{ value: 'mine', label: 'Les miennes' }, { value: 'discover', label: 'Découvrir' }, { value: 'join', label: 'Code' }, { value: 'create', label: 'Créer' }]} value={mode} onChange={setMode} />
 
-      <Segmented options={[{ value: 'discover', label: 'Découvrir' }, { value: 'join', label: 'Code' }, { value: 'create', label: 'Créer' }]} value={mode} onChange={setMode} />
+      {mode === 'mine' && (list.data?.length === 0
+        ? <Card><EmptyState icon={RefreshCcw} title="Aucune tontine" text="Crée ta tontine en 1 minute ou rejoins une tontine publique." action={<View style={{ flexDirection: 'row', gap: 8 }}><Button title="Créer" icon={Plus} size="sm" variant="green" onPress={() => setMode('create')} /><Button title="Découvrir" icon={Compass} size="sm" variant="ghost" onPress={() => setMode('discover')} /></View>} /></Card>
+        : list.data?.map((t) => {
+          const r = t.current_round;
+          const n = t.status === 'recruiting' ? t.members : r?.number ?? (t.status === 'completed' ? t.max_members : 0);
+          const [label, tone] = STATUS[t.status];
+          return (
+            <Pressable key={t.id} onPress={() => open(t.id)} style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}>
+              <Card style={{ gap: 12 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                  <Ring value={(100 * n) / t.max_members} size={58} stroke={6}><Text style={{ fontWeight: '800', fontSize: 13, color: colors.ink }}>{n}/{t.max_members}</Text></Ring>
+                  <View style={{ flex: 1, gap: 3 }}>
+                    <Text style={{ fontWeight: '700', color: colors.ink, fontSize: 16 }} numberOfLines={1}>{t.name}</Text>
+                    <Text style={{ color: colors.muted, fontSize: 12.5 }}>{fcfa(t.contribution_amount)} / {FREQ[t.frequency]} · {t.kind === 'bien' ? t.good_label : `pot ${fcfa(t.contribution_amount * t.max_members)}`}</Text>
+                    <View style={{ flexDirection: 'row', gap: 6, marginTop: 2 }}><Badge label={label} tone={tone} />{t.kind === 'bien' && <Badge label="Bien" tone="gold" />}</View>
+                  </View>
+                </View>
+                {t.status === 'active' && r && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: r.paid ? colors.greenSoft : colors.goldSoft, borderRadius: 12, padding: 10 }}>
+                    <Text style={{ color: colors.ink, fontWeight: '600', fontSize: 13 }}>Tour {r.number} · avant le {shortDate(r.due_date)}</Text>
+                    <Text style={{ color: r.paid ? colors.greenDark : colors.gold, fontWeight: '700', fontSize: 13 }}>{r.paid ? 'Payé' : 'À payer'}</Text>
+                  </View>
+                )}
+                {t.my_turn && t.status === 'active' && <P muted>Ton pot : tour n° {t.position}, le {shortDate(t.my_turn)}</P>}
+                {t.partner && <PartnerBrand brand={t.partner} size="sm" />}
+              </Card>
+            </Pressable>
+          );
+        }))}
+
       {mode === 'discover' && (
         <>
-          <P>Tontines publiques ouvertes à tous, organisées par des membres ou des partenaires.</P>
-          <Segmented options={[{ value: 'tous', label: 'Toutes' }, { value: 'argent', label: '💰 Argent' }, { value: 'bien', label: '🛵 Biens' }]} value={kindFilter} onChange={setKindFilter} />
-          {discover.data?.length === 0 && <Empty text="Aucune tontine publique en recrutement pour l'instant." />}
+          <Segmented options={[{ value: 'tous', label: 'Toutes' }, { value: 'argent', label: 'Argent' }, { value: 'bien', label: 'Biens' }]} value={kindFilter} onChange={setKindFilter} />
+          {discover.data?.length === 0 && <Card><EmptyState icon={Compass} title="Rien pour l'instant" text="Aucune tontine publique en recrutement. Crée la tienne !" /></Card>}
           {discover.data?.map((t) => (
-            <Card key={t.id}>
-              {t.partner && <PartnerBrand brand={t.partner} size="sm" />}
-              <Row style={{ alignItems: 'flex-start' }}>
-                {t.good_image ? <Image source={{ uri: t.good_image }} style={{ width: 56, height: 56, borderRadius: 10 }} /> : null}
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontWeight: '700', color: colors.ink }}>{t.kind === 'bien' ? '🛵' : '🔄'} {t.name}</Text>
-                  {t.kind === 'bien' && <P>Bien : {t.good_label} ({fcfa(t.good_price)})</P>}
-                  <P muted>{fcfa(t.contribution_amount)} / {FREQ[t.frequency]} · {t.members}/{t.max_members} membres · caution {fcfa(t.guarantee_amount)}</P>
+            <Pressable key={t.id} onPress={() => router.push({ pathname: '/rejoindre/[code]', params: { code: t.id } })}>
+              <Card style={{ gap: 12 }}>
+                <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+                  {t.good_image ? <Image source={{ uri: t.good_image }} style={{ width: 52, height: 52, borderRadius: 14 }} /> : <IconBadge icon={t.kind === 'bien' ? ShoppingBag : RefreshCcw} tone={t.kind === 'bien' ? 'gold' : 'brand'} size={52} />}
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontWeight: '700', color: colors.ink, fontSize: 15.5 }} numberOfLines={2}>{t.name}</Text>
+                    <Text style={{ color: colors.muted, fontSize: 12.5 }}>{t.kind === 'bien' ? `${t.good_label} · ${fcfa(t.good_price)}` : `Pot de ${fcfa(t.contribution_amount * t.max_members)}`}</Text>
+                  </View>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={{ fontWeight: '800', color: colors.ink }}>{fcfa(t.contribution_amount)}</Text>
+                    <Text style={{ color: colors.muted, fontSize: 11.5 }}>/ {FREQ[t.frequency]}</Text>
+                  </View>
                 </View>
-              </Row>
-              <Button title="Voir et rejoindre" variant="ghost" onPress={() => router.push({ pathname: '/rejoindre/[code]', params: { code: t.id } })} />
-            </Card>
+                <Progress value={(100 * t.members) / t.max_members} />
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={{ color: colors.muted, fontSize: 12 }}>{t.max_members - t.members} place{t.max_members - t.members > 1 ? 's' : ''} · caution {fcfa(t.guarantee_amount)}</Text>
+                  {t.partner && <PartnerBrand brand={t.partner} size="sm" />}
+                </View>
+              </Card>
+            </Pressable>
           ))}
         </>
       )}
+
       {mode === 'join' && (
-        <Card>
+        <Card style={{ gap: 14 }}>
+          <IconBadge icon={KeyRound} size={48} />
           <H2>Rejoindre avec un code</H2>
-          <Field label="Code ou lien d'invitation reçu de l'organisateur" value={code} onChangeText={setCode} autoCapitalize="none" />
-          <Button title="Voir la tontine" variant="ghost" onPress={lookup} disabled={code.trim().length < 10} />
+          <Field label="Code ou lien reçu de l'organisateur" value={code} onChangeText={setCode} autoCapitalize="none" placeholder="Colle ici le lien d'invitation" />
+          <Button title="Voir la tontine" variant="soft" onPress={lookup} disabled={code.trim().length < 10} />
           {preview && (
-            <View style={{ gap: 8 }}>
-              <Text style={{ fontWeight: '700', color: colors.ink }}>{preview.name}</Text>
-              <P>Organisée par {preview.organizer} · {fcfa(preview.contribution_amount)} / {FREQ[preview.frequency]}</P>
-              <P>{preview.members}/{preview.max_members} membres · pot de {fcfa(preview.pot)}</P>
-              <P muted>Caution bloquée à l'adhésion : {fcfa(preview.guarantee_amount)}, rendue en fin de tontine si tu cotises à chaque tour.</P>
-              <Button title="Rejoindre et bloquer la caution" variant="green" onPress={join} disabled={preview.status !== 'recruiting'} />
+            <View style={{ gap: 10 }}>
+              <Text style={{ fontWeight: '800', color: colors.ink, fontSize: 17 }}>{preview.name}</Text>
+              <P muted>Organisée par {preview.organizer}</P>
+              <Recap rows={[['Cotisation', `${fcfa(preview.contribution_amount)} / ${FREQ[preview.frequency]}`], ['Membres', `${preview.members}/${preview.max_members}`], ['Caution (rendue à la fin)', fcfa(preview.guarantee_amount)], ['Pot à ton tour', fcfa(preview.pot), true]]} />
+              <Button title={`Rejoindre et bloquer ${fcfa(preview.guarantee_amount)}`} variant="green" onPress={join} disabled={preview.status !== 'recruiting'} />
             </View>
           )}
         </Card>
       )}
       {mode === 'create' && (
-        <CreateTontineForm onCreated={(id) => router.push({ pathname: '/tontine/[id]', params: { id } })} />
+        <CreateTontineForm onCreated={(id) => { setMode('mine'); void list.reload(); open(id); }} />
       )}
     </Screen>
   );

@@ -29,7 +29,7 @@ export default function Challenges() {
       {active.length === 0 && <Empty text="Relève ton premier défi ci-dessous 👇" />}
       {[...active, ...toCollect].map((m) => (
         <Card key={m.id}>
-          <Text style={{ fontWeight: '700', color: colors.ink }}>🚀 {m.title}</Text>
+          <Text style={{ fontWeight: '700', color: colors.ink }}>{m.title}</Text>
           <Progress value={m.progress} />
           <P>{fcfa(m.balance)} / {fcfa(m.target_amount)} · fin le {shortDate(m.ends_at)}</P>
           {m.status === 'active' && (

@@ -19,3 +19,6 @@ export const TX_LABELS: Record<string, string> = {
 
 /** Convertit une saisie « 10 000 » en entier. */
 export const parseAmount = (s: string) => Number(s.replace(/\D/g, '')) || 0;
+
+/** Montant court (« 60 000 F ») pour les petits encarts. */
+export const fcfaShort = (n: number | null | undefined) => `${Math.round(n ?? 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} F`;

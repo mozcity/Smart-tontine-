@@ -1,3 +1,4 @@
+import { Package } from 'lucide-react-native';
 import { useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import { api } from '@/lib/api';
@@ -46,7 +47,7 @@ export function CreateTontineForm({ partnerId, onCreated }: { partnerId?: string
   return (
     <Card>
       <H2>{partnerId ? 'Nouvelle tontine du partenaire' : 'Créer une tontine'}</H2>
-      <Segmented options={[{ value: 'argent', label: '💰 Tontine d\'argent' }, { value: 'bien', label: '🛵 Tontine de bien' }]} value={kind} onChange={setKind} />
+      <Segmented options={[{ value: 'argent', label: 'Tontine d\'argent' }, { value: 'bien', label: 'Tontine de bien' }]} value={kind} onChange={setKind} />
       {kind === 'bien' && (
         <>
           <P>Chaque membre reçoit le bien à son tour. Avec un bien du catalogue, le paiement passe par un séquestre et le fournisseur n'est payé qu'à la réception.</P>
@@ -57,7 +58,7 @@ export function CreateTontineForm({ partnerId, onCreated }: { partnerId?: string
               {catalog.data?.map((g) => (
                 <Pressable key={g.id} onPress={() => setGood(g)}
                   style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 8, borderRadius: 10, borderWidth: 2, borderColor: good?.id === g.id ? colors.green : colors.line }}>
-                  {g.image ? <Image source={{ uri: g.image }} style={{ width: 44, height: 44, borderRadius: 8 }} /> : <Text style={{ fontSize: 28 }}>📦</Text>}
+                  {g.image ? <Image source={{ uri: g.image }} style={{ width: 44, height: 44, borderRadius: 8 }} /> : <View style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: colors.goldSoft, alignItems: 'center', justifyContent: 'center' }}><Package size={22} color={colors.gold} /></View>}
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontWeight: '700', color: colors.ink }}>{g.name}</Text>
                     <Text style={{ fontSize: 12, color: colors.ink2 }}>{g.partner.name}</Text>

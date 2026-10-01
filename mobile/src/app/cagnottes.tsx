@@ -15,10 +15,10 @@ const CATEGORIES: { value: string; label: string; glyph: string }[] = [
   { value: 'famille', label: 'Famille', glyph: '👨‍👩‍👧' },
   { value: 'gie', label: 'GIE', glyph: '🧺' },
   { value: 'asc', label: 'ASC', glyph: '⚽' },
-  { value: 'projet', label: 'Projet commun', glyph: '🎯' },
-  { value: 'autre', label: 'Autre', glyph: '🐷' },
+  { value: 'projet', label: 'Projet commun', glyph: '' },
+  { value: 'autre', label: 'Autre', glyph: '' },
 ];
-const glyph = (c: string) => CATEGORIES.find((x) => x.value === c)?.glyph ?? '🐷';
+const glyph = (c: string) => CATEGORIES.find((x) => x.value === c)?.glyph ?? '';
 
 export default function Cagnottes() {
   const list = useApi<Item[]>('/cagnottes');
