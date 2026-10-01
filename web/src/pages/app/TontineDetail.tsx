@@ -6,7 +6,8 @@ import { useApi } from '../../lib/useApi';
 import { date, fcfa, FREQ, ORDER_STATUS, pct, TONTINE_STATUS } from '../../lib/format';
 import { PartnerLogo, type Brand } from '../../components/Brand';
 import { InviteBox } from '../../components/InviteBox';
-import { Badge, Button, ErrorBox, Kpi, Loading, PageHead, useAction } from '../../components/ui';
+import { CalendarClock, Coins, PartyPopper, ShieldCheck } from 'lucide-react';
+import { Avatar, Badge, Button, ErrorBox, Kpi, Loading, PageHead, useAction } from '../../components/ui';
 
 interface Member { id: string; full_name: string | null; phone: string; position: number | null; status: string; guarantee_status: string }
 interface Round { id: string; number: number; beneficiary_id: string; due_date: string; status: string; payout_amount: number | null;
@@ -45,17 +46,17 @@ export default function TontineDetail() {
           <PartnerLogo name={t.partner.name} logo={t.partner.logo} color="rgba(255,255,255,.2)" /><div><b>{t.partner.name}</b><div className="small" style={{ opacity: .85 }}>Tontine organisée par ce partenaire</div></div>
         </div>
       )}
-      <PageHead title={t.name} sub={<>{t.kind === 'bien' ? `🛍️ ${t.good_label} (${fcfa(t.good_price)}) · ` : ''}{fcfa(t.contribution_amount)} / {FREQ[t.frequency]} · {t.members.length}/{t.max_members} membres · <Badge tone={statusTone}>{statusLabel}</Badge></>}>
-        {t.me && current && !iPaid && <Button variant="green" onClick={() => run(() => api(`/tontines/${t.id}/rounds/${current.number}/contribute`, { body: {} }), 'Cotisation payée ✅')}>Payer ma cotisation ({fcfa(t.contribution_amount)})</Button>}
+      <PageHead title={t.name} sub={<>{t.kind === 'bien' ? `${t.good_label} (${fcfa(t.good_price)}) · ` : ''}{fcfa(t.contribution_amount)} / {FREQ[t.frequency]} · {t.members.length}/{t.max_members} membres · <Badge tone={statusTone}>{statusLabel}</Badge></>}>
+        {t.me && current && !iPaid && <Button variant="green" onClick={() => run(() => api(`/tontines/${t.id}/rounds/${current.number}/contribute`, { body: {} }), 'Cotisation payée')}>Payer ma cotisation ({fcfa(t.contribution_amount)})</Button>}
         {t.me && t.status === 'recruiting' && t.organizer_id !== user?.id && <Button variant="ghost" onClick={() => run(() => api(`/tontines/${t.id}/leave`, { body: {} }), 'Vous avez quitté la tontine, caution rendue')}>Quitter</Button>}
       </PageHead>
       {t.description && <p className="muted">{t.description}</p>}
 
       <div className="kpis">
-        <Kpi label="Pot par tour" value={fcfa(t.pot)} hint={`moins ${pct(0.01)} de commission`} />
-        <Kpi label="Caution" value={fcfa(t.guarantee_amount)} hint="rendue en fin de cycle" />
-        <Kpi label="Tour en cours" value={current ? `${current.number} / ${t.rounds.length}` : '—'} hint={current ? `échéance ${date(current.due_date)}` : undefined} />
-        <Kpi label="Mon tour" value={t.me?.position ? `n° ${t.me.position}` : '—'} hint={t.me?.position ? date(t.rounds.find((r) => r.beneficiary_id === user?.id)?.due_date) : t.status === 'recruiting' ? 'après le démarrage' : undefined} />
+        <Kpi icon={Coins} tone="green" label="Pot par tour" value={fcfa(t.pot)} hint={`moins ${pct(0.01)} de commission`} />
+        <Kpi icon={ShieldCheck} label="Caution" value={fcfa(t.guarantee_amount)} hint="rendue en fin de cycle" />
+        <Kpi icon={CalendarClock} tone="gold" label="Tour en cours" value={current ? `${current.number} / ${t.rounds.length}` : '—'} hint={current ? `échéance ${date(current.due_date)}` : undefined} />
+        <Kpi icon={PartyPopper} tone="blue" label="Mon tour" value={t.me?.position ? `n° ${t.me.position}` : '—'} hint={t.me?.position ? date(t.rounds.find((r) => r.beneficiary_id === user?.id)?.due_date) : t.status === 'recruiting' ? 'après le démarrage' : undefined} />
       </div>
 
       {t.status === 'recruiting' && (
@@ -69,7 +70,7 @@ export default function TontineDetail() {
                 <div key={uid} className="row small"><b>{i + 1}.</b><span className="grow">{name(uid)}</span>
                   <button className="linkbtn" disabled={i === 0} onClick={() => move(i, -1)}>↑</button><button className="linkbtn" disabled={i === fixedOrder.length - 1} onClick={() => move(i, 1)}>↓</button></div>
               ))}
-              <Button disabled={t.members.length < 2} onClick={() => run(() => api(`/tontines/${t.id}/start`, { body: t.order_mode === 'fixed' ? { order: fixedOrder } : {} }), 'Tontine démarrée 🎉')}>Démarrer maintenant</Button>
+              <Button disabled={t.members.length < 2} onClick={() => run(() => api(`/tontines/${t.id}/start`, { body: t.order_mode === 'fixed' ? { order: fixedOrder } : {} }), 'Tontine démarrée')}>Démarrer maintenant</Button>
             </div>
           )}
         </div>
@@ -103,7 +104,7 @@ export default function TontineDetail() {
             const c = current?.contributions?.find((x) => x.userId === m.id);
             return (
               <tr key={m.id}>
-                <td>{m.position ?? '—'}</td><td><b>{m.id === user?.id ? 'Moi' : m.full_name ?? '—'}</b>{t.manager && <div className="xs">{m.phone}</div>}</td>
+                <td>{m.position ?? '—'}</td><td><div className="row nowrap" style={{ gap: 10 }}><Avatar name={m.full_name} size="sm" /><div><b>{m.id === user?.id ? 'Moi' : m.full_name ?? '—'}</b>{t.manager && <div className="xs">{m.phone}</div>}</div></div></td>
                 <td>{!current ? '—' : c ? <Badge tone={c.late ? 'warn' : 'ok'}>{c.late ? 'Payé en retard' : 'Payé'}</Badge> : <Badge tone="muted">En attente</Badge>}</td>
                 <td>{{ held: 'Bloquée', used: 'Utilisée', returned: 'Rendue' }[m.guarantee_status] ?? m.guarantee_status}</td>
                 <td>{m.status === 'defaulter' ? <Badge tone="danger">Défaillant</Badge> : <Badge tone="ok">À jour</Badge>}</td>

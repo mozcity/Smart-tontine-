@@ -1,7 +1,9 @@
 import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, Outlet, RouterProvider } from 'react-router';
+import '@fontsource-variable/inter';
 import './styles.css';
+import { applyTheme, watchSystemTheme } from './lib/theme';
 import { AuthProvider } from './lib/auth';
 import { Loading, UiProvider } from './components/ui';
 import { PublicLayout } from './components/PublicLayout';
@@ -40,6 +42,9 @@ const router = createBrowserRouter([
     ],
   },
 ]);
+
+applyTheme();
+watchSystemTheme();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

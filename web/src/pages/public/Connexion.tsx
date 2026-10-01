@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
-import { Button, ErrorBox, Field, Input, Select } from '../../components/ui';
+import { ShieldCheck, Smartphone, TrendingUp } from 'lucide-react';
+import { Button, ErrorBox, Field, Input, Notice, Select } from '../../components/ui';
 
 const COUNTRIES = [['+226', '🇧🇫 Burkina Faso'], ['+225', '🇨🇮 Côte d’Ivoire'], ['+223', '🇲🇱 Mali'], ['+227', '🇳🇪 Niger'], ['+221', '🇸🇳 Sénégal'], ['+229', '🇧🇯 Bénin'], ['+228', '🇹🇬 Togo']];
 
@@ -52,8 +53,16 @@ export default function Connexion() {
   }
 
   return (
-    <div className="container section" style={{ maxWidth: 480 }}>
-      <div className="card stack">
+    <div className="auth">
+      <div className="hero-card panel desktop-only">
+        <span className="pill" style={{ alignSelf: 'flex-start', background: 'rgba(255,255,255,.12)', padding: '6px 12px', borderRadius: 999, fontSize: 13, fontWeight: 600 }}>Smart Tontine</span>
+        <h2 style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-.03em', lineHeight: 1.15 }}>Votre tontine dans votre poche.</h2>
+        {[[ShieldCheck, 'Une caution protège le groupe contre les impayés'], [Smartphone, 'Cotisez par Orange Money, Moov Money ou Wave'], [TrendingUp, 'Votre régularité vous ouvre le crédit']].map(([I, t]) => {
+          const Icon = I as typeof ShieldCheck;
+          return <div key={t as string} className="row nowrap" style={{ position: 'relative', zIndex: 1 }}><span className="ico" style={{ background: 'rgba(255,255,255,.14)', color: '#fff' }}><Icon size={19} /></span><span>{t as string}</span></div>;
+        })}
+      </div>
+      <div className="card stack" style={{ justifyContent: 'center' }}>
         {step === 'phone' && (
           <form className="stack" onSubmit={(e) => { e.preventDefault(); void requestCode(); }}>
             <div><h1>Connexion</h1><p className="muted" style={{ marginTop: 6 }}>Recevez un code par SMS. Pas encore de compte ? Il est créé automatiquement.</p></div>
@@ -72,7 +81,7 @@ export default function Connexion() {
         {step === 'code' && (
           <form className="stack" onSubmit={(e) => { e.preventDefault(); void verify(); }}>
             <div><h1>Code reçu par SMS</h1><p className="muted" style={{ marginTop: 6 }}>Envoyé au {phone}. <button type="button" className="linkbtn" onClick={() => setStep('phone')}>Modifier</button></p></div>
-            {devCode && <div className="notice warn small">Mode démonstration : le code est <b>{devCode}</b> (jamais affiché en production).</div>}
+            {devCode && <Notice tone="warn">Mode démonstration : le code est <b>{devCode}</b> (jamais affiché en production).</Notice>}
             <Field label="Code à 6 chiffres"><Input autoFocus className="pin-input" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} /></Field>
             <Field label="Votre nom" hint="Seulement pour un nouveau compte."><Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Prénom Nom" /></Field>
             <Field label="Code de parrainage (facultatif)"><Input value={referral} onChange={(e) => setReferral(e.target.value.toUpperCase())} /></Field>

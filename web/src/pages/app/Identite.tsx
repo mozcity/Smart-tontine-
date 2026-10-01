@@ -5,7 +5,7 @@ import { useAuth } from '../../lib/auth';
 import { useApi } from '../../lib/useApi';
 import { compressImage } from '../../lib/image';
 import { date, fcfa } from '../../lib/format';
-import { Button, ErrorBox, Field, Input, Loading, PageHead, Select, useUi } from '../../components/ui';
+import { Button, ErrorBox, Field, Input, Loading, Notice, PageHead, Select, useUi } from '../../components/ui';
 
 interface Kyc {
   level: number; limits: Record<string, { balance: number; monthlyInflow: number }>; requirements: Record<string, string[]>;
@@ -33,9 +33,9 @@ export default function Identite() {
         ))}
       </div>
       {k.pending ? (
-        <div className="notice">⏳ Dossier de niveau {k.pending.level} envoyé le {date(k.pending.created_at)} : vérification sous 48 h ouvrées. Vous recevrez une notification.</div>
+        <Notice>Dossier de niveau {k.pending.level} envoyé le {date(k.pending.created_at)} : vérification sous 48 h ouvrées. Vous recevrez une notification.</Notice>
       ) : k.level >= 2 ? (
-        <div className="notice ok">✅ Identité vérifiée au niveau maximal.</div>
+        <Notice tone="ok">Identité vérifiée au niveau maximal.</Notice>
       ) : (
         <>
           {k.last?.status === 'rejected' && <div className="notice warn">Dossier précédent refusé : <b>{k.last.reason}</b>. Corrigez puis renvoyez.</div>}

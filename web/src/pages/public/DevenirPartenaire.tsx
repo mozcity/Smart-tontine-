@@ -3,7 +3,8 @@ import { Link, useSearchParams } from 'react-router';
 import { api } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { fcfa, pct, PARTNER_TYPES } from '../../lib/format';
-import { Button, ErrorBox, Field, Input, Segmented, Select, Textarea } from '../../components/ui';
+import { CheckCircle2, Coins, LayoutDashboard, Palette, ShieldCheck, ShoppingBag, type LucideIcon } from 'lucide-react';
+import { Button, ErrorBox, Field, Ico, Input, Segmented, Select, Textarea } from '../../components/ui';
 
 type Kind = 'partenaire' | 'sfd' | 'contact';
 
@@ -34,18 +35,18 @@ export default function DevenirPartenaire() {
         <span className="eyebrow">Partenaires</span>
         <h1>Organisez vos tontines à votre marque</h1>
         <p className="muted">Associations et GIE, commerçants, entreprises, tontiniers professionnels et SFD : un espace à votre nom et à votre logo, sans rien développer.</p>
-        {[
-          ['🏷️', 'Votre logo et vos couleurs', 'sur vos groupes, dans « Découvrir » et sur les invitations.'],
-          ['📊', 'Tableau de bord', 'membres actifs, collecte du mois, impayés, commandes, relevé exportable.'],
-          ['🛍️', 'Vendez en tontine', 'motos, électroménager, pagnes… payés au séquestre, versés à la réception.'],
-          ['💸', 'Vos frais de gestion', `jusqu’à ${p ? pct(p.partner.maxManagementFeeRate) : '3 %'} de chaque pot, versés sur votre compte partenaire.`],
-          ['🔒', 'Vous ne manipulez pas d’argent', 'les fonds des membres restent cantonnés chez un établissement agréé.'],
-        ].map(([i, t, d]) => <div key={t} className="row" style={{ alignItems: 'flex-start', flexWrap: 'nowrap' }}><span className="feature-icon">{i}</span><div><b>{t}</b><p className="muted small">{d}</p></div></div>)}
+        {([
+          [Palette, 'Votre logo et vos couleurs', 'sur vos groupes, dans « Découvrir » et sur les invitations.'],
+          [LayoutDashboard, 'Tableau de bord', 'membres actifs, collecte du mois, impayés, commandes, relevé exportable.'],
+          [ShoppingBag, 'Vendez en tontine', 'motos, électroménager, pagnes… payés au séquestre, versés à la réception.'],
+          [Coins, 'Vos frais de gestion', `jusqu’à ${p ? pct(p.partner.maxManagementFeeRate) : '3 %'} de chaque pot, versés sur votre compte partenaire.`],
+          [ShieldCheck, 'Vous ne manipulez pas d’argent', 'les fonds des membres restent cantonnés chez un établissement agréé.'],
+        ] as [LucideIcon, string, string][]).map(([I, t, d]) => <div key={t} className="row nowrap" style={{ alignItems: 'flex-start' }}><Ico icon={I} /><div><b>{t}</b><p className="muted small">{d}</p></div></div>)}
         {p && <div className="notice">Licence : <b>{fcfa(p.partner.perMemberMonthly)}</b> par membre actif et par mois, minimum {fcfa(p.partner.minimumMonthly)}. Déjà inscrit ? <Link to="/partenaire">Créez votre espace directement</Link>.</div>}
       </div>
       <div className="card stack">
         {sent ? (
-          <div className="stack center"><span style={{ fontSize: 48 }}>✅</span><h2>Merci, demande reçue !</h2><p className="muted">Notre équipe vous rappelle sous 48 h ouvrées.</p><Link to="/" className="btn ghost">Retour à l'accueil</Link></div>
+          <div className="stack center"><span style={{ alignSelf: 'center' }}><Ico icon={CheckCircle2} tone="green" size="lg" round /></span><h2>Merci, demande reçue !</h2><p className="muted">Notre équipe vous rappelle sous 48 h ouvrées.</p><Link to="/" className="btn ghost">Retour à l'accueil</Link></div>
         ) : (
           <form className="stack" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
             <Segmented<Kind> value={kind} onChange={setKind} options={[['partenaire', 'Partenaire'], ['sfd', 'SFD / microfinance'], ['contact', 'Contact']]} />

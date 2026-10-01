@@ -28,7 +28,7 @@ export default function Equipe() {
           <Field label="Téléphone"><Input value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value.replace(/\s/g, '') })} /></Field>
           <Field label="Rôle"><Select value={f.role} onChange={(e) => setF({ ...f, role: e.target.value })}><option value="manager">Gestionnaire</option><option value="owner">Propriétaire</option></Select></Field>
         </div>
-        <Button disabled={f.phone.length < 10} onClick={async () => { if (await act(() => api(`/partners/${dash.partner.id}/staff`, { body: f }), 'Ajouté à l’équipe ✅')) { setF({ ...f, phone: '+226' }); await reload(); } }}>Ajouter</Button>
+        <Button disabled={f.phone.length < 10} onClick={async () => { if (await act(() => api(`/partners/${dash.partner.id}/staff`, { body: f }), 'Ajouté à l’équipe')) { setF({ ...f, phone: '+226' }); await reload(); } }}>Ajouter</Button>
       </div>
     </div>
   );

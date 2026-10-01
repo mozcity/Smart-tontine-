@@ -47,3 +47,15 @@ export const TONTINE_STATUS: Record<string, [string, Tone]> = {
   recruiting: ['Recrutement', 'info'], active: ['En cours', 'ok'], completed: ['Terminée', 'muted'], cancelled: ['Annulée', 'muted'],
 };
 export type Tone = 'ok' | 'warn' | 'danger' | 'info' | 'muted' | 'brand';
+
+/** « aujourd'hui », « demain », « dans 5 j », « en retard de 2 j » : plus parlant qu'une date. */
+export function dueLabel(d: string): { text: string; tone: Tone } {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const days = Math.round((new Date(`${d}T00:00:00`).getTime() - today.getTime()) / 86_400_000);
+  if (days < 0) return { text: `en retard de ${-days} j`, tone: 'danger' };
+  if (days === 0) return { text: "aujourd'hui", tone: 'warn' };
+  if (days === 1) return { text: 'demain', tone: 'warn' };
+  return { text: `dans ${days} j`, tone: days <= 3 ? 'warn' : 'muted' };
+}
+
+export const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Bonjour' : h < 18 ? 'Bon après-midi' : 'Bonsoir'; };

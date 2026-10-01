@@ -28,7 +28,7 @@ export default function Membres() {
             <tbody>{rows.map((m) => (
               <tr key={m.id}>
                 <td><b>{m.full_name ?? '—'}</b><div className="xs">{m.phone} · KYC {m.kyc_level}</div></td>
-                <td className="small">{m.groups.map((g) => `${g.kind === 'coffre' ? '👥' : '🔄'} ${g.name}`).join(' · ')}</td>
+                <td className="small">{m.groups.map((g) => `${g.kind === 'coffre' ? 'Coffre' : 'Tontine'} « ${g.name} »`).join(' · ')}</td>
                 <td className="right amount">{fcfa(m.contributed)}</td>
                 <td>{m.late_payments ? <Badge tone="warn">{m.late_payments}</Badge> : '0'}</td>
                 <td>{m.defaulter ? <Badge tone="danger">Défaillant</Badge> : <Badge tone="ok">À jour</Badge>}</td>

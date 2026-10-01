@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import { date, fcfa, FREQ, pct, TONTINE_STATUS } from '../../lib/format';
-import { Badge, Empty, Kpi, PageHead } from '../../components/ui';
+import { Badge, Empty, Kpi, Notice, PageHead } from '../../components/ui';
+import { Coins, Landmark, Receipt, Users, Wallet } from 'lucide-react';
 import { usePartner } from './context';
 
 export default function TableauDeBord() {
@@ -17,17 +18,17 @@ export default function TableauDeBord() {
         <Link className="btn" to={`${base}/groupes?creer=tontine`}>+ Nouvelle tontine</Link>
       </PageHead>
       <div className="kpis">
-        <Kpi label="Membres actifs" value={d.activeMembers} hint="base de la licence du mois" />
-        <Kpi label="Collecté ce mois" value={fcfa(d.collectedThisMonth)} hint="cotisations de vos tontines" />
-        <Kpi label="Frais de gestion perçus" value={fcfa(d.managementFeesEarned)} hint="depuis l’ouverture" />
-        <Kpi label="Solde du compte" value={fcfa(d.balance)} hint={d.role === 'owner' ? <Link to={`${base}/finances`}>Finances</Link> : undefined} />
-        <Kpi label="Licence estimée" value={fcfa(d.estimatedInvoice)} hint="ce mois-ci" />
+        <Kpi icon={Users} label="Membres actifs" value={d.activeMembers} hint="base de la licence du mois" />
+        <Kpi icon={Coins} tone="green" label="Collecté ce mois" value={fcfa(d.collectedThisMonth)} hint="cotisations de vos tontines" />
+        <Kpi icon={Wallet} tone="gold" label="Frais de gestion perçus" value={fcfa(d.managementFeesEarned)} hint="depuis l’ouverture" />
+        <Kpi icon={Landmark} tone="blue" label="Solde du compte" value={fcfa(d.balance)} hint={d.role === 'owner' ? <Link to={`${base}/finances`}>Finances</Link> : undefined} />
+        <Kpi icon={Receipt} label="Licence estimée" value={fcfa(d.estimatedInvoice)} hint="ce mois-ci" />
       </div>
       {(defaulters > 0 || toShip.length > 0 || due.length > 0) && (
         <div className="stack-sm">
-          {defaulters > 0 && <div className="notice warn">⚠️ {defaulters} membre{defaulters > 1 ? 's' : ''} défaillant{defaulters > 1 ? 's' : ''} dans vos tontines. <Link to={`${base}/membres`}>Voir les membres</Link></div>}
-          {toShip.length > 0 && <div className="notice">📦 {toShip.length} commande{toShip.length > 1 ? 's' : ''} à expédier. <Link to={`${base}/commandes`}>Gérer les commandes</Link></div>}
-          {due.length > 0 && <div className="notice warn">🧾 {due.length} facture{due.length > 1 ? 's' : ''} de licence en attente : alimentez le compte partenaire.</div>}
+          {defaulters > 0 && <Notice tone="warn">{defaulters} membre{defaulters > 1 ? 's' : ''} défaillant{defaulters > 1 ? 's' : ''} dans vos tontines. <Link to={`${base}/membres`}>Voir les membres</Link></Notice>}
+          {toShip.length > 0 && <Notice>{toShip.length} commande{toShip.length > 1 ? 's' : ''} à expédier. <Link to={`${base}/commandes`}>Gérer les commandes</Link></Notice>}
+          {due.length > 0 && <Notice tone="warn">{due.length} facture{due.length > 1 ? 's' : ''} de licence en attente : alimentez le compte partenaire.</Notice>}
         </div>
       )}
       <div className="card stack-sm">

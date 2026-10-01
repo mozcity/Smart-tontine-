@@ -33,7 +33,7 @@ export default function Vitrine() {
           <div className="grid">
             {p.tontines.map((t) => (
               <Link key={t.id} to={`/rejoindre/${t.id}`} className="card card-link stack-sm">
-                <Badge tone={t.kind === 'bien' ? 'warn' : 'brand'}>{t.kind === 'bien' ? '🛍️ Bien' : '💰 Argent'}</Badge>
+                <Badge tone={t.kind === 'bien' ? 'warn' : 'brand'}>{t.kind === 'bien' ? 'Bien' : 'Argent'}</Badge>
                 <h3>{t.name}</h3>
                 {t.good_label && <p className="small muted">{t.good_label} · {fcfa(t.good_price)}</p>}
                 <p><span className="amount">{fcfa(t.contribution_amount)}</span> <span className="muted small">/ {FREQ[t.frequency]}</span></p>

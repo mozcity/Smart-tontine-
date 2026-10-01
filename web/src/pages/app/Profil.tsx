@@ -46,14 +46,14 @@ export default function Profil() {
           <p className="muted small">{p ? `${fcfa(p.plus.monthlyPrice)} / mois : ${p.plus.freeWithdrawalsPerMonth} retraits offerts par mois (y compris le pot), support prioritaire.` : ''}</p>
           {me.plan === 'plus'
             ? <Button variant="ghost" onClick={async () => { if (await act(() => api('/me/plan/cancel', { body: {} }), 'Abonnement non reconduit')) void refresh(); }}>Ne pas reconduire</Button>
-            : <Button variant="green" onClick={async () => { if (await act(() => api('/me/plan/subscribe', { body: {} }), 'Bienvenue dans Smart Tontine+ ✨')) void refresh(); }}>S’abonner</Button>}
+            : <Button variant="green" onClick={async () => { if (await act(() => api('/me/plan/subscribe', { body: {} }), 'Bienvenue dans Smart Tontine+')) void refresh(); }}>S’abonner</Button>}
         </div>
         <div className="card stack-sm">
           <div className="row between"><h2>Organisateur Pro</h2>{me.is_pro && <Badge tone="ok">Actif jusqu’au {date(me.pro_renews_at)}</Badge>}</div>
           <p className="muted small">{p ? `${fcfa(p.pro.monthlyPrice)} / mois : plus de ${p.pro.freeOrganizerLimit} tontines ou coffres gérés à la fois, exports CSV.` : ''}</p>
           {me.is_pro
             ? <Button variant="ghost" onClick={async () => { if (await act(() => api('/me/pro/cancel', { body: {} }), 'Pro non reconduit')) void refresh(); }}>Ne pas reconduire</Button>
-            : <Button onClick={async () => { if (await act(() => api('/me/pro/subscribe', { body: {} }), 'Vous êtes Organisateur Pro 🚀')) void refresh(); }}>Passer Pro</Button>}
+            : <Button onClick={async () => { if (await act(() => api('/me/pro/subscribe', { body: {} }), 'Vous êtes Organisateur Pro')) void refresh(); }}>Passer Pro</Button>}
         </div>
         <div className="card stack-sm">
           <h2>Parrainage</h2>

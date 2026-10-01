@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { api } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { date, fcfa, parseAmount, pct } from '../../lib/format';
-import { Badge, Button, Empty, Field, Input, Kpi, PageHead, Progress, Select, useAction, useUi } from '../../components/ui';
+import { Badge, Button, Empty, Field, Input, Kpi, PageHead, Ring, Select, useAction, useUi } from '../../components/ui';
 
 interface Offers {
   score: number; factors: { label: string; points: number }[];
@@ -23,10 +23,17 @@ export default function Credit() {
       <PageHead title="Crédit" sub="Vos cotisations à l’heure construisent votre score. Crédits accordés par nos SFD partenaires agréés." />
       {o && (
         <div className="grid-2" style={{ alignItems: 'start' }}>
-          <div className="card stack-sm">
-            <div className="row between"><h2>Score Smart Tontine</h2><span className="price">{o.score}<span className="muted small"> / 1000</span></span></div>
-            <Progress value={o.score / 10} />
-            {o.factors.map((f) => <div key={f.label} className="row between small"><span className="muted">{f.label}</span><b className={f.points < 0 ? 'neg' : ''}>{f.points > 0 ? '+' : ''}{f.points}</b></div>)}
+          <div className="card stack">
+            <div className="row nowrap" style={{ gap: 20 }}>
+              <Ring value={o.score / 10} size={118} stroke={11} color={o.score >= 550 ? 'var(--green-500)' : 'var(--brand-500)'}
+                label={<span style={{ textAlign: 'center', lineHeight: 1.1 }}><b style={{ fontSize: 28, display: 'block' }}>{o.score}</b><span className="xs">/ 1000</span></span>} />
+              <div className="stack-sm grow">
+                <h2>Score Smart Tontine</h2>
+                <Badge tone={o.score >= 700 ? 'ok' : o.score >= 550 ? 'info' : 'warn'}>{o.score >= 700 ? 'Excellent' : o.score >= 550 ? 'Bon : microcrédit possible' : 'En construction'}</Badge>
+                <p className="small muted">Calculé sur votre régularité dans les tontines, votre épargne et votre identité.</p>
+              </div>
+            </div>
+            <div className="summary">{o.factors.map((f) => <div key={f.label} className="row between"><span className="muted small">{f.label}</span><b className={`small ${f.points < 0 ? 'neg' : f.points > 0 ? 'pos' : ''}`}>{f.points > 0 ? '+' : ''}{f.points}</b></div>)}</div>
           </div>
           <Microcredit offer={o.microcredit} onDone={reload} />
         </div>
@@ -73,7 +80,7 @@ function Microcredit({ offer, onDone }: { offer: Offers['microcredit']; onDone: 
           {sim && <div className="notice small">{sim.schedule.length} échéance{sim.schedule.length > 1 ? 's' : ''} ≈ {fcfa(sim.schedule[0].principal + sim.schedule[0].interest)} · intérêts totaux {fcfa(sim.totalInterest)}</div>}
           <Button disabled={a < offer.minAmount || a > offer.maxAmount || purpose.trim().length < 3} onClick={async () => {
             const pin = await askPin(`Microcrédit de ${fcfa(a)} sur ${months} mois`);
-            if (pin && await act(() => api('/credit/loans', { body: { amount: a, months, purpose, pin } }), 'Crédit accordé et versé sur votre jeton ✅')) { setAmount(''); setPurpose(''); onDone(); }
+            if (pin && await act(() => api('/credit/loans', { body: { amount: a, months, purpose, pin } }), 'Crédit accordé et versé sur votre jeton')) { setAmount(''); setPurpose(''); onDone(); }
           }}>Demander</Button>
         </>
       )}
@@ -94,7 +101,7 @@ function Advance({ a, onDone }: { a: Offers['advances'][number]; onDone: () => v
         <Input style={{ width: 130 }} inputMode="numeric" placeholder="Montant" value={amount} onChange={(e) => setAmount(e.target.value)} />
         <Button size="sm" disabled={v < 1 || v > a.maxAmount} onClick={async () => {
           const pin = await askPin(`Avance de ${fcfa(v)} sur « ${a.tontine} »`);
-          if (pin && await act(() => api('/credit/advances', { body: { roundId: a.roundId, amount: v, pin } }), 'Avance versée sur votre jeton ✅')) { setAmount(''); onDone(); }
+          if (pin && await act(() => api('/credit/advances', { body: { roundId: a.roundId, amount: v, pin } }), 'Avance versée sur votre jeton')) { setAmount(''); onDone(); }
         }}>Obtenir</Button>
       </>}
     </div>
@@ -115,7 +122,7 @@ function LoanRow({ l, onDone }: { l: Loan; onDone: () => void }) {
       {l.status === 'active' && l.product === 'microcredit' && next && (
         <Button size="sm" variant="ghost" onClick={async () => {
           const pin = await askPin(`Payer l’échéance ${next.number} (${fcfa(next.principal + next.interest + next.penalty)})`);
-          if (pin && await act(() => api(`/credit/loans/${l.id}/repay`, { body: { pin } }), 'Échéance payée ✅')) onDone();
+          if (pin && await act(() => api(`/credit/loans/${l.id}/repay`, { body: { pin } }), 'Échéance payée')) onDone();
         }}>Payer l’échéance</Button>
       )}
     </div>

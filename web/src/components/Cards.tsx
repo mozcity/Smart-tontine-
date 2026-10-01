@@ -1,3 +1,4 @@
+import { Bike, CookingPot, Package, Refrigerator, Shirt, Smartphone, Sofa, Wheat, Wrench, type LucideIcon } from 'lucide-react';
 import { Link } from 'react-router';
 import { fcfa, FREQ, GOOD_CATEGORIES } from '../lib/format';
 import { PartnerTag, type Brand } from './Brand';
@@ -14,7 +15,7 @@ export function TontineCard({ t }: { t: PublicTontine }) {
   return (
     <Link to={`/rejoindre/${t.id}`} className="card card-link stack-sm">
       <div className="row between">
-        <Badge tone={t.kind === 'bien' ? 'warn' : 'brand'}>{t.kind === 'bien' ? '🛍️ Tontine de bien' : '💰 Tontine'}</Badge>
+        <Badge tone={t.kind === 'bien' ? 'warn' : 'brand'}>{t.kind === 'bien' ? 'Tontine de bien' : 'Tontine'}</Badge>
         <span className="xs">{free > 0 ? `${free} place${free > 1 ? 's' : ''}` : 'Complète'}</span>
       </div>
       <h3>{t.name}</h3>
@@ -31,12 +32,12 @@ export function TontineCard({ t }: { t: PublicTontine }) {
 
 export interface Good { id: string; name: string; description: string | null; category: string; price: number; image: string | null; stock: number | null; partner?: Brand }
 
-const EMOJI: Record<string, string> = { moto: '🛵', electromenager: '🧊', telephone: '📱', mobilier: '🛋️', cuisine: '🍳', textile: '🧵', alimentaire: '🌾', materiel_pro: '🛠️', autre: '📦' };
+const CAT_ICON: Record<string, LucideIcon> = { moto: Bike, electromenager: Refrigerator, telephone: Smartphone, mobilier: Sofa, cuisine: CookingPot, textile: Shirt, alimentaire: Wheat, materiel_pro: Wrench, autre: Package };
 
 export function GoodCard({ g, action }: { g: Good; action?: React.ReactNode }) {
   return (
     <div className="card stack-sm">
-      {g.image ? <img className="good-img" src={g.image} alt={g.name} /> : <div className="good-img" aria-hidden="true">{EMOJI[g.category] ?? '📦'}</div>}
+      {g.image ? <img className="good-img" src={g.image} alt={g.name} /> : <div className="good-img" aria-hidden="true">{(() => { const I = CAT_ICON[g.category] ?? Package; return <I size={44} strokeWidth={1.5} />; })()}</div>}
       <div className="row between"><Badge tone="muted">{GOOD_CATEGORIES[g.category] ?? g.category}</Badge>{g.stock !== null && <span className="xs">{g.stock > 0 ? `${g.stock} en stock` : 'Rupture'}</span>}</div>
       <h3>{g.name}</h3>
       {g.description && <p className="small muted">{g.description}</p>}

@@ -21,7 +21,7 @@ export default function Commandes() {
                 <td className="right amount">{fcfa(o.amount)}</td>
                 <td><Badge tone={tone}>{l}</Badge>{o.shipped_at && <div className="xs">expédiée le {date(o.shipped_at)}</div>}</td>
                 <td className="right nowrap">{o.status === 'pending' && <>
-                  <Button size="sm" onClick={() => { const note = prompt('Message au client (lieu de retrait, livreur…)', 'Votre bien est prêt, passez le récupérer en boutique.'); if (note !== null) return run(() => api(`/goods/orders/${o.id}/ship`, { body: { note: note || undefined } }), 'Client prévenu ✅'); }}>Expédier / prêt</Button>{' '}
+                  <Button size="sm" onClick={() => { const note = prompt('Message au client (lieu de retrait, livreur…)', 'Votre bien est prêt, passez le récupérer en boutique.'); if (note !== null) return run(() => api(`/goods/orders/${o.id}/ship`, { body: { note: note || undefined } }), 'Client prévenu'); }}>Expédier / prêt</Button>{' '}
                   <Button size="sm" variant="ghost" onClick={() => { if (confirm('Annuler la commande ? Le client est remboursé intégralement.')) return run(() => api(`/goods/orders/${o.id}/cancel`, { body: {} }), 'Commande annulée, client remboursé'); }}>Annuler</Button></>}</td>
               </tr>); })}</tbody>
           </table></div>

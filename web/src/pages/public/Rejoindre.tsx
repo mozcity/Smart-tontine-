@@ -46,7 +46,7 @@ export default function Rejoindre() {
       <div className="card stack" style={{ borderTop: `5px solid ${accent}` }}>
         {g.partner && <div className="row"><PartnerLogo name={g.partner.name} logo={g.partner.logo} color={g.partner.color} /><div><b>{g.partner.name}</b><div className="xs">Partenaire Smart Tontine</div></div></div>}
         <div className="stack-sm">
-          <Badge tone={t?.kind === 'bien' ? 'warn' : 'brand'}>{t ? (t.kind === 'bien' ? '🛍️ Tontine de bien' : '💰 Tontine') : '👥 Coffre de groupe'}</Badge>
+          <Badge tone={t?.kind === 'bien' ? 'warn' : 'brand'}>{t ? (t.kind === 'bien' ? 'Tontine de bien' : 'Tontine') : 'Coffre de groupe'}</Badge>
           <h1>{g.name}</h1>
           <p className="muted">Organisée par {g.organizer}</p>
           {t?.description && <p>{t.description}</p>}

@@ -42,7 +42,7 @@ export default function CoffreDetail() {
         <div className="card stack-sm">
           <h2>Cotiser</h2>
           <div className="row"><Input style={{ width: 160 }} inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={c.contribution_amount ? String(c.contribution_amount) : 'Montant'} />
-            <Button variant="green" disabled={parseAmount(amount || String(c.contribution_amount ?? '')) < 100} onClick={() => run(() => api(`/cagnottes/${c.id}/contribute`, { body: { amount: parseAmount(amount || String(c.contribution_amount)) } }), 'Cotisation versée ✅')}>Cotiser</Button></div>
+            <Button variant="green" disabled={parseAmount(amount || String(c.contribution_amount ?? '')) < 100} onClick={() => run(() => api(`/cagnottes/${c.id}/contribute`, { body: { amount: parseAmount(amount || String(c.contribution_amount)) } }), 'Cotisation versée')}>Cotiser</Button></div>
         </div>
         <div className="card stack-sm"><h2>Inviter</h2><InviteBox id={c.id} name={c.name} /></div>
       </div>

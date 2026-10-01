@@ -1,3 +1,4 @@
+import { Banknote, ShoppingBag, Tag } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useApi } from '../../lib/useApi';
@@ -22,7 +23,7 @@ export default function Decouvrir() {
         <p className="muted" style={{ marginTop: 6 }}>Rejoignez une tontine publique en quelques secondes, ou choisissez un bien à financer en tontine ou en plan d'achat.</p></div>
       <div className="row between">
         <Segmented<Tab> value={tab} onChange={(v) => setParams({ onglet: v })}
-          options={[['argent', '💰 Tontines d’argent'], ['bien', '🛍️ Tontines de biens'], ['catalogue', '🏷️ Catalogue']]} />
+          options={[['argent', 'Tontines d’argent', Banknote], ['bien', 'Tontines de biens', ShoppingBag], ['catalogue', 'Catalogue', Tag]]} />
         <div className="row">
           {tab === 'catalogue' && (
             <Select value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Catégorie" style={{ width: 190 }}>

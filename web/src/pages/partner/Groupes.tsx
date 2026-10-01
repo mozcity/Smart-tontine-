@@ -25,7 +25,7 @@ export default function Groupes() {
             <tbody>{d.tontines.map((t) => { const [l, tone] = TONTINE_STATUS[t.status] ?? [t.status, 'muted']; return (
               <tr key={t.id}>
                 <td><Link to={`/app/tontines/${t.id}`}><b>{t.name}</b></Link></td>
-                <td>{t.kind === 'bien' ? `🛍️ ${t.good_label}` : '💰 Argent'}</td>
+                <td>{t.kind === 'bien' ? <Badge tone="warn" plain>Bien · {t.good_label}</Badge> : <Badge tone="brand" plain>Argent</Badge>}</td>
                 <td className="nowrap">{fcfa(t.contribution_amount)} / {FREQ[t.frequency]}</td>
                 <td>{t.members}/{t.max_members}{t.defaulters > 0 && <> · <Badge tone="danger">{t.defaulters} défaillant{t.defaulters > 1 ? 's' : ''}</Badge></>}</td>
                 <td>{t.visibility === 'public' ? 'Publique' : 'Privée'}</td>

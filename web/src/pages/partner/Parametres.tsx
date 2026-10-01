@@ -23,7 +23,7 @@ export default function Parametres() {
         <form className="card stack" onSubmit={async (e) => {
           e.preventDefault();
           if (await act(() => api(`/partners/${p.id}`, { method: 'PATCH', body: { name: f.name, description: f.description || undefined, city: f.city || undefined, phone: f.phone || undefined,
-            primaryColor: f.primaryColor, managementFeeRate: Number(f.fee) / 100, logo: f.logo && f.logo !== p.logo ? f.logo : undefined } }), 'Paramètres enregistrés ✅')) await reload();
+            primaryColor: f.primaryColor, managementFeeRate: Number(f.fee) / 100, logo: f.logo && f.logo !== p.logo ? f.logo : undefined } }), 'Paramètres enregistrés')) await reload();
         }}>
           <LogoPicker name={f.name} value={f.logo} color={f.primaryColor} onChange={(logo) => setF({ ...f, logo })} />
           <div className="form-grid">

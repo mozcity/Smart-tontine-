@@ -4,6 +4,7 @@ import { api } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { pct, PARTNER_TYPES } from '../../lib/format';
 import { PartnerLogo } from '../../components/Brand';
+import { Building2, Home } from 'lucide-react';
 import { Shell } from '../../components/Shell';
 import { Badge, Button, ErrorBox, Field, Input, Loading, PageHead, Select, Textarea } from '../../components/ui';
 import { LogoPicker } from './LogoPicker';
@@ -26,7 +27,7 @@ function Spaces() {
   const { data, loading } = useApi<Mine[]>('/partners/mine');
   const [creating, setCreating] = useState(false);
   return (
-    <Shell items={[{ to: '/partenaire', label: 'Mes espaces', icon: '🏢', end: true }, { to: '/app', label: 'Mon espace membre', icon: '🏠' }]}>
+    <Shell items={[{ to: '/partenaire', label: 'Mes espaces', icon: Building2, end: true }, { to: '/app', label: 'Mon espace membre', icon: Home }]}>
       <div className="stack">
         <PageHead title="Portail partenaire" sub="Organisez vos tontines, coffres et ventes de biens à votre marque.">
           {!!data?.length && <Button onClick={() => setCreating(!creating)}>+ Nouvel espace</Button>}

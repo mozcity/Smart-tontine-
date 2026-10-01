@@ -42,14 +42,14 @@ export default function Finances() {
           <p className="xs">Frais de retrait : 1 % (min. 100 F).</p>
           <Button disabled={parseAmount(w.amount) < 100} onClick={async () => {
             const pin = await askPin(`Retrait de ${fcfa(parseAmount(w.amount))} du compte « ${dash.partner.name} »`);
-            if (pin && await act(() => api(`/partners/${id}/withdraw`, { body: { amount: parseAmount(w.amount), channel: w.channel, phone: w.phone || undefined, pin } }), 'Retrait envoyé ✅')) { setW({ ...w, amount: '' }); await refresh(); }
+            if (pin && await act(() => api(`/partners/${id}/withdraw`, { body: { amount: parseAmount(w.amount), channel: w.channel, phone: w.phone || undefined, pin } }), 'Retrait envoyé')) { setW({ ...w, amount: '' }); await refresh(); }
           }}>Retirer</Button>
         </div>
         <div className="card stack-sm">
           <h2>Alimenter le compte</h2>
           <p className="muted small">Depuis votre jeton personnel, pour payer la licence. Les factures dues sont réglées automatiquement.</p>
           <div className="row"><Input style={{ width: 160 }} inputMode="numeric" value={topup} onChange={(e) => setTopup(e.target.value)} placeholder={due ? String(due) : 'Montant'} />
-            <Button disabled={parseAmount(topup) < 100} onClick={async () => { if (await act(() => api(`/partners/${id}/topup`, { body: { amount: parseAmount(topup) } }), 'Compte alimenté ✅')) { setTopup(''); await refresh(); } }}>Alimenter</Button></div>
+            <Button disabled={parseAmount(topup) < 100} onClick={async () => { if (await act(() => api(`/partners/${id}/topup`, { body: { amount: parseAmount(topup) } }), 'Compte alimenté')) { setTopup(''); await refresh(); } }}>Alimenter</Button></div>
           <h3 style={{ marginTop: 12 }}>Factures de licence</h3>
           {!dash.invoices.length ? <Empty>Aucune facture pour l’instant (facturation le 1er du mois).</Empty> : dash.invoices.map((i) => (
             <div key={i.id} className="list-row"><span className="grow">{i.month} · {i.active_members} membres actifs</span><span className="amount">{fcfa(i.amount)}</span><Badge tone={i.status === 'paid' ? 'ok' : 'warn'}>{i.status === 'paid' ? 'Payée' : 'Due'}</Badge></div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { useAuth } from '../lib/auth';
+import { Menu, X } from 'lucide-react';
 import { LogoMark } from './ui';
 
 export function PublicLayout() {
@@ -25,7 +26,7 @@ export function PublicLayout() {
               ? <Link className="btn" to="/app">Mon espace</Link>
               : <><Link className="btn ghost" to={`/connexion?next=${encodeURIComponent(loc.pathname)}`}>Se connecter</Link><Link className="btn green" to="/connexion">Ouvrir un compte</Link></>}
           </div>
-          <button className="menu-btn" aria-label="Menu" onClick={() => setOpen(!open)}>☰</button>
+          <button className="icon-btn menu-btn" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X size={22} /> : <Menu size={22} />}</button>
         </div>
       </header>
       <main><Outlet /></main>
@@ -33,7 +34,7 @@ export function PublicLayout() {
         <div className="container stack">
           <div className="grid">
             <div className="stack-sm">
-              <div className="brand" style={{ color: '#fff' }}><LogoMark /> Smart Tontine</div>
+              <div className="brand"><LogoMark /> Smart Tontine</div>
               <p>La tontine en ligne sûre, adossée à la microfinance. Ouagadougou, Burkina Faso.</p>
             </div>
             <div className="stack-sm"><b style={{ color: '#fff' }}>Produit</b><Link to="/decouvrir">Tontines publiques</Link><Link to="/decouvrir?onglet=catalogue">Catalogue de biens</Link><Link to="/tarifs">Tarifs</Link></div>

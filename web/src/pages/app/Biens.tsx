@@ -41,7 +41,7 @@ export default function Biens() {
               {['pending', 'shipped'].includes(o.status) && (
                 <Button size="sm" variant="green" onClick={async () => {
                   const pin = await askPin(`Je confirme avoir reçu « ${o.good_name} ». Le fournisseur sera payé.`);
-                  if (pin && await act(() => api(`/goods/orders/${o.id}/confirm`, { body: { pin } }), 'Réception confirmée, fournisseur payé ✅')) void orders.reload();
+                  if (pin && await act(() => api(`/goods/orders/${o.id}/confirm`, { body: { pin } }), 'Réception confirmée, fournisseur payé')) void orders.reload();
                 }}>J’ai reçu le bien</Button>
               )}
             </div>
@@ -65,7 +65,7 @@ function PlanCard({ p, onDone }: { p: Plan; onDone: () => void }) {
       {p.status === 'active' && (
         <div className="row">
           <Input style={{ width: 130 }} inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Montant" />
-          <Button size="sm" disabled={parseAmount(amount) < 100} onClick={async () => { if (await act(() => api(`/goods/plans/${p.id}/pay`, { body: { amount: parseAmount(amount) } }), 'Versement effectué ✅')) onDone(); }}>Verser</Button>
+          <Button size="sm" disabled={parseAmount(amount) < 100} onClick={async () => { if (await act(() => api(`/goods/plans/${p.id}/pay`, { body: { amount: parseAmount(amount) } }), 'Versement effectué')) onDone(); }}>Verser</Button>
           <button className="linkbtn small" onClick={async () => { if (confirm('Annuler ce plan ? L’épargne revient sur votre jeton.') && await act(() => api(`/goods/plans/${p.id}/cancel`, { body: {} }), 'Plan annulé, épargne rendue')) onDone(); }}>Annuler</button>
         </div>
       )}
@@ -91,7 +91,7 @@ function NewPlan({ good, onClose, onDone }: { good: Good | null; onClose: () => 
       <Button size="block" onClick={async () => {
         const ok = await act(() => api('/goods/plans', { body: good
           ? { goodId: good.id, frequency: f.frequency, installmentAmount: parseAmount(f.installment) || undefined }
-          : { label: f.label, targetAmount: parseAmount(f.target), frequency: f.frequency, installmentAmount: parseAmount(f.installment) || undefined } }), 'Plan d’achat créé ✅');
+          : { label: f.label, targetAmount: parseAmount(f.target), frequency: f.frequency, installmentAmount: parseAmount(f.installment) || undefined } }), 'Plan d’achat créé');
         if (ok) onDone();
       }}>Créer le plan</Button>
     </Modal>
