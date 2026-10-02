@@ -3,3 +3,7 @@ dist
 .env
 .expo
 *.log
+motion/.frames
+motion/.still-*
+motion/*.wav
+motion/*-sans-son.mp4

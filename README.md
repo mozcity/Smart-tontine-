@@ -30,6 +30,9 @@ Références : **Maman Tontine** (expérience tontine au Sénégal) et **MaTonti
 9. [**Cahier des charges**](docs/09_cahier_des_charges.md) — objectifs, acteurs et droits, exigences fonctionnelles et non fonctionnelles, livrables, lots, critères de recette
 10. [**Architecture technique**](docs/10_architecture_technique.md) — composants, plateforme web, sécurité, environnements, Docker, intégration continue, EAS, exploitation
 11. [**Design UX/UI**](docs/11_design_ux_ui.md) — principes, identité visuelle, navigation, composants, parcours clés, captures web et app
+12. [**Point d'avancement**](docs/12_point_avancement.md) — ce qui est livré, ce qui reste avant l'ouverture au public, chemin critique
+
+**Vidéo de présentation** : [`motion/smart-tontine-presentation.mp4`](motion/smart-tontine-presentation.mp4) (65 s, motion design, musique originale) — sources dans [`motion/`](motion/).
 
 ## Chiffres clés (modèle G retenu, modifiable dans l'Excel)
 

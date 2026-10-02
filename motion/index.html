@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Smart Tontine — motion design</title>
+<!--
+  Vidéo de présentation de Smart Tontine (1920 × 1080, environ 65 s).
+  Chaque animation est pilotée par le temps (Web Animations API) : `seek(t)` affiche l'image exacte
+  à l'instant t, ce qui permet un rendu image par image (render.mjs) puis l'assemblage en MP4 avec ffmpeg.
+  Ouvrir ce fichier dans un navigateur le joue aussi en direct.
+-->
+<style>
+@font-face { font-family: 'Inter'; src: url('assets/inter.woff2') format('woff2'); font-weight: 100 900; }
+:root { --brand: #2F2C8F; --brand-500: #4A46C4; --brand-800: #1C1A5C; --green: #3AA935; --green-d: #278326; --lime: #8BE086; --gold: #F0A92B; --red: #D63B3B;
+  --ink: #15162C; --ink2: #4E5272; --bg: #F6F7FB; }
+* { box-sizing: border-box; margin: 0; }
+html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; }
+body { font-family: 'Inter', system-ui, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; font-feature-settings: 'cv11', 'ss01'; }
+#stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--brand-800); }
+.scene { position: absolute; inset: 0; opacity: 0; }
+.dark { color: #fff; background: radial-gradient(1100px 600px at 85% -10%, rgba(58,169,53,.30), transparent 60%), radial-gradient(900px 700px at -10% 110%, rgba(108,103,240,.45), transparent 60%), linear-gradient(160deg, #2F2C8F 0%, #15134A 100%); }
+.dark::before { content: ''; position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.07) 1.5px, transparent 1.5px); background-size: 34px 34px; }
+.light { background: radial-gradient(900px 500px at 100% 0%, rgba(74,70,196,.10), transparent 60%), var(--bg); }
+.abs { position: absolute; }
+.center { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.eyebrow { font-size: 22px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--green); }
+.dark .eyebrow { color: var(--lime); }
+h1 { font-size: 86px; font-weight: 850; letter-spacing: -.035em; line-height: 1.04; }
+h2 { font-size: 64px; font-weight: 820; letter-spacing: -.03em; line-height: 1.08; }
+h3 { font-size: 30px; font-weight: 750; letter-spacing: -.01em; }
+p.lead { font-size: 30px; line-height: 1.45; color: var(--ink2); }
+.dark p.lead { color: rgba(255,255,255,.82); }
+em.g { font-style: normal; background: linear-gradient(90deg, var(--lime), var(--green)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.ico { width: 72px; height: 72px; border-radius: 22px; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.ico svg { width: 36px; height: 36px; }
+.card { background: #fff; border-radius: 28px; box-shadow: 0 2px 4px rgba(21,22,44,.05), 0 30px 60px -30px rgba(21,22,44,.35); }
+.glass { background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.18); border-radius: 26px; backdrop-filter: blur(6px); }
+.chip { display: inline-flex; align-items: center; gap: 14px; padding: 14px 24px 14px 14px; border-radius: 999px; background: #fff; color: var(--ink); font-weight: 700; font-size: 26px; box-shadow: 0 20px 40px -18px rgba(0,0,0,.45); }
+.chip i { width: 46px; height: 46px; border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; font-style: normal; font-weight: 850; font-size: 16px; color: #fff; }
+/* Téléphone */
+.phone { position: absolute; width: 400px; height: 846px; border-radius: 62px; background: #0E0F1C; padding: 14px; box-shadow: 0 60px 120px -40px rgba(0,0,0,.7), inset 0 0 0 2px #2A2C45; }
+.phone .scr { width: 100%; height: 100%; border-radius: 48px; overflow: hidden; position: relative; background: #F6F7FB; }
+.phone .scr img { position: absolute; left: 0; right: 0; top: 46px; width: 100%; height: calc(100% - 46px); object-fit: cover; object-position: top; }
+.phone::after { content: ''; position: absolute; top: 26px; left: 50%; width: 110px; height: 30px; margin-left: -55px; border-radius: 20px; background: #0E0F1C; }
+/* Ordinateur */
+.laptop { position: absolute; width: 1180px; }
+.laptop .lid { background: #0E0F1C; border-radius: 26px 26px 0 0; padding: 22px 22px 26px; box-shadow: 0 60px 120px -40px rgba(0,0,0,.7); }
+.laptop .scr { height: 680px; border-radius: 8px; overflow: hidden; position: relative; background: #F6F7FB; }
+.laptop .scr img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top left; }
+.laptop .base { height: 26px; margin: 0 -70px; background: linear-gradient(#D9DBE7, #A9ACC0); border-radius: 0 0 26px 26px; }
+.logo svg { width: 100%; height: 100%; }
+.wipe { position: absolute; top: 0; bottom: 0; width: 2400px; left: -2400px; z-index: 50; background: linear-gradient(90deg, var(--green) 0 18%, var(--brand) 18% 100%); }
+.step { width: 330px; display: flex; flex-direction: column; align-items: center; gap: 22px; text-align: center; }
+.step .n { width: 120px; height: 120px; border-radius: 36px; display: flex; align-items: center; justify-content: center; background: #fff; box-shadow: 0 30px 50px -24px rgba(21,22,44,.35); position: relative; color: var(--brand); }
+.step .n svg { width: 52px; height: 52px; }
+.step .n b { position: absolute; top: -14px; right: -14px; width: 46px; height: 46px; border-radius: 50%; background: var(--green-d); color: #fff; font-size: 22px; display: flex; align-items: center; justify-content: center; }
+.step p { font-size: 22px; color: var(--ink2); line-height: 1.4; }
+.row { display: flex; align-items: center; gap: 22px; }
+.feat { display: flex; align-items: center; gap: 24px; padding: 22px 28px; }
+.feat b { display: block; font-size: 30px; font-weight: 750; }
+.feat span { font-size: 22px; opacity: .78; }
+.badge { display: inline-flex; padding: 8px 18px; border-radius: 999px; font-weight: 750; font-size: 22px; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script>
+const ICONS = {"NotebookPen":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-notebook-pen\" aria-hidden=\"true\"><path d=\"M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4\"></path><path d=\"M2 6h4\"></path><path d=\"M2 10h4\"></path><path d=\"M2 14h4\"></path><path d=\"M2 18h4\"></path><path d=\"M21.378 5.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z\"></path></svg>","UserX":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-user-x\" aria-hidden=\"true\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"></path><circle cx=\"9\" cy=\"7\" r=\"4\"></circle><line x1=\"17\" x2=\"22\" y1=\"8\" y2=\"13\"></line><line x1=\"22\" x2=\"17\" y1=\"8\" y2=\"13\"></line></svg>","Banknote":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-banknote\" aria-hidden=\"true\"><rect width=\"20\" height=\"12\" x=\"2\" y=\"6\" rx=\"2\"></rect><circle cx=\"12\" cy=\"12\" r=\"2\"></circle><path d=\"M6 12h.01M18 12h.01\"></path></svg>","Ban":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-ban\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"></circle><path d=\"M4.929 4.929 19.07 19.071\"></path></svg>","Smartphone":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-smartphone\" aria-hidden=\"true\"><rect width=\"14\" height=\"20\" x=\"5\" y=\"2\" rx=\"2\" ry=\"2\"></rect><path d=\"M12 18h.01\"></path></svg>","ShieldCheck":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-shield-check\" aria-hidden=\"true\"><path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\"></path><path d=\"m9 12 2 2 4-4\"></path></svg>","Lock":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-lock\" aria-hidden=\"true\"><rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\" ry=\"2\"></rect><path d=\"M7 11V7a5 5 0 0 1 10 0v4\"></path></svg>","Landmark":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-landmark\" aria-hidden=\"true\"><path d=\"M10 18v-7\"></path><path d=\"M11.119 2.205a2 2 0 0 1 1.762 0l7.84 3.846A.5.5 0 0 1 20.5 7h-17a.5.5 0 0 1-.22-.949z\"></path><path d=\"M14 18v-7\"></path><path d=\"M18 18v-7\"></path><path d=\"M3 22h18\"></path><path d=\"M6 18v-7\"></path></svg>","BadgeCheck":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-badge-check lucide-verified\" aria-hidden=\"true\"><path d=\"M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z\"></path><path d=\"m16 9-5.5 5.5L8 12\"></path></svg>","TrendingUp":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-trending-up\" aria-hidden=\"true\"><path d=\"M16 7h6v6\"></path><path d=\"m22 7-8.5 8.5-5-5L2 17\"></path></svg>","HandCoins":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-hand-coins\" aria-hidden=\"true\"><path d=\"M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 17\"></path><path d=\"m7 21 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-4.2 3.9\"></path><path d=\"m2 16 6 6\"></path><circle cx=\"16\" cy=\"9\" r=\"2.9\"></circle><circle cx=\"6\" cy=\"5\" r=\"3\"></circle></svg>","Bike":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-bike\" aria-hidden=\"true\"><circle cx=\"18.5\" cy=\"17.5\" r=\"3.5\"></circle><circle cx=\"5.5\" cy=\"17.5\" r=\"3.5\"></circle><circle cx=\"15\" cy=\"5\" r=\"1\"></circle><path d=\"M12 17.5V14l-3-3 4-3 2 3h2\"></path></svg>","Refrigerator":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-refrigerator\" aria-hidden=\"true\"><path d=\"M5 6a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6Z\"></path><path d=\"M5 10h14\"></path><path d=\"M15 7v6\"></path></svg>","ShoppingBag":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-shopping-bag\" aria-hidden=\"true\"><path d=\"M16 10a4 4 0 0 1-8 0\"></path><path d=\"M3.103 6.034h17.794\"></path><path d=\"M3.4 5.467a2 2 0 0 0-.4 1.2V20a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6.667a2 2 0 0 0-.4-1.2l-2-2.667A2 2 0 0 0 17 2H7a2 2 0 0 0-1.6.8z\"></path></svg>","Package":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-package\" aria-hidden=\"true\"><path d=\"M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z\"></path><path d=\"M12 22V12\"></path><polyline points=\"3.29 7 12 12 20.71 7\"></polyline><path d=\"m7.5 4.27 9 5.15\"></path></svg>","Truck":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-truck\" aria-hidden=\"true\"><path d=\"M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2\"></path><path d=\"M15 18H9\"></path><path d=\"M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14\"></path><circle cx=\"17\" cy=\"18\" r=\"2\"></circle><circle cx=\"7\" cy=\"18\" r=\"2\"></circle></svg>","CircleCheck":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-circle-check lucide-check-circle-2\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"></circle><path d=\"m16 9-5.5 5.5L8 12\"></path></svg>","Users":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-users\" aria-hidden=\"true\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"></path><path d=\"M16 3.128a4 4 0 0 1 0 7.744\"></path><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"></path><circle cx=\"9\" cy=\"7\" r=\"4\"></circle></svg>","RefreshCcw":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-refresh-ccw\" aria-hidden=\"true\"><path d=\"M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\"></path><path d=\"M3 3v5h5\"></path><path d=\"M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16\"></path><path d=\"M16 16h5v5\"></path></svg>","Wallet":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-wallet\" aria-hidden=\"true\"><path d=\"M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1\"></path><path d=\"M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4\"></path></svg>","ArrowRight":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-arrow-right\" aria-hidden=\"true\"><path d=\"M5 12h14\"></path><path d=\"m12 5 7 7-7 7\"></path></svg>","Building2":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-building-complex lucide-building-2\" aria-hidden=\"true\"><path d=\"M10 12h4\"></path><path d=\"M10 8h4\"></path><path d=\"M14 21v-3a2 2 0 0 0-4 0v3\"></path><path d=\"M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2\"></path><path d=\"M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16\"></path></svg>","Globe":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-globe\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"></circle><path d=\"M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20\"></path><path d=\"M2 12h20\"></path></svg>","Bell":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-bell\" aria-hidden=\"true\"><path d=\"M10.268 21a2 2 0 0 0 3.464 0\"></path><path d=\"M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326\"></path></svg>","Sparkles":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-sparkles lucide-stars\" aria-hidden=\"true\"><path d=\"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z\"></path><path d=\"M20 2v4\"></path><path d=\"M22 4h-4\"></path><circle cx=\"4\" cy=\"20\" r=\"2\"></circle></svg>","MessageCircleWarning":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-message-circle-warning\" aria-hidden=\"true\"><path d=\"M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719\"></path><path d=\"M12 8v4\"></path><path d=\"M12 16h.01\"></path></svg>","Coins":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-coins\" aria-hidden=\"true\"><path d=\"M13.744 17.736a6 6 0 1 1-7.48-7.48\"></path><path d=\"M15 6h1v4\"></path><path d=\"m6.134 14.768.866-.5 2 3.464\"></path><circle cx=\"16\" cy=\"8\" r=\"6\"></circle></svg>","Store":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-store\" aria-hidden=\"true\"><path d=\"M15 21v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5\"></path><path d=\"M17.774 10.31a1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.451 0 1.12 1.12 0 0 0-1.548 0 2.5 2.5 0 0 1-3.452 0 1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.77-3.248l2.889-4.184A2 2 0 0 1 7 2h10a2 2 0 0 1 1.653.873l2.895 4.192a2.5 2.5 0 0 1-3.774 3.244\"></path><path d=\"M4 10.95V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.05\"></path></svg>","IdCard":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-id-card\" aria-hidden=\"true\"><path d=\"M13 19a4 4 0 00-8 0\"></path><path d=\"M16 10h2\"></path><path d=\"M16 14h2\"></path><circle cx=\"9\" cy=\"12\" r=\"3\"></circle><rect x=\"2\" y=\"5\" width=\"20\" height=\"14\" rx=\"2\"></rect></svg>","Laptop":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-laptop\" aria-hidden=\"true\"><path d=\"M18 5a2 2 0 0 1 2 2v8.526a2 2 0 0 0 .212.897l1.068 2.127a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45l1.068-2.127A2 2 0 0 0 4 15.526V7a2 2 0 0 1 2-2z\"></path><path d=\"M20.054 15.987H3.946\"></path></svg>","MapPin":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-map-pin\" aria-hidden=\"true\"><path d=\"M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0\"></path><circle cx=\"12\" cy=\"10\" r=\"3\"></circle></svg>","Check":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-check\" aria-hidden=\"true\"><path d=\"M20 6 9 17l-5-5\"></path></svg>"};
+const ico = (name, bg = '#ECEBFA', fg = '#2F2C8F', size = 72) =>
+  `<span class="ico" style="background:${bg};color:${fg};width:${size}px;height:${size}px;border-radius:${size * .3}px">${ICONS[name].replace('width="24" height="24"', `width="${size / 2}" height="${size / 2}"`)}</span>`;
+const LOGO = `<svg viewBox="0 0 64 64"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4A46C4"/><stop offset="1" stop-color="#1C1A5C"/></linearGradient></defs>
+  <rect width="64" height="64" rx="18" fill="url(#lg)"/>
+  <circle class="ring" cx="32" cy="33" r="16" fill="none" stroke="#3AA935" stroke-width="5.5" stroke-linecap="round" stroke-dasharray="78 23" transform="rotate(-60 32 33)"/>
+  <circle class="d1" cx="32" cy="17" r="5" fill="#fff"/><circle class="d2" cx="46" cy="41" r="5" fill="#fff"/><circle class="d3" cx="18" cy="41" r="5" fill="#fff"/></svg>`;
+
+const stage = document.getElementById('stage');
+const html = (s) => { const t = document.createElement('template'); t.innerHTML = s.trim(); return t.content.firstElementChild; };
+const $ = (sel, root = stage) => root.querySelector(sel);
+const $$ = (sel, root = stage) => [...root.querySelectorAll(sel)];
+const EASE = 'cubic-bezier(.2,.8,.2,1)', SOFT = 'cubic-bezier(.45,0,.2,1)', BACK = 'cubic-bezier(.3,1.5,.5,1)';
+const counters = [];
+
+// ───── Outils d'animation (tout est exprimé en secondes depuis le début de la vidéo) ─────
+function A(el, t, d, kf, easing = EASE, fill = 'both') {
+  if (typeof el === 'string') el = $(el);
+  el.animate(kf, { delay: t * 1000, duration: d * 1000, fill, easing });
+}
+const up = (el, t, d = .7, y = 50) => A(el, t, d, [{ opacity: 0, transform: `translateY(${y}px)` }, { opacity: 1, transform: 'none' }]);
+const pop = (el, t, d = .55) => A(el, t, d, [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'scale(1)' }], BACK);
+const fromX = (el, t, x, d = .9) => A(el, t, d, [{ opacity: 0, transform: `translateX(${x}px)` }, { opacity: 1, transform: 'none' }]);
+const out = (el, t, d = .45) => A(el, t, d, [{ opacity: 1 }, { opacity: 0 }], 'ease-in', 'forwards');
+function scene(id, cls, start, end, inner) {
+  const el = html(`<section class="scene ${cls}" id="${id}">${inner}</section>`);
+  stage.appendChild(el);
+  A(el, start, .5, [{ opacity: 0 }, { opacity: 1 }], 'linear');
+  if (end) A(el, end - .5, .5, [{ opacity: 1 }, { opacity: 0 }], 'linear', 'forwards');
+  return el;
+}
+function wipe(t) {
+  const w = html('<div class="wipe"></div>'); stage.appendChild(w);
+  A(w, t - .45, .9, [{ transform: 'translateX(0)' }, { transform: 'translateX(4320px)' }], 'cubic-bezier(.7,0,.3,1)', 'both');
+}
+function count(el, t, d, from, to, fmt = (v) => Math.round(v).toLocaleString('fr-FR')) { counters.push({ el, t, d, from, to, fmt }); }
+const phone = (src, x, y, rot = 0, scale = 1) => `<div class="phone" style="left:${x}px;top:${y}px;transform:rotate(${rot}deg) scale(${scale})"><div class="scr"><img src="assets/${src}"></div></div>`;
+
+// ═════ 1. Ouverture (0 – 5,5 s) ═════
+const s1 = scene('s1', 'dark center', 0, 5.5, `
+  <div class="logo" style="width:200px;height:200px">${LOGO}</div>
+  <h1 style="margin-top:42px;font-size:110px"><span class="t1" style="display:inline-block">Smart Tontine</span></h1>
+  <p class="lead tag" style="margin-top:22px;font-size:36px">La tontine en ligne, <em class="g">sûre</em> et sans espèces.</p>`);
+pop($('.logo', s1), .3, .8);
+A($('.ring', s1), .6, 1.2, [{ strokeDasharray: '0 101' }, { strokeDasharray: '78 23' }], SOFT);
+['.d1', '.d2', '.d3'].forEach((c, i) => A($(c, s1), 1.1 + i * .15, .4, [{ opacity: 0 }, { opacity: 1 }]));
+A($('.t1', s1), 1.5, .9, [{ opacity: 0, transform: 'translateY(60px)', filter: 'blur(8px)' }, { opacity: 1, transform: 'none', filter: 'blur(0)' }]);
+up($('.tag', s1), 2.3, .8, 30);
+
+// ═════ 2. Le problème (5,5 – 12,5 s) ═════
+const problems = [
+  ['NotebookPen', 'Cahiers et espèces', 'Tout se note à la main, l’argent circule en liquide.'],
+  ['UserX', 'Trésorier qui disparaît', 'Une seule personne garde la caisse du groupe.'],
+  ['MessageCircleWarning', 'Impayés et disputes', 'Un retard, et le bénéficiaire du tour est pénalisé.'],
+  ['Ban', 'Pas d’accès au crédit', 'Des années de cotisations… sans aucune trace.'],
+];
+const s2 = scene('s2', 'light', 5.5, 12.5, `
+  <div class="abs" style="left:160px;top:150px"><div class="eyebrow">Le constat</div><h2 class="q" style="margin-top:16px">La tontine, tout le monde l’aime.<br><span style="color:#D63B3B">Mais elle a ses limites.</span></h2></div>
+  <div class="abs" style="left:160px;top:520px;display:grid;grid-template-columns:repeat(4, 380px);gap:30px">
+    ${problems.map(([i, t, d]) => `<div class="card pb" style="padding:34px;height:330px;display:flex;flex-direction:column;gap:20px">${ico(i, '#FDEEEE', '#D63B3B')}<h3>${t}</h3><p style="font-size:22px;color:#4E5272;line-height:1.45">${d}</p></div>`).join('')}
+  </div>`);
+up($('.q', s2), 6, .8);
+$$('.pb', s2).forEach((c, i) => up(c, 7 + i * .35, .7, 60));
+
+// ═════ 3. La solution (12,5 – 20,5 s) ═════
+wipe(12.5);
+const s3 = scene('s3', 'dark', 12.5, 20.5, `
+  <div class="abs" style="left:150px;top:230px;width:900px">
+    <div class="eyebrow">La solution</div>
+    <h2 class="h" style="margin-top:16px;font-size:76px">Votre tontine,<br>dans votre téléphone.</h2>
+    <p class="lead l1" style="margin-top:30px;max-width:780px">Cotisez en un clic, recevez votre pot à votre tour. Plus de trésorier qui garde la caisse.</p>
+    <div class="row ops" style="margin-top:48px;gap:20px">
+      <span class="chip c1"><i style="background:#FF7900">OM</i>Orange Money</span>
+      <span class="chip c2"><i style="background:#0066B3">MV</i>Moov Money</span>
+      <span class="chip c3"><i style="background:#1DC8F2">W</i>Wave</span>
+    </div>
+  </div>
+  ${phone('app-accueil.png', 1330, 110)}
+  <div class="abs card n1" style="z-index:5;left:1000px;top:610px;padding:18px 26px 18px 18px;display:flex;gap:16px;align-items:center;color:#15162C">${ico('Bell', '#ECEBFA', '#2F2C8F', 56)}<div><b style="font-size:22px">Cotisation reçue</b><div style="font-size:18px;color:#4E5272">Tontine du marché · 15 000 F</div></div></div>
+  <div class="abs card n2" style="z-index:5;left:1420px;top:880px;padding:18px 26px 18px 18px;display:flex;gap:16px;align-items:center;color:#15162C">${ico('Wallet', '#ECF8EC', '#278326', 56)}<div><b style="font-size:22px">Pot versé : 60 000 F</b><div style="font-size:18px;color:#4E5272">automatiquement, à votre tour</div></div></div>`);
+up($('.h', s3), 13, .8);
+up($('.l1', s3), 13.6, .7, 30);
+['.c1', '.c2', '.c3'].forEach((c, i) => pop($(c, s3), 14.4 + i * .25));
+A($('.phone', s3), 13.2, 1.2, [{ opacity: 0, transform: 'translateY(220px) rotate(6deg)' }, { opacity: 1, transform: 'translateY(0) rotate(0)' }]);
+A($('.phone img', s3), 15, 5, [{ transform: 'scale(1)' }, { transform: 'scale(1.04)' }], 'ease-in-out');
+fromX($('.n1', s3), 15.6, -60);
+fromX($('.n2', s3), 16.6, 60);
+
+// ═════ 4. Comment ça marche (20,5 – 29 s) ═════
+const steps = [
+  ['Users', 'Créez ou rejoignez', 'Cotisation, fréquence, membres. Invitez par WhatsApp.'],
+  ['ShieldCheck', 'Versez la caution', 'Elle couvre un impayé et vous est rendue à la fin.'],
+  ['Smartphone', 'Cotisez en un clic', 'Rappels automatiques la veille et le jour J.'],
+  ['Coins', 'Recevez votre pot', 'Versé dès la dernière cotisation du tour.'],
+];
+const s4 = scene('s4', 'light', 20.5, 29, `
+  <div class="abs center" style="left:0;right:0;top:120px"><div class="eyebrow">Comment ça marche</div><h2 class="h" style="margin-top:14px">4 étapes, zéro cahier</h2></div>
+  <div class="abs line" style="left:330px;top:555px;height:6px;width:1260px;border-radius:3px;background:linear-gradient(90deg,#3AA935,#4A46C4);transform-origin:left"></div>
+  <div class="abs" style="left:150px;top:470px;display:flex;gap:60px">
+    ${steps.map(([i, t, d], k) => `<div class="step st"><div class="n">${ICONS[i]}<b>${k + 1}</b></div><h3>${t}</h3><p>${d}</p></div>`).join('')}
+  </div>
+  <div class="abs card rd" style="left:760px;top:860px;padding:18px 30px;display:flex;align-items:center;gap:22px">
+    <svg width="70" height="70" viewBox="0 0 70 70" style="transform:rotate(-90deg)"><circle cx="35" cy="35" r="29" fill="none" stroke="#F1F2F8" stroke-width="8"/><circle class="rr" cx="35" cy="35" r="29" fill="none" stroke="#3AA935" stroke-width="8" stroke-linecap="round" stroke-dasharray="182.2" stroke-dashoffset="182.2"/></svg>
+    <div><b style="font-size:26px">Tour <span class="rn">1</span> / 10</b><div style="font-size:19px;color:#4E5272">un pot versé à chaque tour</div></div>
+  </div>`);
+up($('.h', s4), 21, .7);
+A($('.line', s4), 21.6, 3.2, [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], SOFT);
+$$('.st', s4).forEach((c, i) => up(c, 21.8 + i * .75, .7, 50));
+up($('.rd', s4), 25.4, .6, 30);
+A($('.rr', s4), 25.6, 2.6, [{ strokeDashoffset: 182.2 }, { strokeDashoffset: 0 }], SOFT);
+count($('.rn', s4), 25.6, 2.6, 1, 10);
+
+// ═════ 5. Sécurité (29 – 36,5 s) ═════
+wipe(29);
+const feats = [
+  ['ShieldCheck', 'Caution anti-impayé', 'Le bénéficiaire reçoit toujours son pot complet.'],
+  ['Lock', 'Code PIN et identité vérifiée', 'Chaque sortie d’argent est protégée.'],
+  ['Landmark', 'Fonds cantonnés', 'Chez un établissement agréé par la BCEAO.'],
+  ['BadgeCheck', 'Paiements vérifiés', 'Chaque dépôt est contrôlé auprès de l’opérateur.'],
+];
+const s5 = scene('s5', 'dark', 29, 36.5, `
+  ${phone('app-pin.png', 190, 120, -4)}
+  <div class="abs" style="left:780px;top:150px;width:1000px">
+    <div class="eyebrow">Sécurité</div>
+    <h2 class="h" style="margin-top:14px">Votre argent est protégé.<br><em class="g">Toujours.</em></h2>
+    <div style="margin-top:44px;display:flex;flex-direction:column;gap:18px">
+      ${feats.map(([i, t, d]) => `<div class="glass feat ft">${ico(i, 'rgba(58,169,53,.25)', '#8BE086', 64)}<div><b>${t}</b><span>${d}</span></div></div>`).join('')}
+    </div>
+  </div>`);
+A($('.phone', s5), 29.3, 1.1, [{ opacity: 0, transform: 'translateX(-200px) rotate(-10deg)' }, { opacity: 1, transform: 'translateX(0) rotate(-4deg)' }]);
+up($('.h', s5), 29.6, .8);
+$$('.ft', s5).forEach((c, i) => fromX(c, 30.6 + i * .45, 80, .7));
+
+// ═════ 6. Crédit (36,5 – 44 s) ═════
+const s6 = scene('s6', 'light', 36.5, 44, `
+  <div class="abs" style="left:150px;top:190px;width:860px">
+    <div class="eyebrow">Score et crédit</div>
+    <h2 class="h" style="margin-top:14px">Votre régularité devient<br>un <span style="color:#4A46C4">score de crédit</span>.</h2>
+    <p class="lead l" style="margin-top:28px">Chaque cotisation payée à l’heure fait monter votre score Smart Tontine et ouvre le crédit de nos SFD partenaires.</p>
+    <div class="row" style="margin-top:44px;gap:20px">
+      <div class="card o1 feat" style="padding:22px 26px">${ico('HandCoins', '#ECF8EC', '#278326', 60)}<div><b style="font-size:26px">Avance sur tontine</b><span style="color:#4E5272">jusqu’à 50 % du pot</span></div></div>
+      <div class="card o2 feat" style="padding:22px 26px">${ico('TrendingUp', '#ECEBFA', '#2F2C8F', 60)}<div><b style="font-size:26px">Microcrédit</b><span style="color:#4E5272">avec un SFD agréé</span></div></div>
+    </div>
+  </div>
+  <div class="abs card sc" style="left:1180px;top:200px;width:600px;height:660px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px">
+    <div style="position:relative;width:360px;height:360px">
+      <svg width="360" height="360" viewBox="0 0 360 360" style="transform:rotate(-90deg)"><circle cx="180" cy="180" r="150" fill="none" stroke="#F1F2F8" stroke-width="28"/>
+        <circle class="arc" cx="180" cy="180" r="150" fill="none" stroke="url(#sg)" stroke-width="28" stroke-linecap="round" stroke-dasharray="942.5" stroke-dashoffset="942.5"/>
+        <defs><linearGradient id="sg"><stop offset="0" stop-color="#4A46C4"/><stop offset="1" stop-color="#3AA935"/></linearGradient></defs></svg>
+      <div class="center" style="position:absolute;inset:0"><b class="sv" style="font-size:110px;font-weight:850;letter-spacing:-.04em;font-variant-numeric:tabular-nums">0</b><span style="font-size:26px;color:#868AA6">/ 1000</span></div>
+    </div>
+    <span class="badge lv" style="background:#ECF8EC;color:#278326;font-size:28px">Excellent : crédit ouvert</span>
+  </div>`);
+up($('.h', s6), 37, .8);
+up($('.l', s6), 37.6, .7, 30);
+pop($('.sc', s6), 37.4, .7);
+A($('.arc', s6), 38, 2.8, [{ strokeDashoffset: 942.5 }, { strokeDashoffset: 942.5 * (1 - .78) }], SOFT);
+count($('.sv', s6), 38, 2.8, 0, 780, (v) => String(Math.round(v)));
+pop($('.lv', s6), 40.8);
+up($('.o1', s6), 39.2, .6, 30);
+up($('.o2', s6), 39.6, .6, 30);
+
+// ═════ 7. Tontines de biens (44 – 51 s) ═════
+wipe(44);
+const flow = [['Coins', 'Les membres cotisent'], ['Lock', 'Prix au séquestre'], ['Truck', 'Le commerçant livre'], ['CircleCheck', 'Réception confirmée : il est payé']];
+const s7 = scene('s7', 'dark', 44, 51, `
+  <div class="abs center" style="left:0;right:0;top:110px"><div class="eyebrow">Nouveau</div><h2 class="h" style="margin-top:14px">Des tontines pour <em class="g">s’équiper</em></h2>
+    <p class="lead l" style="margin-top:20px">Moto, réfrigérateur, téléphone : cotisez ensemble, chacun reçoit son bien à son tour.</p></div>
+  <div class="abs" style="left:300px;top:450px;display:flex;gap:40px">
+    ${[['Bike', 'Moto Sanili 125', '450 000 F'], ['Refrigerator', 'Réfrigérateur 150 L', '180 000 F'], ['Smartphone', 'Téléphone Android', '65 000 F']].map(([i, t, p]) =>
+      `<div class="glass gd" style="width:400px;padding:30px;display:flex;align-items:center;gap:24px">${ico(i, 'rgba(240,169,43,.25)', '#F0A92B', 84)}<div><b style="font-size:28px">${t}</b><div style="font-size:24px;opacity:.75;margin-top:4px">${p}</div></div></div>`).join('')}
+  </div>
+  <div class="abs" style="left:170px;top:760px;display:flex;align-items:center;gap:26px">
+    ${flow.map(([i, t], k) => `${k ? `<span class="ar" style="color:#8BE086;opacity:.9">${ICONS.ArrowRight.replace('width="24" height="24"', 'width="40" height="40"')}</span>` : ''}<div class="fl row" style="gap:14px">${ico(i, 'rgba(255,255,255,.12)', '#fff', 60)}<span style="font-size:24px;font-weight:650;max-width:250px">${t}</span></div>`).join('')}
+  </div>`);
+up($('.h', s7), 44.5, .8);
+up($('.l', s7), 45, .7, 30);
+$$('.gd', s7).forEach((c, i) => pop(c, 45.6 + i * .3));
+$$('.fl', s7).forEach((c, i) => up(c, 47 + i * .55, .5, 20));
+$$('.ar', s7).forEach((c, i) => A(c, 47.3 + i * .55, .4, [{ opacity: 0, transform: 'translateX(-20px)' }, { opacity: .9, transform: 'none' }]));
+
+// ═════ 8. La plateforme web (51 – 59 s) ═════
+const s8 = scene('s8', 'light', 51, 59, `
+  <div class="abs" style="left:110px;top:150px;width:560px">
+    <div class="eyebrow">Plateforme web</div>
+    <h2 class="h" style="margin-top:14px;font-size:58px">Aussi sur ordinateur, pour les membres… <span style="color:#4A46C4">et les partenaires.</span></h2>
+    <div style="margin-top:40px;display:flex;flex-direction:column;gap:16px">
+      ${[['Users', 'Associations et GIE'], ['Store', 'Commerçants'], ['Building2', 'Entreprises'], ['Landmark', 'SFD et microfinance']].map(([i, t]) => `<div class="row pt" style="gap:16px">${ico(i, '#ECEBFA', '#2F2C8F', 54)}<span style="font-size:27px;font-weight:650">${t}</span></div>`).join('')}
+    </div>
+    <p class="lead l" style="margin-top:34px;font-size:24px">Leur logo, leurs groupes, leur tableau de bord.</p>
+  </div>
+  <div class="laptop" style="left:720px;top:170px"><div class="lid"><div class="scr"><img class="w1" src="assets/d-app-accueil.png"><img class="w2" src="assets/d-partenaire.png" style="opacity:0"></div></div><div class="base"></div></div>
+  <div class="abs card tag" style="left:1440px;top:820px;padding:16px 24px;display:flex;align-items:center;gap:16px"><span style="width:52px;height:52px;border-radius:14px;background:#C0392B;color:#fff;font-weight:850;display:flex;align-items:center;justify-content:center;font-size:20px">ES</span><div><b style="font-size:22px">Ets Sawadogo Motos</b><div style="font-size:18px;color:#4E5272">portail à sa marque</div></div></div>`);
+up($('.h', s8), 51.5, .8);
+$$('.pt', s8).forEach((c, i) => fromX(c, 52.3 + i * .3, -50, .6));
+up($('.l', s8), 53.8, .6, 20);
+A($('.laptop', s8), 51.6, 1.2, [{ opacity: 0, transform: 'translateY(120px) scale(.94)' }, { opacity: 1, transform: 'none' }]);
+A($('.w1', s8), 52.5, 3, [{ transform: 'translateY(0)' }, { transform: 'translateY(-60px)' }], 'ease-in-out');
+A($('.w2', s8), 55.3, .8, [{ opacity: 0 }, { opacity: 1 }], 'ease-in-out');
+pop($('.tag', s8), 55.8);
+
+// ═════ 9. Conclusion (59 – 65 s) ═════
+wipe(59);
+const s9 = scene('s9', 'dark center', 59, 0, `
+  <div class="logo" style="width:150px;height:150px">${LOGO}</div>
+  <h1 class="t" style="margin-top:34px;font-size:100px">Smart Tontine</h1>
+  <p class="lead s" style="margin-top:18px;font-size:42px;font-weight:650;color:#fff">Cotisez. Recevez. <em class="g">Grandissez.</em></p>
+  <div class="row pl" style="margin-top:56px;gap:18px">
+    <span class="chip">${ico('Smartphone', '#ECEBFA', '#2F2C8F', 46)}Android et iPhone</span>
+    <span class="chip">${ico('Globe', '#ECF8EC', '#278326', 46)}Plateforme web</span>
+    <span class="chip">${ico('MapPin', '#FEF6E4', '#9A6406', 46)}Burkina Faso, puis l’UEMOA</span>
+  </div>`);
+pop($('.logo', s9), 59.4, .8);
+A($('.ring', s9), 59.6, 1.2, [{ strokeDasharray: '0 101' }, { strokeDasharray: '78 23' }], SOFT);
+up($('.t', s9), 60, .8);
+up($('.s', s9), 60.6, .7, 30);
+$$('.pl .chip', s9).forEach((c, i) => pop(c, 61.4 + i * .25));
+
+// ───── Pilotage du temps ─────
+window.DURATION = 65;
+window.seek = (t) => {
+  for (const a of document.getAnimations()) { a.pause(); a.currentTime = t * 1000; }
+  for (const c of counters) {
+    const p = Math.max(0, Math.min(1, (t - c.t) / c.d));
+    const e = p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+    c.el.textContent = c.fmt(c.from + (c.to - c.from) * e);
+  }
+};
+window.ready = Promise.all([document.fonts.ready, ...[...document.images].map((i) => i.decode().catch(() => null))]);
+// Lecture directe dans un navigateur (sans rendu image par image).
+if (!navigator.webdriver) { const t0 = performance.now(); seek(0); const loop = () => { const t = ((performance.now() - t0) / 1000) % window.DURATION; seek(t); requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
+</script>
+</body>
+</html>
