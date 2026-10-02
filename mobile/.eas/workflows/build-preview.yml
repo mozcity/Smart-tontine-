@@ -1,0 +1,19 @@
+# Build d'essai (APK Android + iOS interne), lancé à la main depuis expo.dev (pas à chaque push : chaque build consomme des crédits EAS).
+name: Build d'essai
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  build_android:
+    name: Android (APK)
+    type: build
+    params:
+      platform: android
+      profile: preview
+  build_ios:
+    name: iOS (distribution interne)
+    type: build
+    params:
+      platform: ios
+      profile: preview
