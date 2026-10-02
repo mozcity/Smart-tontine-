@@ -30,8 +30,10 @@ export default function Retrait() {
     if (!pin) return;
     setLoading(true);
     try {
-      const r = await api<{ fee: number }>('/wallet/withdrawals', { body: { amount: a, channel, pin } });
-      notifyOk('Retrait envoyé', `${fcfa(a)} arrivent sur ton compte (frais : ${fcfa(r.fee)}).`);
+      const r = await api<{ fee: number; status: string }>('/wallet/withdrawals', { body: { amount: a, channel, pin } });
+      // « processing » : l'opérateur confirme en quelques minutes ; en cas d'échec, le jeton est recrédité automatiquement.
+      notifyOk(r.status === 'processing' ? 'Retrait en cours' : 'Retrait envoyé',
+        r.status === 'processing' ? `${fcfa(a)} sont en route vers ton compte. Tu recevras une notification.` : `${fcfa(a)} arrivent sur ton compte (frais : ${fcfa(r.fee)}).`);
       await refresh();
       router.back();
     } catch (e) { notifyError(e); } finally { setLoading(false); }

@@ -1,6 +1,6 @@
 import { config } from '../../config.js';
 import { mockProvider } from './mock.js';
-import { cinetpayProvider } from './cinetpay.js';
+import { cinetpayCredentialsFromEnv, cinetpayProvider } from './cinetpay.js';
 import type { PaymentProvider } from './types.js';
 
 let provider: PaymentProvider | undefined;
@@ -8,12 +8,16 @@ let provider: PaymentProvider | undefined;
 export function paymentProvider(): PaymentProvider {
   if (provider) return provider;
   if (config.paymentProvider === 'cinetpay') {
-    const base = process.env.PUBLIC_API_URL ?? 'https://api.smarttontine.app';
+    const api = process.env.PUBLIC_API_URL ?? 'https://api.smarttontine.app';
+    const web = process.env.PUBLIC_WEB_URL ?? 'https://smarttontine.app';
+    const credentials = cinetpayCredentialsFromEnv();
+    if (!Object.keys(credentials).length) throw new Error('PAYMENT_PROVIDER=cinetpay : CINETPAY_API_KEY et CINETPAY_API_PASSWORD sont obligatoires');
     provider = cinetpayProvider({
-      apiKey: process.env.CINETPAY_API_KEY ?? '',
-      siteId: process.env.CINETPAY_SITE_ID ?? '',
-      notifyUrl: `${base}/webhooks/cinetpay`,
-      returnUrl: 'smarttontine://depot/retour',
+      credentials,
+      notifyUrl: `${api}/webhooks/cinetpay`,
+      successUrl: `${web}/app/portefeuille?depot=ok`,
+      failedUrl: `${web}/app/portefeuille?depot=echec`,
+      baseUrl: process.env.CINETPAY_BASE_URL || undefined,
     });
   } else {
     provider = mockProvider;

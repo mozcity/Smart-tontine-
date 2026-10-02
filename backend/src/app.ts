@@ -44,8 +44,8 @@ export function createApp() {
 
   app.use('/public', rateLimit({ name: 'public', windowMs: 60_000, max: 120, enabled: limitsOn }), publicApi);
   app.use('/auth', rateLimit({ name: 'auth', windowMs: 60_000, max: 30, enabled: limitsOn }), auth);
-  app.use('/webhooks/cinetpay', express.urlencoded({ extended: false, limit: '20kb' }));
-  app.use('/webhooks', webhooks);
+  app.use('/webhooks/sms/twilio', express.urlencoded({ extended: false, limit: '20kb' }));
+  app.use('/webhooks', rateLimit({ name: 'webhooks', windowMs: 60_000, max: 300, enabled: limitsOn }), webhooks);
   app.use('/wallet', requireAuth, wallet);
   app.use('/ecaisses', requireAuth, ecaisse);
   app.use('/tontines', requireAuth, tontines);

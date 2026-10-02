@@ -134,10 +134,10 @@ describe('paiements : vérification serveur-à-serveur', () => {
     const b = await dep(20_000);
     verdicts.set(b, { status: 'success', amount: 2_000 });
     expect((await webhook(b, 'success').expect(200)).body).toMatchObject({ status: 'pending', mismatch: true });
-    // Notification CinetPay (formulaire) : vérifiée puis créditée.
+    // Notification confirmée par l'agrégateur : créditée.
     const c = await dep(15_000);
     verdicts.set(c, { status: 'success', amount: 15_000 });
-    await request(app).post('/webhooks/cinetpay').type('form').send({ cpm_trans_id: c, cpm_site_id: '123' }).expect(200);
+    await webhook(c, 'success').expect(200);
     expect(await balance(m)).toBe(15_000);
     // Webhook perdu : le rattrapage horaire interroge l'agrégateur.
     const d = await dep(5_000);

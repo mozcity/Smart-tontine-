@@ -111,7 +111,7 @@ function Retrait({ balance, onDone }: { balance: number; onDone: () => void }) {
       {tooMuch && <Notice tone="warn">Solde insuffisant : {fcfa(balance)} disponibles.</Notice>}
       <Button size="block" icon={ArrowUpFromLine} disabled={a < 100 || tooMuch} onClick={async () => {
         const pin = await askPin(`Retrait de ${fcfa(a)} vers ${CHANNELS[channel]}`);
-        if (pin && await act(() => api('/wallet/withdrawals', { body: { amount: a, channel, pin } }), 'Retrait envoyé')) { setAmount(''); onDone(); }
+        if (pin && await act(() => api('/wallet/withdrawals', { body: { amount: a, channel, pin } }), 'Retrait envoyé : vous serez notifié dès la confirmation de l’opérateur')) { setAmount(''); onDone(); }
       }}>Retirer</Button>
     </div>
   );

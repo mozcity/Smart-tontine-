@@ -25,7 +25,7 @@ router.post('/otp/request', async (req, res) => {
     `INSERT INTO otp_codes (phone, code_hash, expires_at) VALUES ($1, $2, now() + make_interval(mins => $3))`,
     [p, hashSecret(code), config.otpTtlMinutes],
   );
-  await sms.send(p, `Smart Tontine : ton code est ${code}. Ne le partage avec personne.`);
+  await sms.send(p, `Smart Tontine : ton code est ${code}. Ne le partage avec personne.`, 'otp');
   res.json({ ok: true, ...(config.isProd ? {} : { devCode: code }) });
 });
 

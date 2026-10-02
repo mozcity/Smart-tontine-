@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { many, one, pool, withTx } from '../db.js';
-import { badRequest, conflict, notFound } from '../lib/errors.js';
+import { badRequest, conflict, HttpError, notFound } from '../lib/errors.js';
 import { currentUser } from '../lib/auth.js';
 import { reference } from '../lib/crypto.js';
 import { config } from '../config.js';
@@ -15,6 +15,20 @@ export const router = Router();
 
 const channel = z.enum(['wave', 'orange_money', 'mtn_momo', 'moov_money', 'card']);
 const amount = z.number().int().min(100).max(5_000_000);
+// Un retrait part toujours vers un compte Mobile Money (pas de remboursement sur carte).
+const payoutChannel = z.enum(['wave', 'orange_money', 'mtn_momo', 'moov_money']);
+
+/** Refuse avant toute écriture une opération que l'agrégateur ne pourra pas exécuter. */
+function assertProviderAccepts(ch: Channel, phone: string, value: number, direction: 'collect' | 'payout') {
+  const p = paymentProvider();
+  if (p.supports && !p.supports(ch, phone, direction)) {
+    throw badRequest('channel_not_supported', 'Ce moyen de paiement n\'est pas disponible pour ce numéro');
+  }
+  const max = p.limits?.[direction];
+  if (max && value > max) {
+    throw badRequest('provider_limit', `Montant maximum par opération : ${max} FCFA. Fais plusieurs opérations.`);
+  }
+}
 
 router.get('/', async (req, res) => {
   const userId = currentUser(req).id;
@@ -43,7 +57,9 @@ router.get('/history', async (req, res) => {
 router.post('/deposits', async (req, res) => {
   const user = currentUser(req);
   const body = z.object({ amount, channel, phone: z.string().optional() }).parse(req.body);
-  const profile = await one(pool, 'SELECT phone, kyc_level FROM users WHERE id = $1', [user.id]);
+  const profile = await one(pool, 'SELECT phone, kyc_level, full_name, email FROM users WHERE id = $1', [user.id]);
+  const payer = body.phone ?? profile.phone;
+  assertProviderAccepts(body.channel, payer, body.amount, 'collect');
   const wallet = await walletOf(pool, user.id);
   const limit = pricing.limits[profile.kyc_level];
   if (wallet.balance + body.amount > limit.balance) {
@@ -61,12 +77,23 @@ router.post('/deposits', async (req, res) => {
   const tx = await one(pool,
     `INSERT INTO transactions (reference, type, status, amount, initiator_id, provider, description, meta)
      VALUES ($1, 'deposit', 'pending', $2, $3, $4, 'Dépôt', $5) RETURNING id`,
-    [ref, body.amount, user.id, paymentProvider().name, { channel: body.channel, walletId: wallet.id }]);
-  const result = await paymentProvider().collect({
-    reference: ref, amount: body.amount, phone: body.phone ?? profile.phone, channel: body.channel as Channel,
-    description: 'Dépôt Smart Tontine',
-  });
-  await pool.query('UPDATE transactions SET provider_ref = $2 WHERE id = $1', [tx.id, result.providerRef ?? null]);
+    [ref, body.amount, user.id, paymentProvider().name, { channel: body.channel, walletId: wallet.id, phone: payer }]);
+  const [firstName, ...rest] = String(profile.full_name ?? '').trim().split(/\s+/);
+  let result;
+  try {
+    result = await paymentProvider().collect({
+      reference: ref, amount: body.amount, phone: payer, channel: body.channel as Channel,
+      description: 'Dépôt Smart Tontine', customer: { firstName, lastName: rest.join(' '), email: profile.email ?? undefined },
+    });
+  } catch (err) {
+    await pool.query("UPDATE transactions SET status = 'failed', completed_at = now() WHERE id = $1", [tx.id]);
+    if (err instanceof HttpError) throw err;
+    console.error('Initialisation du dépôt', ref, err);
+    throw new HttpError(502, 'provider_unavailable', 'Le service de paiement ne répond pas. Réessaie dans un instant.');
+  }
+  // Le jeton de notification reste côté serveur : il authentifie le webhook de l'agrégateur.
+  await pool.query(`UPDATE transactions SET provider_ref = $2, meta = meta || jsonb_strip_nulls(jsonb_build_object('notifyToken', $3::text)) WHERE id = $1`,
+    [tx.id, result.providerRef ?? null, result.notifyToken ?? null]);
   await track(pool, user.id, 'deposit_initiated', { amount: body.amount, channel: body.channel });
   res.status(201).json({ reference: ref, paymentUrl: result.paymentUrl, status: 'pending' });
 });
@@ -93,10 +120,10 @@ export async function verifyAndSettle(ref: string, claimed?: { success: boolean;
     if (!claimed) return { status: 'pending' as const };
     return settleDeposit(ref, claimed.success, claimed.providerRef);
   }
-  const tx = await one(pool, "SELECT id, amount, status FROM transactions WHERE reference = $1 AND type = 'deposit'", [ref]);
+  const tx = await one(pool, "SELECT id, amount, status, meta FROM transactions WHERE reference = $1 AND type = 'deposit'", [ref]);
   if (!tx) throw notFound('Transaction');
   if (tx.status !== 'pending') return { status: tx.status, alreadyProcessed: true };
-  const v = await provider.verify(ref);
+  const v = await provider.verify(ref, { phone: tx.meta?.phone });
   if (v.status === 'pending') return { status: 'pending' as const };
   if (v.status === 'success' && v.amount !== undefined && v.amount !== tx.amount) {
     await pool.query(`UPDATE transactions SET meta = meta || jsonb_build_object('verification', 'amount_mismatch', 'paidAmount', $2::bigint) WHERE id = $1`, [tx.id, v.amount]);
@@ -191,9 +218,10 @@ router.get('/withdrawals/quote', async (req, res) => {
 
 router.post('/withdrawals', async (req, res) => {
   const user = currentUser(req);
-  const body = z.object({ amount, channel, phone: z.string().optional(), pin: z.string().optional() }).parse(req.body);
+  const body = z.object({ amount, channel: payoutChannel, phone: z.string().optional(), pin: z.string().optional() }).parse(req.body);
   await assertPin(user.id, body.pin);
   const profile = await one(pool, 'SELECT phone FROM users WHERE id = $1', [user.id]);
+  assertProviderAccepts(body.channel, body.phone ?? profile.phone, body.amount, 'payout');
   const f = await withdrawalFee(user.id, body.amount);
 
   const tx = await withTx(async (client) => {
@@ -226,16 +254,64 @@ router.post('/withdrawals', async (req, res) => {
     await reverseWithdrawal(tx.id);
     throw badRequest('payout_failed', 'Le retrait a échoué, ton portefeuille a été recrédité');
   }
-  await pool.query(`UPDATE transactions SET provider_ref = $2, meta = meta || jsonb_build_object('payout', $3::text) WHERE id = $1`,
-    [tx.id, payout.providerRef ?? null, payout.status]);
+  await pool.query(
+    `UPDATE transactions SET provider_ref = $2,
+       meta = meta || jsonb_strip_nulls(jsonb_build_object('payout', $3::text, 'notifyToken', $4::text)) WHERE id = $1`,
+    [tx.id, payout.providerRef ?? null, payout.status, payout.notifyToken ?? null]);
   await track(pool, user.id, 'withdrawal', { amount: body.amount, fee: f });
+  // Décaissement asynchrone : le webhook ou le rattrapage confirme, ou annule et recrédite.
+  if (payout.status === 'pending') {
+    res.status(202).json({ reference: tx.reference, amount: body.amount, fee: f, status: 'processing' });
+    return;
+  }
   res.status(201).json({ reference: tx.reference, amount: body.amount, fee: f, status: payout.status });
 });
+
+const OPEN_PAYOUT = ['pending', 'processing', 'unknown'];
+
+/**
+ * Statut d'un retrait en cours, demandé à l'agrégateur : succès → confirmé ; échec → annulé et recrédité.
+ * Idempotent : appelé par le webhook comme par le rattrapage.
+ */
+export async function checkWithdrawal(ref: string) {
+  const provider = paymentProvider();
+  const tx = await one(pool, "SELECT id, status, initiator_id, amount, meta FROM transactions WHERE reference = $1 AND type = 'withdrawal'", [ref]);
+  if (!tx) throw notFound('Retrait');
+  if (tx.status !== 'completed' || !OPEN_PAYOUT.includes(tx.meta?.payout)) return { status: tx.meta?.payout ?? tx.status, alreadyProcessed: true };
+  if (!provider.payoutStatus) return { status: tx.meta.payout };
+  const v = await provider.payoutStatus(ref, { phone: tx.meta.phone });
+  if (v.status === 'pending') return { status: 'pending' };
+  if (v.status === 'failed') {
+    try { await reverseWithdrawal(tx.id); } catch (e) { if ((e as HttpError).code !== 'not_reversible') throw e; }
+    return { status: 'failed' };
+  }
+  const done = await pool.query(
+    `UPDATE transactions SET provider_ref = COALESCE($2, provider_ref), meta = meta || '{"payout":"completed"}'
+     WHERE id = $1 AND status = 'completed' AND meta->>'payout' = ANY($3)`, [tx.id, v.providerRef ?? null, OPEN_PAYOUT]);
+  if (done.rowCount) await notify(pool, tx.initiator_id, 'Retrait effectué', `${tx.amount} FCFA envoyés sur ton compte Mobile Money`);
+  return { status: 'completed' };
+}
+
+/** Rattrapage : retraits en cours depuis plus de 5 minutes, interrogés auprès de l'agrégateur. */
+export async function reconcilePendingWithdrawals() {
+  let settled = 0;
+  const open = await many(pool,
+    `SELECT reference FROM transactions WHERE type = 'withdrawal' AND status = 'completed' AND meta->>'payout' = ANY($1)
+     AND created_at < now() - interval '5 minutes' ORDER BY created_at LIMIT 200`, [OPEN_PAYOUT]);
+  for (const w of open) {
+    try {
+      const r = await checkWithdrawal(w.reference);
+      if (r.status === 'completed' || r.status === 'failed') settled++;
+    } catch (e) { console.error('Rapprochement du retrait', w.reference, e); }
+  }
+  return settled;
+}
 
 export async function reverseWithdrawal(txId: string) {
   return withTx(async (client) => {
     const tx = await one(client, "SELECT * FROM transactions WHERE id = $1 AND type = 'withdrawal' FOR UPDATE", [txId]);
-    if (!tx || tx.status !== 'completed') throw conflict('not_reversible', 'Transaction non annulable');
+    // Un décaissement confirmé par l'agrégateur ne s'annule jamais : l'argent est parti.
+    if (!tx || tx.status !== 'completed' || tx.meta?.payout === 'completed') throw conflict('not_reversible', 'Transaction non annulable');
     const legs = await many(client, 'SELECT account_id, amount FROM ledger_entries WHERE tx_id = $1', [txId]);
     await post(client, {
       type: 'reversal', amount: tx.amount + tx.fee, initiatorId: tx.initiator_id, description: 'Annulation de retrait',

@@ -9,15 +9,17 @@ import { sendReminders } from './services/reminders.js';
 import { chargePro } from './services/pro.js';
 import { autoConfirmOrders } from './modules/goods.js';
 import { invoicePartners } from './modules/partners.js';
-import { reconcilePendingDeposits } from './modules/wallet.js';
+import { reconcilePendingDeposits, reconcilePendingWithdrawals } from './modules/wallet.js';
 
 /** Tâches périodiques (toutes les heures). En production : un worker dédié ou un cron. */
 export async function runJobs() {
   const results = { ecaissesReleased: 0, plansRenewed: 0, plansExpired: 0, challengesExpired: 0, tontineRoundsClosed: 0,
-    credit: { autoDebited: 0, penalized: 0, defaulted: 0 }, reminders: 0, ordersAutoConfirmed: 0, partnersInvoiced: 0, depositsReconciled: 0 };
+    credit: { autoDebited: 0, penalized: 0, defaulted: 0 }, reminders: 0, ordersAutoConfirmed: 0, partnersInvoiced: 0, depositsReconciled: 0, withdrawalsReconciled: 0 };
 
   // Dépôts dont le webhook n'est jamais arrivé : vérifiés auprès de l'agrégateur.
   results.depositsReconciled = await reconcilePendingDeposits();
+  // Retraits Mobile Money encore en cours : confirmés, ou annulés et recrédités.
+  results.withdrawalsReconciled = await reconcilePendingWithdrawals();
 
   // Biens expédiés sans réclamation : le séquestre paie le fournisseur après le délai prévu.
   results.ordersAutoConfirmed = await autoConfirmOrders();
