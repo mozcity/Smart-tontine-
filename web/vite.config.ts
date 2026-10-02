@@ -13,6 +13,7 @@ export default defineConfig({
       // Ne pas relayer la navigation du navigateur (routes de l'application web) vers l'API.
       bypass: (req: { headers: Record<string, string | string[] | undefined> }) => (String(req.headers.accept ?? '').includes('text/html') ? '/index.html' : undefined) }])),
   },
-  build: { sourcemap: true, chunkSizeWarningLimit: 400 },
+  // « hidden » : cartes générées pour le suivi d'erreurs, mais jamais référencées par les fichiers servis.
+  build: { sourcemap: 'hidden', chunkSizeWarningLimit: 400 },
   test: { environment: 'jsdom', include: ['src/**/*.test.{ts,tsx}'] },
 });

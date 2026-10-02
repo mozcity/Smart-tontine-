@@ -10,7 +10,9 @@ const COUNTRIES = [['+226', '🇧🇫 Burkina Faso'], ['+225', '🇨🇮 Côte d
 /** Connexion / inscription par OTP SMS, puis création du code PIN si besoin. */
 export default function Connexion() {
   const [params] = useSearchParams();
-  const next = params.get('next') && params.get('next')!.startsWith('/') ? params.get('next')! : '/app';
+  // Retour interne seulement : « //site.com » ou « /\site.com » mèneraient hors du domaine (redirection ouverte).
+  const raw = params.get('next') ?? '';
+  const next = /^\/(?![/\\])/.test(raw) ? raw : '/app';
   const nav = useNavigate();
   const { signIn, refresh } = useAuth();
   const [step, setStep] = useState<'phone' | 'code' | 'pin'>('phone');

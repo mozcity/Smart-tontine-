@@ -14,8 +14,8 @@ declare global {
 }
 
 /** Jeton de session. `mfa` = double authentification validée : session courte (12 h) pour le back-office. */
-export function signToken(user: AuthUser, mfa = false): string {
-  return jwt.sign({ sub: user.id, role: user.role, ...(mfa ? { mfa: true } : {}) }, config.jwtSecret,
+export function signToken(user: AuthUser, mfa = false, iat?: number): string {
+  return jwt.sign({ sub: user.id, role: user.role, ...(mfa ? { mfa: true } : {}), ...(iat ? { iat } : {}) }, config.jwtSecret,
     { expiresIn: (mfa ? '12h' : config.jwtTtl) as jwt.SignOptions['expiresIn'] });
 }
 
@@ -24,17 +24,21 @@ export const requireAuth: RequestHandler = async (req, _res, next) => {
   const token = header.startsWith('Bearer ') ? header.slice(7) : '';
   let payload: jwt.JwtPayload;
   try {
-    payload = jwt.verify(token, config.jwtSecret) as jwt.JwtPayload;
+    payload = jwt.verify(token, config.jwtSecret, { algorithms: ['HS256'] }) as jwt.JwtPayload;
   } catch {
     throw new HttpError(401, 'unauthenticated', 'Session invalide ou expirée');
   }
   // Le rôle et le statut sont relus en base : une suspension prend effet immédiatement.
   const { rows } = await pool.query(
-    "UPDATE users SET last_active_at = now() WHERE id = $1 RETURNING id, role, status, (totp_enabled_at IS NOT NULL) AS mfa_enrolled",
+    "UPDATE users SET last_active_at = now() WHERE id = $1 RETURNING id, role, status, (totp_enabled_at IS NOT NULL) AS mfa_enrolled, sessions_revoked_at",
     [payload.sub],
   );
   const user = rows[0];
   if (!user || user.status !== 'active') throw new HttpError(401, 'unauthenticated', 'Compte inactif');
+  // Jeton émis avant une révocation (« déconnecter tous mes appareils ») : refusé.
+  if (user.sessions_revoked_at && (payload.iat ?? 0) <= Math.floor(new Date(user.sessions_revoked_at).getTime() / 1000)) {
+    throw new HttpError(401, 'unauthenticated', 'Session révoquée, reconnecte-toi');
+  }
   req.user = { id: user.id, role: user.role, mfa: payload.mfa === true, mfaEnrolled: user.mfa_enrolled };
   next();
 };

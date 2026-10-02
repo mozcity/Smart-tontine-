@@ -1,17 +1,25 @@
 import { Pressable, Share, Text, View } from 'react-native';
 import { router, type Href } from 'expo-router';
-import { Building2, ChevronRight, Crown, FileSignature, Gift, HelpCircle, IdCard, LogOut, Rocket, ShoppingBag, Sparkles, Users } from 'lucide-react-native';
-import { api } from '@/lib/api';
+import { Building2, ChevronRight, Crown, FileSignature, Gift, HelpCircle, IdCard, LogOut, MonitorSmartphone, Rocket, Trash2, ShoppingBag, Sparkles, Users } from 'lucide-react-native';
+import { api, tokenStore } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useApi } from '@/lib/useApi';
 import { shortDate } from '@/lib/format';
-import { Badge, Button, Card, H1, ListItem, P, Screen, SectionHeader, colors, notifyError, type Icon, type Tone } from '@/components/ui';
+import { Badge, Button, Card, H1, ListItem, P, Screen, SectionHeader, colors, notifyError, notifyOk, type Icon, type Tone } from '@/components/ui';
 
 export default function Profil() {
   const { me, refresh, signOut } = useAuth();
   const notifs = useApi<{ id: string; title: string; body: string; created_at: string; read_at: string | null }[]>('/me/notifications');
   const initials = (me?.full_name ?? '?').split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase();
 
+  // Téléphone perdu ou prêté : les autres appareils sont déconnectés, celui-ci reçoit un nouveau jeton.
+  async function logoutOthers() {
+    try {
+      const r = await api<{ token: string }>('/auth/logout-all', { body: {} });
+      await tokenStore.set(r.token);
+      notifyOk('Autres appareils déconnectés', 'Seul ce téléphone reste connecté à ton compte.');
+    } catch (e) { notifyError(e); }
+  }
   async function call(path: string) { try { await api(path, { body: {} }); await refresh(); } catch (e) { notifyError(e); } }
   const menu: [Icon, Tone, string, string, Href][] = [
     [ShoppingBag, 'gold', 'Mes biens', 'Plans d’achat et commandes', '/biens'],
@@ -92,7 +100,9 @@ export default function Profil() {
         ))}
       </Card>
 
+      <Button title="Déconnecter mes autres appareils" icon={MonitorSmartphone} variant="ghost" onPress={logoutOthers} />
       <Button title="Se déconnecter" icon={LogOut} variant="ghost" onPress={signOut} />
+      <Button title="Supprimer mon compte" icon={Trash2} variant="ghost" size="sm" onPress={() => router.push('/supprimer-compte')} />
     </Screen>
   );
 }

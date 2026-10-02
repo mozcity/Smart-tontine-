@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import type pg from 'pg';
 import { z } from 'zod';
+import { csvCell } from '../lib/csv.js';
 import { many, one, pool, withTx } from '../db.js';
 import { badRequest, conflict, forbidden, HttpError, notFound } from '../lib/errors.js';
 import { currentUser } from '../lib/auth.js';
@@ -127,7 +128,7 @@ router.get('/:id/cotisations.csv', async (req, res) => {
      FROM transactions t JOIN users u ON u.id = t.initiator_id
      WHERE t.type = 'cagnotte_contribution' AND t.status = 'completed' AND t.meta->>'cagnotteId' = $1::text
      ORDER BY t.created_at`, [id]);
-  const esc = (v: unknown) => `"${String(v).replace(/"/g, '""')}"`;
+  const esc = csvCell;
   const csv = ['date;membre;telephone;montant', ...rows.map((r) => [r.date, r.membre, r.telephone, r.montant].map(esc).join(';'))].join('\n');
   res.type('text/csv; charset=utf-8').attachment(`cotisations-${id}.csv`).send('\uFEFF' + csv);
 });

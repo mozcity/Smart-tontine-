@@ -220,7 +220,11 @@ router.post('/withdrawals', async (req, res) => {
   const user = currentUser(req);
   const body = z.object({ amount, channel: payoutChannel, phone: z.string().optional(), pin: z.string().optional() }).parse(req.body);
   await assertPin(user.id, body.pin);
-  const profile = await one(pool, 'SELECT phone FROM users WHERE id = $1', [user.id]);
+  const profile = await one(pool, 'SELECT phone, kyc_level FROM users WHERE id = $1', [user.id]);
+  // Vers un autre numéro que celui du compte : identité vérifiée exigée (session volée, LBC/FT).
+  if (body.phone && body.phone !== profile.phone && profile.kyc_level < 1) {
+    throw new HttpError(403, 'kyc_required', 'Pour retirer vers un autre numéro, vérifie d\'abord ton identité');
+  }
   assertProviderAccepts(body.channel, body.phone ?? profile.phone, body.amount, 'payout');
   const f = await withdrawalFee(user.id, body.amount);
 

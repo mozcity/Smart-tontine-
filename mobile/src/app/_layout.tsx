@@ -34,6 +34,7 @@ function RootStack() {
         <Stack.Screen name="historique" options={{ title: 'Historique' }} />
         <Stack.Screen name="support" options={{ title: 'Aide & support' }} />
         <Stack.Screen name="identite" options={{ title: 'Mon identité' }} />
+        <Stack.Screen name="supprimer-compte" options={{ title: 'Supprimer mon compte' }} />
       </Stack.Protected>
     </Stack>
   );

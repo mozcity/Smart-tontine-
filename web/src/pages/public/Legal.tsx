@@ -5,7 +5,7 @@ export default function Legal() {
     ['Fonds des membres', 'Les fonds sont cantonnés auprès d’un établissement agréé par la BCEAO. Smart Tontine agit comme prestataire technique ; les partenaires ne détiennent jamais l’argent des membres.'],
     ['Crédit', 'Les avances et microcrédits sont accordés par des Systèmes Financiers Décentralisés (SFD) agréés, sous le taux d’usure. Smart Tontine distribue l’offre et calcule le score.'],
     ['Tontines de biens', 'Épargne collective en vue de l’achat d’un bien. Le prix est payé au séquestre puis au fournisseur à la réception confirmée. Ce n’est pas une vente à crédit ; Smart Tontine n’avance jamais le prix d’un bien. Garantie et livraison relèvent du fournisseur.'],
-    ['Données personnelles', 'Traitement déclaré à la Commission de l’Informatique et des Libertés (CIL). Données minimales, conservées 10 ans pour les opérations financières (LBC/FT). Droit d’accès, de rectification et de suppression via le support.'],
+    ['Données personnelles', 'Traitement déclaré à la Commission de l’Informatique et des Libertés (CIL). Données minimales, conservées 10 ans pour les opérations financières (LBC/FT). Détail dans la politique de confidentialité (/confidentialite) ; suppression du compte depuis l’application ou sur /suppression-compte.'],
   ];
   return (
     <div className="container section stack" style={{ maxWidth: 820 }}>

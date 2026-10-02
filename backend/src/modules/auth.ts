@@ -26,7 +26,9 @@ router.post('/otp/request', async (req, res) => {
     [p, hashSecret(code), config.otpTtlMinutes],
   );
   await sms.send(p, `Smart Tontine : ton code est ${code}. Ne le partage avec personne.`, 'otp');
-  res.json({ ok: true, ...(config.isProd ? {} : { devCode: code }) });
+  // Code renvoyé seulement en développement ET avec le faux fournisseur SMS : un serveur mal configuré
+  // (NODE_ENV oublié) qui envoie de vrais SMS ne le divulgue jamais.
+  res.json({ ok: true, ...(!config.isProd && config.smsProvider === 'console' ? { devCode: code } : {}) });
 });
 
 router.post('/otp/verify', async (req, res) => {
@@ -95,6 +97,14 @@ router.put('/me/pin', requireAuth, async (req, res) => {
   if (row.pin_hash) await assertPin(user.id, body.currentPin); // le changement de PIN compte aussi les erreurs
   await pool.query('UPDATE users SET pin_hash = $2, pin_failed_attempts = 0, pin_locked_until = NULL WHERE id = $1', [user.id, hashSecret(body.pin)]);
   res.json({ ok: true });
+});
+
+/** Déconnecte tous les appareils (téléphone perdu ou volé) : les jetons existants sont refusés, un nouveau est rendu. */
+router.post('/logout-all', requireAuth, async (req, res) => {
+  const u = currentUser(req);
+  const { at } = await one(pool, 'UPDATE users SET sessions_revoked_at = now() WHERE id = $1 RETURNING sessions_revoked_at AS at', [u.id]);
+  // Le nouveau jeton est daté de la seconde suivante : seul l'appareil qui a demandé la révocation reste connecté.
+  res.json({ token: signToken({ id: u.id, role: u.role }, false, Math.floor(new Date(at).getTime() / 1000) + 1) });
 });
 
 // ───── Double authentification (TOTP) — comptes support et admin ─────

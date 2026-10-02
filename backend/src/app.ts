@@ -26,14 +26,35 @@ import { router as goods } from './modules/goods.js';
 import { router as publicApi } from './modules/public.js';
 import { router as kyc } from './modules/kyc.js';
 
+/** Politique de sécurité du contenu, reprise à l'identique par nginx (web/security-headers.conf). */
+export const CSP = {
+  'default-src': ["'self'"],
+  'script-src': ["'self'"],
+  'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+  'font-src': ["'self'", 'https://fonts.gstatic.com'],
+  'img-src': ["'self'", 'data:', 'blob:'],
+  'connect-src': ["'self'"],
+  'object-src': ["'none'"],
+  'base-uri': ["'self'"],
+  'form-action': ["'self'"],
+  'frame-ancestors': ["'none'"],
+};
+
 export function createApp() {
   const app = express();
   app.disable('x-powered-by');
   // Derrière le reverse proxy (TLS), l'adresse du client vient de X-Forwarded-For.
   app.set('trust proxy', 1);
   const limitsOn = config.env !== 'test';
-  app.use(helmet({ contentSecurityPolicy: false }));
-  app.use(cors());
+  // CSP stricte : aucun script en ligne ni externe (back-office et plateforme web servis par l'API).
+  app.use(helmet({
+    contentSecurityPolicy: { useDefaults: false, directives: CSP },
+    crossOriginEmbedderPolicy: false,
+    strictTransportSecurity: { maxAge: 31_536_000, includeSubDomains: true },
+  }));
+  // Les jetons voyagent dans l'en-tête Authorization (pas de cookie) ; en production, origines limitées à CORS_ORIGINS.
+  const origins = (process.env.CORS_ORIGINS ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+  app.use(cors(origins.length ? { origin: origins } : undefined));
   // Le corps brut est conservé pour vérifier la signature HMAC des webhooks.
   // Corps plus gros (jusqu'à 2 Mo) seulement là où l'on envoie des photos : dossier KYC, logos, biens.
   app.use(['/me/kyc', '/partners', '/goods'], express.json({ limit: '2mb' }));

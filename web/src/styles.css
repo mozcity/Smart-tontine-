@@ -307,7 +307,8 @@ a.list-row:hover { background: var(--surface-2); text-decoration: none; }
 .phone-mock { background: var(--surface); color: var(--ink); border-radius: 36px; padding: 14px; box-shadow: 0 40px 100px -30px rgba(0, 0, 0, .6), 0 0 0 10px rgba(255, 255, 255, .06); max-width: 340px; justify-self: center; width: 100%; animation: float 6s ease-in-out infinite; }
 .phone-mock .screen { background: var(--bg); border-radius: 26px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
 @keyframes float { 50% { transform: translateY(-10px); } }
-.section { padding: 80px 0; }
+/* padding-block : ne pas écraser la marge latérale de .container quand les deux classes sont combinées. */
+.section { padding-block: 80px; }
 .section.alt { background: var(--surface); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .section-title { text-align: center; max-width: 700px; margin: 0 auto 44px; }
 .section-title h2 { font-size: clamp(26px, 3.4vw, 36px); font-weight: 800; letter-spacing: -.03em; }
@@ -390,7 +391,7 @@ a.list-row:hover { background: var(--surface-2); text-decoration: none; }
   .main { padding: 18px 16px calc(96px + env(safe-area-inset-bottom)); }
   h1 { font-size: 24px; }
   .page-head { margin-bottom: 16px; }
-  .section { padding: 56px 0; }
+  .section { padding-block: 56px; }
   .cta-band { padding: 30px 22px; }
   .card { padding: 18px; }
   .balance { font-size: 32px; }

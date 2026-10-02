@@ -152,6 +152,7 @@ describe('CinetPay API v1', () => {
   it('refuse avant tout débit un opérateur absent du pays ou un montant au-delà du plafond agrégateur', async () => {
     use();
     const m = await signup('Contrôles');
+    await pool.query('UPDATE users SET kyc_level = 1 WHERE id = $1', [m.id]); // retrait vers un numéro burkinabè distinct
     await m.auth(request(app).post('/wallet/deposits')).send({ amount: 1_000, channel: 'mtn_momo', phone: BF }).expect(400);
     await m.auth(request(app).post('/wallet/deposits')).send({ amount: 1_000, channel: 'wave', phone: '+33612345678' }).expect(400);
     await m.auth(request(app).post('/wallet/withdrawals')).send({ amount: 1_000, channel: 'card', pin: '1234' }).expect(400);
@@ -164,6 +165,7 @@ describe('CinetPay API v1', () => {
   it('retrait asynchrone : en cours, puis confirmé par webhook ; ou annulé et recrédité par le rattrapage', async () => {
     use();
     const m = await signup('Retraits réels');
+    await pool.query('UPDATE users SET kyc_level = 1 WHERE id = $1', [m.id]);
     const dep = await deposit(m, 50_000);
     fake.status.set(dep.reference, 'SUCCESS');
     await notifyFor(dep.reference).expect(200);

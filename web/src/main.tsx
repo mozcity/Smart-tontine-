@@ -34,6 +34,8 @@ const router = createBrowserRouter([
           { path: '/rejoindre/:code', element: page(() => import('./pages/public/Rejoindre')) },
           { path: '/connexion', element: page(() => import('./pages/public/Connexion')) },
           { path: '/legal', element: page(() => import('./pages/public/Legal')) },
+          { path: '/confidentialite', element: page(() => import('./pages/public/Confidentialite')) },
+          { path: '/suppression-compte', element: page(() => import('./pages/public/SuppressionCompte')) },
           { path: '*', element: <NotFound /> },
         ],
       },

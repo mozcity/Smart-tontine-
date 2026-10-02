@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import { csvCell } from '../lib/csv.js';
 import { many, one, pool, withTx } from '../db.js';
 import { badRequest, notFound } from '../lib/errors.js';
 import { currentUser } from '../lib/auth.js';
@@ -231,7 +232,7 @@ router.get('/:id/statement', async (req, res) => {
 
 router.get('/:id/statement.csv', async (req, res) => {
   const { partner, entries } = await statement(req.params.id, currentUser(req).id, req.query);
-  const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const esc = csvCell;
   const lines = entries.map((e) => [new Date(e.created_at).toISOString().replace('T', ' ').slice(0, 16), e.reference, e.type, e.description,
     e.amount, Number(e.balance_after)].map(esc).join(';'));
   const csv = ['date;reference;type;libelle;montant;solde', ...lines].join('\n');

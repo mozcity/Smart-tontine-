@@ -30,6 +30,11 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     res.status(400).json({ error: 'invalid_json', message: 'Requête mal formée' });
     return;
   }
+  // Identifiant mal formé (pas un UUID, pas un entier) : la ressource n'existe pas. Jamais d'erreur 500 sondable.
+  if (err?.code === '22P02' || err?.code === '22003') {
+    res.status(404).json({ error: 'not_found', message: 'Ressource introuvable' });
+    return;
+  }
   // Violation de contrainte CHECK sur le solde (course entre deux débits)
   if (err?.code === '23514' && String(err?.constraint).includes('balance')) {
     res.status(409).json({ error: 'insufficient_funds', message: 'Solde insuffisant' });

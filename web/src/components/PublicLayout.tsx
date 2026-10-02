@@ -39,7 +39,7 @@ export function PublicLayout() {
             </div>
             <div className="stack-sm"><b style={{ color: '#fff' }}>Produit</b><Link to="/decouvrir">Tontines publiques</Link><Link to="/decouvrir?onglet=catalogue">Catalogue de biens</Link><Link to="/tarifs">Tarifs</Link></div>
             <div className="stack-sm"><b style={{ color: '#fff' }}>Partenaires</b><Link to="/devenir-partenaire">Associations, commerçants, SFD</Link><Link to="/partenaires">Nos partenaires</Link><Link to="/partenaire">Portail partenaire</Link></div>
-            <div className="stack-sm"><b style={{ color: '#fff' }}>Aide</b><Link to="/devenir-partenaire?type=contact">Nous contacter</Link><Link to="/legal">CGU et confidentialité</Link></div>
+            <div className="stack-sm"><b style={{ color: '#fff' }}>Aide</b><Link to="/devenir-partenaire?type=contact">Nous contacter</Link><Link to="/legal">Conditions générales</Link><Link to="/confidentialite">Confidentialité</Link><Link to="/suppression-compte">Supprimer mon compte</Link></div>
           </div>
           <p className="xs">© {new Date().getFullYear()} Smart Tontine. Fonds des membres cantonnés auprès d'un établissement agréé par la BCEAO. Crédits accordés par nos SFD partenaires agréés.</p>
         </div>
