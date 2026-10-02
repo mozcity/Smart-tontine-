@@ -72,7 +72,10 @@
       "typedRoutes": true
     },
     "extra": {
-      "apiUrl": "http://localhost:4000"
+      "apiUrl": "http://localhost:4000",
+      "eas": {
+        "projectId": "ad459038-0644-40dc-a26e-328b8f1875c5"
+      }
     },
     "description": "Tontine en ligne sûre : cotisez par Orange Money, Moov Money ou Wave, recevez votre pot à votre tour, épargnez et empruntez.",
     "owner": "zizouomz"
