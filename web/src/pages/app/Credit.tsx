@@ -53,7 +53,7 @@ export default function Credit() {
 
 function Microcredit({ offer, onDone }: { offer: Offers['microcredit']; onDone: () => void }) {
   const [amount, setAmount] = useState('');
-  const [months, setMonths] = useState(offer.durations[2] ?? offer.durations[0]);
+  const [months, setMonths] = useState(offer.durations[1] ?? offer.durations[0]);
   const [purpose, setPurpose] = useState('');
   const [sim, setSim] = useState<{ schedule: { number: number; dueDate: string; principal: number; interest: number }[]; totalInterest: number } | null>(null);
   const { askPin } = useUi();

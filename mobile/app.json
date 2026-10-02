@@ -7,8 +7,17 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "app.smarttontine.mobile"
+      "supportsTablet": false,
+      "bundleIdentifier": "app.smarttontine.mobile",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "CFBundleDevelopmentRegion": "fr",
+        "CFBundleLocalizations": [
+          "fr"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +27,17 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "app.smarttontine.mobile"
+      "package": "app.smarttontine.mobile",
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ],
+      "allowBackup": false
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -31,7 +50,20 @@
         "expo-image-picker",
         {
           "photosPermission": "Smart Tontine utilise tes photos pour ta vérification d'identité, le logo de ton espace partenaire et les images de tes biens.",
-          "cameraPermission": "Smart Tontine utilise l'appareil photo pour ta vérification d'identité (pièce et selfie)."
+          "cameraPermission": "Smart Tontine utilise l'appareil photo pour ta vérification d'identité (pièce et selfie).",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "backgroundColor": "#FFFFFF",
+          "dark": {
+            "image": "./assets/splash-icon.png",
+            "backgroundColor": "#14123A"
+          }
         }
       ]
     ],
@@ -41,6 +73,7 @@
     },
     "extra": {
       "apiUrl": "http://localhost:4000"
-    }
+    },
+    "description": "Tontine en ligne sûre : cotisez par Orange Money, Moov Money ou Wave, recevez votre pot à votre tour, épargnez et empruntez."
   }
 }

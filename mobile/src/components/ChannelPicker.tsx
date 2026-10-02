@@ -1,5 +1,6 @@
 import { Pressable, Text, View } from 'react-native';
 import { colors } from '@/components/ui';
+import { useAuth } from '@/lib/auth';
 
 // Opérateurs Mobile Money : pastille aux couleurs de l'opérateur (repère visuel immédiat).
 export const CHANNELS = [
@@ -9,12 +10,16 @@ export const CHANNELS = [
   { value: 'mtn_momo', label: 'MTN MoMo', short: 'MTN', color: '#FFCB05', fg: '#111' },
 ] as const;
 
+/** MTN n'opère qu'en Côte d'Ivoire et au Bénin (moyens de paiement ouverts par CinetPay) : masqué ailleurs. */
+export const channelsFor = (phone?: string | null) => CHANNELS.filter((c) => c.value !== 'mtn_momo' || /^\+22[59]/.test(phone ?? ''));
+
 export function ChannelPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { me } = useAuth();
   return (
     <View style={{ gap: 8 }}>
       <Text style={{ fontSize: 13, fontWeight: '600', color: colors.ink2 }}>Opérateur Mobile Money</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }} accessibilityRole="radiogroup">
-        {CHANNELS.map((c) => {
+        {channelsFor(me?.phone).map((c) => {
           const on = value === c.value;
           return (
             <Pressable key={c.value} onPress={() => onChange(c.value)} accessibilityRole="radio" accessibilityState={{ checked: on }}

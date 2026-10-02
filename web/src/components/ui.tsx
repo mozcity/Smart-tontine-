@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
 import { AlertCircle, CheckCircle2, Delete, Info, Inbox, Lock, TriangleAlert, X, type LucideIcon } from 'lucide-react';
 import { CHANNELS, fcfa, num, parseAmount, type Tone } from '../lib/format';
+import { useAuth } from '../lib/auth';
 
 // Identifiant de dégradé unique par logo : un logo masqué (menu latéral sur téléphone) ne doit pas casser les autres.
 export function LogoMark() {
@@ -144,12 +145,17 @@ export function AmountInput({ value, onChange, chips = [5000, 10000, 25000, 5000
 
 const OPERATOR_COLOR: Record<string, string> = { orange_money: '#FF7900', moov_money: '#0066B3', wave: '#1DC8F2', mtn_momo: '#FFCB05' };
 const OPERATOR_TEXT: Record<string, string> = { orange_money: 'OM', moov_money: 'MV', wave: 'W', mtn_momo: 'MTN' };
+/** MTN n'opère qu'en Côte d'Ivoire et au Bénin (moyens de paiement ouverts par CinetPay) : masqué ailleurs. */
+export const operatorsFor = (phone?: string | null) =>
+  Object.entries(CHANNELS).filter(([k]) => k !== 'mtn_momo' || /^\+22[59]/.test(phone ?? ''));
+
 export function OperatorPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { me } = useAuth();
   return (
     <div className="stack-sm">
       <span className="xs" style={{ fontWeight: 600 }}>Opérateur Mobile Money</span>
       <div className="operators" role="radiogroup">
-        {Object.entries(CHANNELS).map(([k, label]) => (
+        {operatorsFor(me?.phone).map(([k, label]) => (
           <button type="button" role="radio" aria-checked={value === k} key={k} className={`operator ${value === k ? 'on' : ''}`} onClick={() => onChange(k)}>
             <i style={{ background: OPERATOR_COLOR[k], color: k === 'mtn_momo' ? '#111' : '#fff' }}>{OPERATOR_TEXT[k]}</i>{label}
           </button>

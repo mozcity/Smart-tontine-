@@ -95,7 +95,8 @@ Choix de conception :
 | `GET /admin/api/kyc`, `GET /admin/api/kyc/:id`, `POST /admin/api/kyc/:id/decision` | Support : file et dossiers (consultation tracée) ; admin : décision |
 | `GET /auth/mfa`, `POST /auth/mfa/setup`, `POST /auth/mfa/enable`, `POST /auth/mfa/verify` | Agents : double authentification TOTP |
 | `POST /admin/api/staff/:id/mfa/reset` | Admin : réinitialiser la 2FA d'un agent |
-| `POST /webhooks/cinetpay` | Notification CinetPay : seule la référence est lue, puis la transaction est vérifiée auprès de CinetPay |
+| `POST /webhooks/cinetpay` | Notification CinetPay API v1 (dépôts et retraits) : `notify_token` comparé en temps constant, puis statut redemandé à CinetPay (docs/13) |
+| `POST /webhooks/sms/orange/:jeton`, `POST /webhooks/sms/twilio` | Accusés de réception SMS : jeton secret (Orange), signature `X-Twilio-Signature` (Twilio) |
 
 ## 10.3 Sécurité
 

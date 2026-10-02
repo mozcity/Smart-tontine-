@@ -26,14 +26,16 @@ export const pricing = {
     graceDays: 3,              // après l'échéance + délai de grâce, les cautions couvrent les impayés
   },
   credit: {
-    usuryApr: 0.24,            // taux d'usure applicable aux SFD dans l'UEMOA (à confirmer avec le partenaire)
+    usuryApr: 0.24,
+    // Remboursement complet jamais avant 61 jours : règle Google Play sur les prêts personnels (« short-term loans »).
+    minRepaymentDays: 61,            // taux d'usure applicable aux SFD dans l'UEMOA (à confirmer avec le partenaire)
     smartTontineInterestShare: 0.4, // part des intérêts revenant à Smart Tontine, le reste au SFD partenaire
     advance: { monthlyRate: 0.015, maxShareOfPot: 0.5, minAmount: 5_000 },
     microcredit: {
       monthlyRate: 0.015,      // intérêt sur capital restant dû (18 % / an)
       minAmount: 10_000,
       maxAmount: 500_000,
-      durations: [1, 2, 3, 4, 6],
+      durations: [3, 4, 6],    // en mois : la plus courte dépasse minRepaymentDays
       minScore: 550,
       minKycLevel: 1,
       latePenaltyRate: 0.02,   // pénalité unique par échéance en retard

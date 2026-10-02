@@ -23,6 +23,9 @@ function splitInterest(amount: number) {
 }
 
 /** Tours de tontine pour lesquels l'utilisateur peut demander une avance sur son futur pot. */
+const daysUntil = (date: string | Date) =>
+  Math.floor((new Date(`${typeof date === 'string' ? date.slice(0, 10) : date.toISOString().slice(0, 10)}T00:00:00Z`).getTime() - Date.now()) / DAY);
+
 async function advanceOffers(db: Db, userId: string) {
   const rounds = await many(db,
     `SELECT r.id AS round_id, r.number, r.due_date, t.id AS tontine_id, t.name, t.contribution_amount,
@@ -44,6 +47,7 @@ async function advanceOffers(db: Db, userId: string) {
       r.arrears > 0 && 'Tu as des cotisations en retard',
       r.has_advance && 'Une avance est déjà en cours sur ce tour',
       maxAmount < pricing.credit.advance.minAmount && 'Pot trop petit',
+      daysUntil(r.due_date) < pricing.credit.minRepaymentDays && `Ton pot arrive dans moins de ${pricing.credit.minRepaymentDays} jours : l'avance n'est proposée qu'au-delà`,
     ].filter(Boolean) as string[];
     return {
       roundId: r.round_id, tontineId: r.tontine_id, tontine: r.name, round: r.number, dueDate: r.due_date, pot,

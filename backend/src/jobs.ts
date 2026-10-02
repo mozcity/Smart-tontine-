@@ -14,7 +14,7 @@ import { reconcilePendingDeposits, reconcilePendingWithdrawals } from './modules
 /** Tâches périodiques (toutes les heures). En production : un worker dédié ou un cron. */
 export async function runJobs() {
   const results = { ecaissesReleased: 0, plansRenewed: 0, plansExpired: 0, challengesExpired: 0, tontineRoundsClosed: 0,
-    credit: { autoDebited: 0, penalized: 0, defaulted: 0 }, reminders: 0, ordersAutoConfirmed: 0, partnersInvoiced: 0, depositsReconciled: 0, withdrawalsReconciled: 0 };
+    credit: { autoDebited: 0, penalized: 0, defaulted: 0 }, reminders: 0, ordersAutoConfirmed: 0, partnersInvoiced: 0, depositsReconciled: 0, withdrawalsReconciled: 0, purged: 0 };
 
   // Dépôts dont le webhook n'est jamais arrivé : vérifiés auprès de l'agrégateur.
   results.depositsReconciled = await reconcilePendingDeposits();
@@ -79,6 +79,13 @@ export async function runJobs() {
     "UPDATE challenge_participations SET status = 'abandoned' WHERE status = 'active' AND ends_at <= now() RETURNING user_id");
   for (const r of expired.rows) await notify(pool, r.user_id, 'Challenge terminé', 'Récupère ton épargne et relance un nouveau défi !');
   results.challengesExpired = expired.rowCount ?? 0;
+
+  // Durées de conservation annoncées dans la politique de confidentialité (/confidentialite).
+  for (const sql of [
+    "DELETE FROM sms_log WHERE created_at < now() - interval '12 months'",
+    "DELETE FROM user_events WHERE created_at < now() - interval '24 months'",
+    "DELETE FROM otp_codes WHERE created_at < now() - interval '1 day'",
+  ]) results.purged += (await pool.query(sql)).rowCount ?? 0;
 
   return results;
 }

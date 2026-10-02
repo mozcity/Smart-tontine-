@@ -1,12 +1,19 @@
 # 12. Point d'avancement — application et plateforme Smart Tontine
 
-*Au 2 octobre 2026. Base : le dépôt du projet (12 commits) et les tests automatisés.*
+*Au 2 octobre 2026, mis à jour à la fin du Lot 4. Base : le dépôt du projet et les tests automatisés.*
 
 ## 12.1 En résumé
 
 Le **produit est développé de bout en bout et fonctionne en démonstration**. Une tontine complète se déroule de la création au versement du pot, avec la caution, le crédit, les biens, les partenaires, le back-office et la vérification d'identité. Le produit tourne sur l'API, la plateforme web et l'application mobile.
 
-**Il ne peut pas encore être ouvert au public.** Les paiements sont **simulés** et les SMS s'affichent dans la console. Il manque aussi les **conventions** avec un établissement agréé BCEAO et un SFD, ainsi que les comptes marchands de l'agrégateur. Ces étapes relèvent surtout de démarches, pas de code.
+**Le Lot 4 a branché le réel** : paiements CinetPay (dépôts et retraits), SMS Orange et Twilio, test d'intrusion interne et préparation des stores (voir [docs/13](13_lot4_integrations_reelles.md)).
+
+**Il ne peut pas encore être ouvert au public.** Il manque surtout des démarches, pas du code :
+- les **conventions** avec un établissement agréé BCEAO et un SFD ;
+- les **contrats** CinetPay et Orange SMS ;
+- les **comptes développeur** Apple et Google ;
+- l'**hébergement** de production ;
+- le **test d'intrusion externe**.
 
 | Lot (cahier des charges) | Contenu | État |
 |---|---|---|
@@ -14,7 +21,7 @@ Le **produit est développé de bout en bout et fonctionne en démonstration**. 
 | Lot 1 | API cœur : comptes, grand livre, portefeuille, tontines, rappels | ✅ Terminé |
 | Lot 2 | App mobile membres + site public | ✅ Terminé (testé en navigateur, pas encore sur téléphone réel) |
 | Lot 3 | Crédit, biens, partenaires, portail partenaire web, back-office | ✅ Terminé |
-| Lot 4 | Intégration réelle (paiement, SMS), sécurité, test d'intrusion, stores | 🟡 Sécurité faite ; **intégrations réelles, test d'intrusion et stores à faire** |
+| Lot 4 | Intégration réelle (paiement, SMS), sécurité, test d'intrusion, stores | ✅ Code terminé ([docs/13](13_lot4_integrations_reelles.md)) ; **test externe et publication à lancer** (comptes et contrats à ouvrir) |
 | Lot 5 | USSD, langues locales, BIC, marque blanche | ⏳ Plus tard |
 
 ## 12.2 Ce qui est livré
@@ -32,7 +39,7 @@ Le **produit est développé de bout en bout et fonctionne en démonstration**. 
 | **Vidéo** | Motion design de présentation (65 s, avec musique) | `motion/` |
 
 **Qualité** :
-- 46 tests de bout en bout sur l'API et 4 tests sur le web, tous au vert ;
+- 70 tests de bout en bout sur l'API (dont 13 scénarios d'attaque) et 4 tests sur le web, tous au vert ;
 - typage strict sur tout le code (≈ 10 700 lignes de TypeScript) ;
 - parcours rejoués dans un navigateur sans erreur ;
 - aucune page web ne déborde sur téléphone.
@@ -44,13 +51,13 @@ Le **produit est développé de bout en bout et fonctionne en démonstration**. 
 | 1 | Convention avec un établissement agréé BCEAO (cantonnement des fonds) | Juridique | Direction | — |
 | 2 | Convention avec un SFD (crédit, licence) | Partenariat | Direction | — |
 | 3 | Comptes marchands CinetPay (ou autre agrégateur) : encaissement **et** décaissement | Intégration | Direction + dev | 1 |
-| 4 | Brancher le décaissement (retraits) et passer `PAYMENT_PROVIDER` en réel | Code | Dev | 3 |
-| 5 | Fournisseur SMS (OTP, rappels) | Code | Dev | contrat SMS |
+| 4 | ~~Brancher le décaissement (retraits)~~ ✅ fait (CinetPay v1) ; passer `PAYMENT_PROVIDER=cinetpay` après essais en bac à sable | Configuration | Dev | 3 |
+| 5 | ~~Fournisseur SMS~~ ✅ fait (Orange + Twilio) ; contrat Orange SMS et nom d'expéditeur à obtenir | Contrat | Direction | — |
 | 6 | Hébergement de production, nom de domaine, sauvegardes | Infra | Dev | — |
 | 7 | Dépôt du code sur GitHub (le dépôt n'a pas encore de serveur distant : l'intégration continue n'a jamais tourné) | Infra | Dev | — |
 | 8 | Stockage chiffré des photos KYC (aujourd'hui en base) | Code | Dev | 6 |
-| 9 | Essais sur vrais téléphones Android et iPhone, puis publication sur les stores (EAS) | Test + stores | Dev | 6 |
-| 10 | Test d'intrusion externe | Sécurité | Prestataire | 6 |
+| 9 | Comptes Apple (D-U-N-S) et Google ; builds EAS ; essais sur vrais téléphones ; publication (visuels, fiches et formulaires prêts : [docs/15](15_publication_stores.md)) | Stores | Direction + dev | 6 |
+| 10 | Test d'intrusion externe (test interne fait, cahier des charges prêt : [docs/14](14_test_intrusion.md)) | Sécurité | Prestataire | 6 |
 | 11 | Textes juridiques (CGU, confidentialité, tontines de biens), déclaration CIL | Juridique | Juriste | 1 |
 | 12 | Tests avec 5 à 10 utilisateurs réels (marché, association), puis bêta fermée de 50 membres | Produit | Équipe | 9 |
 
@@ -58,7 +65,8 @@ Le **produit est développé de bout en bout et fonctionne en démonstration**. 
 
 ## 12.4 Points d'attention
 
-- **Démonstration et réalité** : tout ce qui touche l'argent réel (Mobile Money, SFD) n'a été testé qu'en simulation. Prévoir 4 à 6 semaines d'intégration après la signature des contrats.
+- **Démonstration et réalité** : les intégrations CinetPay, Orange et Twilio suivent les API officielles et sont testées contre des serveurs simulés fidèles. Il reste à les rejouer en bac à sable, puis avec de petits montants réels. Prévoir 2 à 3 semaines après la signature des contrats.
+- **Crédit et Google Play** : un prêt ne doit jamais être remboursé en totalité en 60 jours ou moins. Avances et microcrédit respectent désormais ce minimum de 61 jours.
 - **Application mobile** : vérifiée dans sa version navigateur. L'appareil photo, le clavier PIN et les performances doivent être essayés sur un téléphone d'entrée de gamme.
 - **Back-office** : fonctionnel mais au style d'origine. Une refonte est possible si l'équipe interne grandit.
 - **Hors périmètre actuel** : USSD (téléphones simples), langues locales, mode sombre de l'app.

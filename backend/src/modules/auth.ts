@@ -15,17 +15,23 @@ export const router = Router();
 // Numéros UEMOA : +225 (CI), +221 (SN), +223 (ML), +226 (BF), +227 (NE), +228 (TG), +229 (BJ), +245 (GW)
 const phone = z.string().trim().regex(/^\+22[1-9]\d{8,10}$|^\+245\d{7,9}$/, 'Numéro au format international, ex. +2250748553268');
 
+const isReviewPhone = (p: string) =>
+  !!process.env.REVIEW_PHONE && /^\d{6}$/.test(process.env.REVIEW_OTP ?? '') && p === process.env.REVIEW_PHONE;
+
 router.post('/otp/request', async (req, res) => {
   const { phone: p } = z.object({ phone }).parse(req.body);
   const recent = await one(pool, "SELECT count(*)::int AS n FROM otp_codes WHERE phone = $1 AND created_at > now() - interval '15 minutes'", [p]);
   if (recent.n >= 5) throw new HttpError(429, 'too_many_requests', 'Trop de demandes, réessaie dans quelques minutes');
 
-  const code = otpCode();
+  // Compte de revue des stores (Apple, Google) : numéro et code fixes fournis aux équipes de validation.
+  // Désactivé sans les deux variables ; jamais pour un compte du back-office ; mêmes limites que tout OTP.
+  const review = isReviewPhone(p) && !(await one(pool, "SELECT 1 FROM users WHERE phone = $1 AND role <> 'customer'", [p]));
+  const code = review ? process.env.REVIEW_OTP! : otpCode();
   await pool.query(
     `INSERT INTO otp_codes (phone, code_hash, expires_at) VALUES ($1, $2, now() + make_interval(mins => $3))`,
     [p, hashSecret(code), config.otpTtlMinutes],
   );
-  await sms.send(p, `Smart Tontine : ton code est ${code}. Ne le partage avec personne.`, 'otp');
+  if (!review) await sms.send(p, `Smart Tontine : ton code est ${code}. Ne le partage avec personne.`, 'otp');
   // Code renvoyé seulement en développement ET avec le faux fournisseur SMS : un serveur mal configuré
   // (NODE_ENV oublié) qui envoie de vrais SMS ne le divulgue jamais.
   res.json({ ok: true, ...(!config.isProd && config.smsProvider === 'console' ? { devCode: code } : {}) });

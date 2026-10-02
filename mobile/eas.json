@@ -9,12 +9,12 @@
       "distribution": "internal",
       "channel": "preview",
       "android": { "buildType": "apk" },
-      "env": { "EXPO_PUBLIC_API_URL": "https://api.staging.smarttontine.bf" }
+      "env": { "EXPO_PUBLIC_API_URL": "https://api.staging.smarttontine.app" }
     },
     "production": {
       "channel": "production",
       "autoIncrement": true,
-      "env": { "EXPO_PUBLIC_API_URL": "https://api.smarttontine.bf" }
+      "env": { "EXPO_PUBLIC_API_URL": "https://api.smarttontine.app" }
     }
   },
   "submit": {

@@ -12,9 +12,9 @@ Références : **Maman Tontine** (expérience tontine au Sénégal) et **MaTonti
 |---|---|
 | [`docs/`](docs/) | Dossier stratégique : comparatif Sénégal + 7 chapitres |
 | [`finance/`](finance/) | `SmartTontine_modeles_economiques.xlsx` : 7 modèles économiques chiffrés et validés (Burkina puis UEMOA), tests de résistance, et son générateur |
-| [`backend/`](backend/) | API Node.js/TypeScript + PostgreSQL : moteur de tontine, scoring et crédit, coffres de groupe, rappels automatiques, Organisateur Pro, tontines de biens, espaces partenaires, grand livre en partie double, API publique du site, back-office CRM web, 46 tests de bout en bout |
+| [`backend/`](backend/) | API Node.js/TypeScript + PostgreSQL : moteur de tontine, scoring et crédit, coffres de groupe, rappels automatiques, Organisateur Pro, tontines de biens, espaces partenaires, grand livre en partie double, API publique du site, back-office CRM web, **CinetPay API v1 (dépôts et retraits)**, **SMS Orange / Twilio**, 70 tests de bout en bout |
 | [`web/`](web/) | **Plateforme web** React : site public (vitrine, tarifs, tontines publiques, catalogue, vitrines partenaires, « Devenir partenaire »), espace membre, **portail partenaire** |
-| [`mobile/`](mobile/) | Application Expo / React Native (Android, iOS) reprenant l'interface de l'affiche, profils de build EAS |
+| [`mobile/`](mobile/) | Application Expo / React Native (Android, iOS) reprenant l'interface de l'affiche, profils de build EAS, **visuels et captures des stores** (`mobile/store/`) |
 
 ## Dossier stratégique
 
@@ -31,6 +31,9 @@ Références : **Maman Tontine** (expérience tontine au Sénégal) et **MaTonti
 10. [**Architecture technique**](docs/10_architecture_technique.md) — composants, plateforme web, sécurité, environnements, Docker, intégration continue, EAS, exploitation
 11. [**Design UX/UI**](docs/11_design_ux_ui.md) — principes, identité visuelle, navigation, composants, parcours clés, captures web et app
 12. [**Point d'avancement**](docs/12_point_avancement.md) — ce qui est livré, ce qui reste avant l'ouverture au public, chemin critique
+13. [**Lot 4 : intégrations réelles**](docs/13_lot4_integrations_reelles.md) — CinetPay API v1 (dépôts, retraits asynchrones), SMS Orange / Twilio, mise en service
+14. [**Test d'intrusion**](docs/14_test_intrusion.md) — rapport interne (13 constats corrigés) et cahier des charges du test externe
+15. [**Publication sur les stores**](docs/15_publication_stores.md) — fiches, formulaires de données, compte de revue, builds EAS, liste de contrôle
 
 **Vidéo de présentation** : [`motion/smart-tontine-presentation.mp4`](motion/smart-tontine-presentation.mp4) (65 s, motion design, musique originale) — sources dans [`motion/`](motion/).
 
@@ -71,6 +74,9 @@ Références : **Maman Tontine** (expérience tontine au Sénégal) et **MaTonti
 | **Vérification d'identité (KYC)** : pièce + selfie, justificatif ; revue et décision motivée | ✅ | ✅ | ✅ | ✅ revue |
 | **Double authentification** du back-office (TOTP) | — | — | ✅ | ✅ |
 | **Paiements vérifiés** auprès de l'agrégateur avant crédit, rattrapage des webhooks perdus | — | — | ✅ | — |
+| **Paiements réels CinetPay v1** : dépôts, retraits asynchrones confirmés ou recrédités | ✅ | ✅ | ✅ | ✅ rapprochement |
+| **SMS** Orange (Burkina) + Twilio en secours, accusés de réception | — | — | ✅ | — |
+| **Déconnecter mes autres appareils**, **suppression du compte**, politique de confidentialité | ✅ | ✅ | ✅ | — |
 
 ## Démarrage rapide
 
@@ -87,4 +93,14 @@ Détails : [docs/10_architecture_technique.md](docs/10_architecture_technique.md
 
 ## Ce qui reste à faire avant un lancement réel
 
-Les paiements sont **simulés** (`PAYMENT_PROVIDER=mock`), les SMS s'affichent dans la console et la ligne de crédit du SFD est un compte comptable (`SYS_CREDIT`). Avant d'ouvrir au public : banque/EME agréé BCEAO **et convention avec un SFD agréé** (crédit), contrat de prêt électronique au nom du SFD, connexion au bureau d'information sur le crédit, comptes marchands réels de l'agrégateur (la collecte CinetPay et sa vérification serveur-à-serveur sont codées ; le payout reste à brancher), fournisseur SMS, stockage objet chiffré des photos KYC, test d'intrusion, alertes LBC/FT, et validation juridique. Liste complète : chapitres 5.5, 6 et 7.4.
+Le code des paiements réels (CinetPay API v1, dépôts **et** retraits) et des SMS (Orange, Twilio) est prêt et testé contre des serveurs simulés. En développement, `PAYMENT_PROVIDER=mock` et `SMS_PROVIDER=console`. La ligne de crédit du SFD reste un compte comptable (`SYS_CREDIT`).
+
+Avant d'ouvrir au public :
+- **conventions** : banque ou EME agréé BCEAO, SFD agréé pour le crédit, contrat de prêt électronique au nom du SFD ;
+- **contrats fournisseurs** : compte marchand CinetPay (encaissement et transfert), contrat Orange SMS ;
+- **hébergement** de production et stockage objet chiffré des photos KYC ;
+- **test d'intrusion externe** ([docs/14](docs/14_test_intrusion.md)) ;
+- **comptes Apple et Google** et builds EAS ([docs/15](docs/15_publication_stores.md)) ;
+- alertes LBC/FT et validation juridique.
+
+Liste complète : [docs/12](docs/12_point_avancement.md#123-ce-qui-reste-avant-louverture-au-public).

@@ -105,9 +105,13 @@ describe('microfinance', () => {
     const id = await startTontine([a, b, c], 20_000, 'weekly');
     const feesBefore = await sys('SYS_FEES');
 
-    const offers = await c.auth(request(app).get('/credit/offers')).expect(200);
+    // Pot dans moins de 61 jours : pas d'avance (règle Google Play sur les prêts à court terme).
+    let offers = await c.auth(request(app).get('/credit/offers')).expect(200);
+    expect(offers.body.advances.find((o: any) => o.tontineId === id)).toMatchObject({ round: 3, eligible: false });
+    await pool.query('UPDATE tontine_rounds SET due_date = CURRENT_DATE + 70 WHERE tontine_id = $1 AND number = 3', [id]);
+    offers = await c.auth(request(app).get('/credit/offers')).expect(200);
     const offer = offers.body.advances.find((o: any) => o.tontineId === id);
-    expect(offer).toMatchObject({ round: 3, maxAmount: 30_000, months: 1, eligible: true });
+    expect(offer).toMatchObject({ round: 3, maxAmount: 30_000, months: 3, eligible: true });
     await c.auth(request(app).post('/credit/advances')).send({ roundId: offer.roundId, amount: 40_000, pin: '1234' }).expect(400);
     await c.auth(request(app).post('/credit/advances')).send({ roundId: offer.roundId, amount: 20_000, pin: '1234' }).expect(201);
     await c.auth(request(app).post('/credit/advances')).send({ roundId: offer.roundId, amount: 5_000, pin: '1234' }).expect(400);
@@ -115,11 +119,11 @@ describe('microfinance', () => {
 
     for (const round of [1, 2, 3]) for (const u of [a, b, c]) await contribute(u, id, round).expect(201);
     const loans = await c.auth(request(app).get('/credit/loans')).expect(200);
-    expect(loans.body[0]).toMatchObject({ product: 'avance_tontine', status: 'repaid', interest: 300 });
-    // 100 000 − 60 000 cotisés + 20 000 d'avance + (60 000 − 600 − 20 300) de pot + 20 000 de caution rendue
-    expect(await balance(c)).toBe(100_000 - 60_000 + 20_000 + 39_100);
-    // Commissions tontine (3 × 600) + 40 % des 300 F d'intérêts
-    expect(await sys('SYS_FEES') - feesBefore).toBe(1_800 + 120);
+    expect(loans.body[0]).toMatchObject({ product: 'avance_tontine', status: 'repaid', interest: 900 });
+    // 100 000 − 60 000 cotisés + 20 000 d'avance + (60 000 − 600 − 20 900) de pot + 20 000 de caution rendue
+    expect(await balance(c)).toBe(100_000 - 60_000 + 20_000 + 38_500);
+    // Commissions tontine (3 × 600) + 40 % des 900 F d'intérêts (3 mois à 1,5 %)
+    expect(await sys('SYS_FEES') - feesBefore).toBe(1_800 + 360);
     expect(await ledgerBalanced()).toBe(true);
   });
 

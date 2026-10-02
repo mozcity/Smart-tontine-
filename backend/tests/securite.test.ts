@@ -213,3 +213,25 @@ describe('suppression du compte', () => {
     expect(await ledgerBalanced()).toBe(true);
   });
 });
+
+describe('compte de revue des stores', () => {
+  it('code fixe pour le seul numéro de revue, sans SMS ; jamais pour un compte du back-office', async () => {
+    process.env.REVIEW_PHONE = '+22670999000';
+    process.env.REVIEW_OTP = '246810';
+    try {
+      await request(app).post('/auth/otp/request').send({ phone: '+22670999000' }).expect(200);
+      expect((await pool.query("SELECT count(*)::int AS n FROM sms_log WHERE phone = '+22670999000'")).rows[0].n).toBe(0);
+      const ok = await request(app).post('/auth/otp/verify').send({ phone: '+22670999000', code: '246810', fullName: 'Revue Apple' }).expect(200);
+      expect(ok.body.token).toBeTruthy();
+      // Autre numéro : code aléatoire, le code de revue ne marche pas.
+      await request(app).post('/auth/otp/request').send({ phone: '+22670999001' }).expect(200);
+      await request(app).post('/auth/otp/verify').send({ phone: '+22670999001', code: '246810' }).expect(400);
+      // Le numéro de revue promu admin perd le code fixe.
+      await pool.query("UPDATE users SET role = 'admin' WHERE phone = '+22670999000'");
+      await request(app).post('/auth/otp/request').send({ phone: '+22670999000' }).expect(200);
+      await request(app).post('/auth/otp/verify').send({ phone: '+22670999000', code: '246810' }).expect(400);
+    } finally {
+      delete process.env.REVIEW_PHONE; delete process.env.REVIEW_OTP;
+    }
+  });
+});
