@@ -76,11 +76,17 @@ export const setUnauthorizedHandler = (fn: () => void) => { onUnauthorized = fn;
 
 export async function api<T = any>(path: string, opts: { method?: string; body?: unknown } = {}, retried = false): Promise<T> {
   const token = await tokenStore.get();
-  const res = await fetch(API_URL + path, {
-    method: opts.method ?? (opts.body ? 'POST' : 'GET'),
-    headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
-    body: opts.body ? JSON.stringify(opts.body) : undefined,
-  });
+  let res: Response;
+  try {
+    res = await fetch(API_URL + path, {
+      method: opts.method ?? (opts.body ? 'POST' : 'GET'),
+      headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+  } catch {
+    // Pas de réseau, serveur injoignable ou adresse introuvable : jamais le message technique brut d'Android ou d'iOS.
+    throw new ApiError(0, 'network', 'Connexion au service impossible. Vérifie ta connexion internet puis réessaie.');
+  }
   // Jeton d'accès expiré : renouvelé une fois, puis la requête est rejouée.
   if (res.status === 401 && token && !retried && !path.startsWith('/auth/')) {
     if (await refreshSession()) return api<T>(path, opts, true);
