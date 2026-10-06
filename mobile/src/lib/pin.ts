@@ -12,7 +12,7 @@ export function usePin() {
   const { me, refresh } = useAuth();
   return useCallback(async (reason: string): Promise<string | null> => {
     if (me?.has_pin) return ask('Code PIN', reason);
-    const a = await ask('Crée ton code PIN', 'Choisis 4 chiffres : ils protègent chaque sortie d’argent.');
+    const a = await ask('Crée ton code PIN', '4 chiffres pour tes retraits, envois et crédits. Évite 0000 ou 1234.');
     if (!a) return null;
     const b = await ask('Confirme ton code PIN', 'Saisis à nouveau les 4 mêmes chiffres.');
     if (!b) return null;

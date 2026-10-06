@@ -5,6 +5,7 @@ import { one, pool, withTx } from '../db.js';
 import { badRequest, HttpError } from '../lib/errors.js';
 import { hashSecret, otpCode, referralCode, verifySecret } from '../lib/crypto.js';
 import { requireAuth, currentUser, signToken } from '../lib/auth.js';
+import { clientOf, closeSession, openSession, revokeAllSessions, rotateSession } from '../lib/session.js';
 import { matchTotp, newTotpSecret, openSecret, otpauthUrl, sealSecret } from '../lib/totp.js';
 import { createAccount } from '../services/ledger.js';
 import { sms } from '../services/sms.js';
@@ -14,6 +15,15 @@ export const router = Router();
 
 // Numéros UEMOA : +225 (CI), +221 (SN), +223 (ML), +226 (BF), +227 (NE), +228 (TG), +229 (BJ), +245 (GW)
 const phone = z.string().trim().regex(/^\+22[1-9]\d{8,10}$|^\+245\d{7,9}$/, 'Numéro au format international, ex. +2250748553268');
+
+/** PIN refusés : chiffres identiques, suites croissantes ou décroissantes, motifs répétés et codes les plus courants. */
+const COMMON_PINS = new Set(['1212', '2580', '0852', '1004', '2000', '1122', '6969', '1010', '1313', '2001', '1999', '2020', '2021', '2022', '2023', '2024', '2025', '2026']);
+export function isWeakPin(pin: string): boolean {
+  const d = [...pin].map(Number);
+  const steps = d.slice(1).map((x, i) => x - d[i]);
+  return d.every((x) => x === d[0]) || steps.every((s) => s === 1) || steps.every((s) => s === -1)
+    || (pin.slice(0, 2) === pin.slice(2)) || COMMON_PINS.has(pin);
+}
 
 const isReviewPhone = (p: string) =>
   !!process.env.REVIEW_PHONE && /^\d{6}$/.test(process.env.REVIEW_OTP ?? '') && p === process.env.REVIEW_PHONE;
@@ -34,7 +44,7 @@ router.post('/otp/request', async (req, res) => {
   if (!review) await sms.send(p, `Smart Tontine : ton code est ${code}. Ne le partage avec personne.`, 'otp');
   // Code renvoyé seulement en développement ET avec le faux fournisseur SMS : un serveur mal configuré
   // (NODE_ENV oublié) qui envoie de vrais SMS ne le divulgue jamais.
-  res.json({ ok: true, ...(!config.isProd && config.smsProvider === 'console' ? { devCode: code } : {}) });
+  res.json({ ok: true, ...(config.otpDevEcho ? { devCode: code } : {}) });
 });
 
 router.post('/otp/verify', async (req, res) => {
@@ -46,18 +56,26 @@ router.post('/otp/verify', async (req, res) => {
     channel: z.string().max(40).optional(),
   }).parse(req.body);
 
+  // Anti force brute : 3 essais par code, et au plus 10 essais ratés par numéro et par heure.
+  const failures = await one(pool,
+    "SELECT COALESCE(sum(attempts), 0)::int AS n FROM otp_codes WHERE phone = $1 AND created_at > now() - interval '1 hour'", [body.phone]);
+  if (failures.n >= config.otpMaxFailuresPerHour) throw new HttpError(429, 'otp_locked', 'Trop d\'essais sur ce numéro : réessaie dans une heure');
+
   const result = await withTx(async (client) => {
     const otp = await one(client,
       `SELECT * FROM otp_codes WHERE phone = $1 AND consumed_at IS NULL AND expires_at > now()
        ORDER BY created_at DESC LIMIT 1 FOR UPDATE`, [body.phone]);
-    if (!otp || otp.attempts >= config.otpMaxAttempts) throw badRequest('otp_invalid', 'Code expiré, demande un nouveau code');
+    if (!otp) throw badRequest('otp_invalid', 'Code expiré, demande un nouveau code');
+    if (otp.attempts >= config.otpMaxAttempts) throw new HttpError(429, 'otp_locked', 'Trop d\'essais : demande un nouveau code');
     if (!verifySecret(body.code, otp.code_hash)) {
       await client.query('UPDATE otp_codes SET attempts = attempts + 1 WHERE id = $1', [otp.id]);
-      return { error: true as const };
+      return { error: true as const, left: config.otpMaxAttempts - otp.attempts - 1 };
     }
     await client.query('UPDATE otp_codes SET consumed_at = now() WHERE id = $1', [otp.id]);
 
-    let user = await one(client, 'SELECT id, role, status FROM users WHERE phone = $1', [body.phone]);
+    // Le nom saisi complète un compte qui n'en avait pas encore (il n'écrase jamais un nom existant).
+    let user = await one(client,
+      'UPDATE users SET full_name = COALESCE(full_name, $2) WHERE phone = $1 RETURNING id, role, status', [body.phone, body.fullName ?? null]);
     let isNew = false;
     if (!user) {
       isNew = true;
@@ -76,8 +94,24 @@ router.post('/otp/verify', async (req, res) => {
   });
 
   // Hors transaction : la tentative ratée doit rester comptabilisée.
-  if ('error' in result) throw badRequest('otp_invalid', 'Code incorrect');
-  res.json({ token: signToken({ id: result.user.id, role: result.user.role }), isNew: result.isNew });
+  if ('error' in result) {
+    const left = result.left ?? 0;
+    if (left <= 0) throw new HttpError(429, 'otp_locked', 'Code incorrect. Trop d\'essais : demande un nouveau code');
+    throw badRequest('otp_invalid', `Code incorrect (${left} essai${left > 1 ? 's' : ''} restant${left > 1 ? 's' : ''})`);
+  }
+  const session = await openSession(res, clientOf(req), { id: result.user.id, role: result.user.role });
+  res.json({ ...session.body, isNew: result.isNew });
+});
+
+/** Renouvelle le jeton d'accès (30 min) à partir du jeton de renouvellement, qui est remplacé au passage. */
+router.post('/refresh', async (req, res) => {
+  res.json(await rotateSession(req, res));
+});
+
+/** Déconnexion de cet appareil : le jeton de renouvellement est révoqué (et le cookie effacé sur le web). */
+router.post('/logout', async (req, res) => {
+  await closeSession(req, res);
+  res.json({ ok: true });
 });
 
 router.get('/me', requireAuth, async (req, res) => {
@@ -98,6 +132,7 @@ router.patch('/me', requireAuth, async (req, res) => {
 
 router.put('/me/pin', requireAuth, async (req, res) => {
   const body = z.object({ pin: z.string().regex(/^\d{4}$/), currentPin: z.string().optional() }).parse(req.body);
+  if (isWeakPin(body.pin)) throw badRequest('weak_pin', 'Code PIN trop facile à deviner (ex. 0000, 1234, 1212) : choisis-en un autre');
   const user = currentUser(req);
   const row = await one(pool, 'SELECT pin_hash FROM users WHERE id = $1', [user.id]);
   if (row.pin_hash) await assertPin(user.id, body.currentPin); // le changement de PIN compte aussi les erreurs
@@ -105,12 +140,14 @@ router.put('/me/pin', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
-/** Déconnecte tous les appareils (téléphone perdu ou volé) : les jetons existants sont refusés, un nouveau est rendu. */
+/** Déconnecte tous les appareils (téléphone perdu ou volé) : jetons d'accès et de renouvellement révoqués ; une nouvelle session est ouverte pour cet appareil. */
 router.post('/logout-all', requireAuth, async (req, res) => {
   const u = currentUser(req);
   const { at } = await one(pool, 'UPDATE users SET sessions_revoked_at = now() WHERE id = $1 RETURNING sessions_revoked_at AS at', [u.id]);
-  // Le nouveau jeton est daté de la seconde suivante : seul l'appareil qui a demandé la révocation reste connecté.
-  res.json({ token: signToken({ id: u.id, role: u.role }, false, Math.floor(new Date(at).getTime() / 1000) + 1) });
+  await revokeAllSessions(u.id);
+  // Le nouveau jeton d'accès est daté de la seconde suivante : seul l'appareil qui a demandé la révocation reste connecté.
+  const session = await openSession(res, clientOf(req), { id: u.id, role: u.role }, undefined, Math.floor(new Date(at).getTime() / 1000) + 1);
+  res.json(session.body);
 });
 
 // ───── Double authentification (TOTP) — comptes support et admin ─────

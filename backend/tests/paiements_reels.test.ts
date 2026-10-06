@@ -155,8 +155,8 @@ describe('CinetPay API v1', () => {
     await pool.query('UPDATE users SET kyc_level = 1 WHERE id = $1', [m.id]); // retrait vers un numéro burkinabè distinct
     await m.auth(request(app).post('/wallet/deposits')).send({ amount: 1_000, channel: 'mtn_momo', phone: BF }).expect(400);
     await m.auth(request(app).post('/wallet/deposits')).send({ amount: 1_000, channel: 'wave', phone: '+33612345678' }).expect(400);
-    await m.auth(request(app).post('/wallet/withdrawals')).send({ amount: 1_000, channel: 'card', pin: '1234' }).expect(400);
-    const big = await m.auth(request(app).post('/wallet/withdrawals')).send({ amount: 1_600_000, channel: 'wave', phone: BF, pin: '1234' }).expect(400);
+    await m.auth(request(app).post('/wallet/withdrawals')).send({ amount: 1_000, channel: 'card', pin: '4826' }).expect(400);
+    const big = await m.auth(request(app).post('/wallet/withdrawals')).send({ amount: 1_600_000, channel: 'wave', phone: BF, pin: '4826' }).expect(400);
     expect(big.body.error).toBe('provider_limit');
     const pending = await pool.query("SELECT count(*)::int AS n FROM transactions WHERE initiator_id = $1 AND type = 'withdrawal'", [m.id]);
     expect(pending.rows[0].n).toBe(0);
@@ -172,7 +172,7 @@ describe('CinetPay API v1', () => {
     expect(await balance(m)).toBe(50_000);
 
     // 1. Transfert accepté (PENDING) : portefeuille débité, retrait « en cours ».
-    const w1 = await m.auth(request(app).post('/wallet/withdrawals')).send({ amount: 10_000, channel: 'orange_money', phone: BF, pin: '1234' }).expect(202);
+    const w1 = await m.auth(request(app).post('/wallet/withdrawals')).send({ amount: 10_000, channel: 'orange_money', phone: BF, pin: '4826' }).expect(202);
     expect(w1.body.status).toBe('processing');
     const transfer = fake.calls.filter((c) => c.path === '/v1/transfer').at(-1)!;
     expect(transfer.body).toMatchObject({ amount: 10_000, payment_method: 'OM_BF', phone_number: BF, currency: 'XOF' });
@@ -188,7 +188,7 @@ describe('CinetPay API v1', () => {
     expect(await balance(m)).toBe(afterW1);
 
     // 2. Transfert qui échoue plus tard, webhook perdu : le rattrapage annule et recrédite.
-    const w2 = await m.auth(request(app).post('/wallet/withdrawals')).send({ amount: 5_000, channel: 'wave', phone: BF, pin: '1234' }).expect(202);
+    const w2 = await m.auth(request(app).post('/wallet/withdrawals')).send({ amount: 5_000, channel: 'wave', phone: BF, pin: '4826' }).expect(202);
     expect(await balance(m)).toBeLessThan(afterW1);
     fake.status.set(w2.body.reference, 'FAILED');
     await pool.query("UPDATE transactions SET created_at = now() - interval '10 minutes' WHERE reference = $1", [w2.body.reference]);
@@ -199,7 +199,7 @@ describe('CinetPay API v1', () => {
 
     // 3. Refus immédiat (solde marchand insuffisant) : annulé et recrédité tout de suite.
     fake.transferCode.set('+22670999999', 2005);
-    await m.auth(request(app).post('/wallet/withdrawals')).send({ amount: 2_000, channel: 'moov_money', phone: '+22670999999', pin: '1234' }).expect(400);
+    await m.auth(request(app).post('/wallet/withdrawals')).send({ amount: 2_000, channel: 'moov_money', phone: '+22670999999', pin: '4826' }).expect(400);
     expect(await balance(m)).toBe(afterW1);
     expect(await ledgerBalanced()).toBe(true);
   });

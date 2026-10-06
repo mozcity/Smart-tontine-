@@ -64,7 +64,7 @@ async function demoTontine() {
   const login = async (phone: string) => {
     const { devCode } = await call('/auth/otp/request', { phone });
     const { token } = await call('/auth/otp/verify', { phone, code: devCode });
-    await call('/auth/me/pin', { pin: '1234' }, token, 'PUT');
+    await call('/auth/me/pin', { pin: '4826' }, token, 'PUT');
     return token as string;
   };
   const phones = ['+22670000001', '+22670000002', '+22670000003', '+22670000004'];
@@ -77,7 +77,7 @@ async function demoTontine() {
   for (const tk of tokens) await call(`/tontines/${t.id}/rounds/1/contribute`, {}, tk);
   const offers = await call('/credit/offers', null, tokens[3], 'GET');
   const offer = offers.advances[0];
-  if (offer?.eligible) await call('/credit/advances', { roundId: offer.roundId, amount: 20_000, pin: '1234' }, tokens[3]);
+  if (offer?.eligible) await call('/credit/advances', { roundId: offer.roundId, amount: 20_000, pin: '4826' }, tokens[3]);
 
   // Coffre de groupe d'une association, cotisations mensuelles (une complète, une partielle, une absente).
   const coffre = await call('/cagnottes', { name: 'Association des femmes de Tanghin', category: 'association', visibility: 'public',

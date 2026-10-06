@@ -1,3 +1,4 @@
+import { usePageMeta } from '../../lib/seo';
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { api } from '../../lib/api';
@@ -9,6 +10,7 @@ const COUNTRIES = [['+226', '🇧🇫 Burkina Faso'], ['+225', '🇨🇮 Côte d
 
 /** Connexion / inscription par OTP SMS, puis création du code PIN si besoin. */
 export default function Connexion() {
+  usePageMeta("Connexion", "Connectez-vous à Smart Tontine avec votre numéro de téléphone.", { path: '/connexion' });
   const [params] = useSearchParams();
   // Retour interne seulement : « //site.com » ou « /\site.com » mèneraient hors du domaine (redirection ouverte).
   const raw = params.get('next') ?? '';
@@ -24,6 +26,9 @@ export default function Connexion() {
   const [referral, setReferral] = useState(params.get('parrain') ?? '');
   const [pin, setPin] = useState('');
   const [pin2, setPin2] = useState('');
+  // Étape « profil » : nom (s'il manque encore) et code PIN (s'il n'est pas encore créé).
+  const [needName, setNeedName] = useState(false);
+  const [needPin, setNeedPin] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const phone = country + local.replace(/\D/g, '');
 
@@ -43,15 +48,21 @@ export default function Connexion() {
         body: { phone, code, fullName: fullName.trim() || undefined, referralCode: referral.trim() || undefined, channel: 'web' },
       });
       await signIn(r.token);
-      const me = await api<{ has_pin: boolean }>('/auth/me');
-      if (!me.has_pin) setStep('pin'); else nav(next, { replace: true });
+      const me = await api<{ has_pin: boolean; full_name: string | null }>('/auth/me');
+      setNeedName(!me.full_name); setNeedPin(!me.has_pin);
+      if (!me.has_pin || !me.full_name) setStep('pin'); else nav(next, { replace: true });
     } catch (e) { setError((e as Error).message); }
   }
 
   async function savePin() {
     setError(null);
-    if (pin !== pin2) { setError('Les deux codes PIN sont différents'); return; }
-    try { await api('/auth/me/pin', { method: 'PUT', body: { pin } }); await refresh(); nav(next, { replace: true }); } catch (e) { setError((e as Error).message); }
+    if (needName && fullName.trim().length < 2) { setError('Indiquez votre nom : il s’affiche auprès des membres de vos tontines'); return; }
+    if (needPin && pin !== pin2) { setError('Les deux codes PIN sont différents'); return; }
+    try {
+      if (needName) await api('/auth/me', { method: 'PATCH', body: { fullName: fullName.trim() } });
+      if (needPin) await api('/auth/me/pin', { method: 'PUT', body: { pin } });
+      await refresh(); nav(next, { replace: true });
+    } catch (e) { setError((e as Error).message); }
   }
 
   return (
@@ -73,7 +84,7 @@ export default function Connexion() {
                 <Select value={country} onChange={(e) => setCountry(e.target.value)} aria-label="Pays" style={{ width: 170 }}>
                   {COUNTRIES.map(([c, l]) => <option key={c} value={c}>{l} {c}</option>)}
                 </Select>
-                <Input autoFocus inputMode="tel" placeholder="70 00 00 00" value={local} onChange={(e) => setLocal(e.target.value)} aria-label="Numéro" />
+                <Input autoFocus inputMode="tel" autoComplete="tel-national" maxLength={14} placeholder="70 00 00 00" value={local} onChange={(e) => setLocal(e.target.value.replace(/[^\d ]/g, ''))} aria-label="Numéro" />
               </div>
             </Field>
             <ErrorBox error={error} />
@@ -93,11 +104,17 @@ export default function Connexion() {
         )}
         {step === 'pin' && (
           <form className="stack" onSubmit={(e) => { e.preventDefault(); void savePin(); }}>
-            <div><h1>Créez votre code PIN</h1><p className="muted" style={{ marginTop: 6 }}>4 chiffres, demandés pour chaque sortie d'argent. Ne le communiquez à personne.</p></div>
-            <Field label="Code PIN"><Input autoFocus className="pin-input" type="password" inputMode="numeric" maxLength={4} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} /></Field>
-            <Field label="Confirmez le code PIN"><Input className="pin-input" type="password" inputMode="numeric" maxLength={4} value={pin2} onChange={(e) => setPin2(e.target.value.replace(/\D/g, ''))} /></Field>
+            <div>
+              <h1>{needPin ? 'Créez votre code PIN' : 'Votre nom'}</h1>
+              {needPin && <p className="muted" style={{ marginTop: 6 }}>4 chiffres, demandés pour chaque retrait, envoi d'argent et crédit. Évitez 0000, 1234 ou votre année de naissance, et ne le communiquez à personne.</p>}
+            </div>
+            {needName && <Field label="Votre nom" hint="Visible par les membres de vos tontines."><Input autoFocus autoComplete="name" maxLength={80} value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Prénom Nom" /></Field>}
+            {needPin && <>
+              <Field label="Code PIN"><Input autoFocus={!needName} className="pin-input" type="password" inputMode="numeric" maxLength={4} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} /></Field>
+              <Field label="Confirmez le code PIN"><Input className="pin-input" type="password" inputMode="numeric" maxLength={4} value={pin2} onChange={(e) => setPin2(e.target.value.replace(/\D/g, ''))} /></Field>
+            </>}
             <ErrorBox error={error} />
-            <Button size="block" disabled={pin.length !== 4 || pin2.length !== 4}>Enregistrer</Button>
+            <Button size="block" disabled={(needPin && (pin.length !== 4 || pin2.length !== 4)) || (needName && fullName.trim().length < 2)}>Enregistrer</Button>
           </form>
         )}
         <p className="xs center">En continuant, vous acceptez les <Link to="/legal">conditions d'utilisation</Link>.</p>

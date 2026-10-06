@@ -32,14 +32,14 @@ describe('sécurité du compte', () => {
     const locked = await u.auth(request(app).post('/wallet/withdrawals')).send({ amount: 1000, channel: 'wave', pin: '0000' }).expect(423);
     expect(locked.body.error).toBe('pin_locked');
     // Même le bon PIN est refusé pendant le verrouillage, et le solde n'a pas bougé.
-    await u.auth(request(app).post('/wallet/withdrawals')).send({ amount: 1000, channel: 'wave', pin: '1234' }).expect(423);
+    await u.auth(request(app).post('/wallet/withdrawals')).send({ amount: 1000, channel: 'wave', pin: '4826' }).expect(423);
     expect(await balance(u)).toBe(20_000);
     const notes = await u.auth(request(app).get('/me/notifications')).expect(200);
     expect(notes.body.some((n: any) => n.title.includes('verrouillé'))).toBe(true);
 
     // Fin du verrouillage : le bon PIN fonctionne et remet le compteur à zéro.
     await pool.query("UPDATE users SET pin_locked_until = now() - interval '1 minute' WHERE id = $1", [u.id]);
-    await u.auth(request(app).post('/wallet/withdrawals')).send({ amount: 1000, channel: 'wave', pin: '1234' }).expect(201);
+    await u.auth(request(app).post('/wallet/withdrawals')).send({ amount: 1000, channel: 'wave', pin: '4826' }).expect(201);
     const row = await pool.query('SELECT pin_failed_attempts FROM users WHERE id = $1', [u.id]);
     expect(row.rows[0].pin_failed_attempts).toBe(0);
   });
@@ -48,7 +48,7 @@ describe('sécurité du compte', () => {
     const u = await signup('Plafond KYC');
     for (let i = 0; i < 3; i++) {
       await fund(u, 150_000);
-      await u.auth(request(app).post('/wallet/withdrawals')).send({ amount: 148_000, channel: 'wave', pin: '1234' }).expect(201);
+      await u.auth(request(app).post('/wallet/withdrawals')).send({ amount: 148_000, channel: 'wave', pin: '4826' }).expect(201);
     }
     // 450 000 F déjà déposés ce mois-ci : KYC 0 plafonné à 500 000 F.
     const r = await u.auth(request(app).post('/wallet/deposits')).send({ amount: 100_000, channel: 'wave' }).expect(400);

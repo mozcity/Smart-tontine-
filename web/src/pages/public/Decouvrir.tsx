@@ -1,3 +1,4 @@
+import { usePageMeta } from '../../lib/seo';
 import { Banknote, ShoppingBag, Tag } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
@@ -9,6 +10,7 @@ import { Empty, Input, Loading, Segmented, Select } from '../../components/ui';
 type Tab = 'argent' | 'bien' | 'catalogue';
 
 export default function Decouvrir() {
+  usePageMeta("Tontines publiques à rejoindre", "Rejoignez une tontine publique d'argent ou de biens près de chez vous : montants, rythme et places disponibles affichés.", { path: '/decouvrir' });
   const [params, setParams] = useSearchParams();
   const tab = (params.get('onglet') as Tab) ?? 'argent';
   const [search, setSearch] = useState('');

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { unseal } from '../lib/vault.js';
 import { z } from 'zod';
 import { many, one, pool, withTx } from '../db.js';
 import { conflict, notFound } from '../lib/errors.js';
@@ -127,11 +128,12 @@ router.patch('/customers/:id', requireRole('admin'), async (req, res) => {
 // ───── Vérification d'identité (KYC) ─────
 router.get('/kyc', async (req, res) => {
   const { status } = z.object({ status: z.enum(['pending', 'approved', 'rejected']).default('pending') }).parse(req.query);
-  res.json(await many(pool,
+  const rows = await many(pool,
     `SELECT k.id, k.user_id, k.level, k.id_type, k.id_number, k.full_name, k.birth_date, k.status, k.reason, k.created_at, k.reviewed_at,
             u.phone, u.full_name AS account_name, u.kyc_level, r.full_name AS reviewer
      FROM kyc_submissions k JOIN users u ON u.id = k.user_id LEFT JOIN users r ON r.id = k.reviewed_by
-     WHERE k.status = $1 ORDER BY k.created_at ${status === 'pending' ? 'ASC' : 'DESC'} LIMIT 200`, [status]));
+     WHERE k.status = $1 ORDER BY k.created_at ${status === 'pending' ? 'ASC' : 'DESC'} LIMIT 200`, [status]);
+  res.json(rows.map((r) => ({ ...r, id_number: unseal(r.id_number) })));
 });
 
 /** Dossier complet avec les photos ; chaque consultation est tracée (protection des données). */
@@ -140,7 +142,8 @@ router.get('/kyc/:id', async (req, res) => {
     `SELECT k.*, u.phone, u.full_name AS account_name, u.kyc_level FROM kyc_submissions k JOIN users u ON u.id = k.user_id WHERE k.id = $1`, [req.params.id]);
   if (!k) throw notFound('Dossier KYC');
   await pool.query("INSERT INTO user_events (user_id, name, props) VALUES ($1, 'kyc_viewed', $2)", [k.user_id, { by: currentUser(req).id, submission: k.id }]);
-  res.json(k);
+  res.json({ ...k, id_number: unseal(k.id_number), id_front: unseal(k.id_front), id_back: unseal(k.id_back),
+    selfie: unseal(k.selfie), proof_of_address: unseal(k.proof_of_address) });
 });
 
 router.post('/kyc/:id/decision', requireRole('admin'), async (req, res) => {

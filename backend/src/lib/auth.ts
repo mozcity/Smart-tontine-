@@ -13,10 +13,10 @@ declare global {
   }
 }
 
-/** Jeton de session. `mfa` = double authentification validée : session courte (12 h) pour le back-office. */
+/** Jeton d'accès (30 min). `mfa` = double authentification validée : session du back-office (12 h, sans renouvellement). */
 export function signToken(user: AuthUser, mfa = false, iat?: number): string {
   return jwt.sign({ sub: user.id, role: user.role, ...(mfa ? { mfa: true } : {}), ...(iat ? { iat } : {}) }, config.jwtSecret,
-    { expiresIn: (mfa ? '12h' : config.jwtTtl) as jwt.SignOptions['expiresIn'] });
+    { expiresIn: mfa ? '12h' : config.accessTtlSeconds });
 }
 
 export const requireAuth: RequestHandler = async (req, _res, next) => {

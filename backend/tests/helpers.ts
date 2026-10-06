@@ -13,7 +13,7 @@ export async function signup(name: string, extra: Record<string, unknown> = {}) 
   const res = await request(app).post('/auth/otp/verify').send({ phone, code: otp.body.devCode, fullName: name, ...extra }).expect(200);
   const token = res.body.token as string;
   const auth = (r: request.Test) => r.set('authorization', `Bearer ${token}`);
-  await auth(request(app).put('/auth/me/pin')).send({ pin: '1234' }).expect(200);
+  await auth(request(app).put('/auth/me/pin')).send({ pin: '4826' }).expect(200);
   const me = await auth(request(app).get('/auth/me')).expect(200);
   return { phone, token, id: me.body.id as string, referralCode: me.body.referral_code as string, auth };
 }

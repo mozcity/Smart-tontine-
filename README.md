@@ -12,7 +12,7 @@ Références : **Maman Tontine** (expérience tontine au Sénégal) et **MaTonti
 |---|---|
 | [`docs/`](docs/) | Dossier stratégique : comparatif Sénégal + 7 chapitres |
 | [`finance/`](finance/) | `SmartTontine_modeles_economiques.xlsx` : 7 modèles économiques chiffrés et validés (Burkina puis UEMOA), tests de résistance, et son générateur |
-| [`backend/`](backend/) | API Node.js/TypeScript + PostgreSQL : moteur de tontine, scoring et crédit, coffres de groupe, rappels automatiques, Organisateur Pro, tontines de biens, espaces partenaires, grand livre en partie double, API publique du site, back-office CRM web, **CinetPay API v1 (dépôts et retraits)**, **SMS Orange / Twilio**, 70 tests de bout en bout |
+| [`backend/`](backend/) | API Node.js/TypeScript + PostgreSQL : moteur de tontine, scoring et crédit, coffres de groupe, rappels automatiques, Organisateur Pro, tontines de biens, espaces partenaires, grand livre en partie double, API publique du site, back-office CRM web, **CinetPay API v1 (dépôts et retraits)**, **SMS Orange / Twilio**, 83 tests de bout en bout |
 | [`web/`](web/) | **Plateforme web** React : site public (vitrine, tarifs, tontines publiques, catalogue, vitrines partenaires, « Devenir partenaire »), espace membre, **portail partenaire** |
 | [`mobile/`](mobile/) | Application Expo / React Native (Android, iOS) reprenant l'interface de l'affiche, profils de build EAS, **visuels et captures des stores** (`mobile/store/`) |
 
@@ -34,6 +34,7 @@ Références : **Maman Tontine** (expérience tontine au Sénégal) et **MaTonti
 13. [**Lot 4 : intégrations réelles**](docs/13_lot4_integrations_reelles.md) — CinetPay API v1 (dépôts, retraits asynchrones), SMS Orange / Twilio, mise en service
 14. [**Test d'intrusion**](docs/14_test_intrusion.md) — rapport interne (13 constats corrigés) et cahier des charges du test externe
 15. [**Publication sur les stores**](docs/15_publication_stores.md) — fiches, formulaires de données, compte de revue, builds EAS, liste de contrôle
+16. [**Corrections de l'audit du 05/10/2026**](docs/16_corrections_audit.md) — bloquants levés (OTP, `/simulate`, force brute), sessions courtes, PIN, confidentialité, SEO
 
 **Vidéo de présentation** : [`motion/smart-tontine-presentation.mp4`](motion/smart-tontine-presentation.mp4) (65 s, motion design, musique originale) — sources dans [`motion/`](motion/).
 

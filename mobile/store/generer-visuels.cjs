@@ -6,6 +6,7 @@ const { chromium } = require(process.env.PLAYWRIGHT ?? 'playwright');
 
 const ASSETS = path.join(__dirname, '..', 'assets');
 const STORE = __dirname;
+const OG_IMAGE = path.join(__dirname, '..', '..', 'web', 'public', 'og-image.png');
 const grad = (id) => `<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4A46C4"/><stop offset="1" stop-color="#1C1A5C"/></linearGradient>`;
 // Anneau (tontine qui tourne) et trois membres ; centre de rotation (32, 33).
 const mark = (ring = '#3AA935', dots = '#fff') => `
@@ -47,14 +48,17 @@ const banner = `<!doctype html><html><head><style>
     await page.close();
     console.log('✓', path.relative(path.join(__dirname, '..'), file));
   }
-  const page = await browser.newPage({ viewport: { width: 1024, height: 500 } });
-  await page.setContent(banner);
-  await page.evaluate(() => document.fonts.ready);
-  await page.screenshot({ path: `${STORE}/play-banniere-1024x500.png` });
-  console.log('✓ store/play-banniere-1024x500.png');
+  // Bannière Google Play (1024 × 500) et image de partage du site, Open Graph (1200 × 630).
+  for (const [w, h, file] of [[1024, 500, `${STORE}/play-banniere-1024x500.png`], [1200, 630, OG_IMAGE]]) {
+    const page = await browser.newPage({ viewport: { width: w, height: h } });
+    await page.setContent(banner.replace(/width:1024px;height:500px/, `width:${w}px;height:${h}px`));
+    await page.evaluate(() => document.fonts.ready);
+    await page.screenshot({ path: file });
+    console.log('✓', path.relative(path.join(__dirname, '..', '..'), file));
+  }
   await browser.close();
   // L'App Store refuse les icônes avec canal alpha : celles qui sont opaques sont aplaties en RGB (ffmpeg).
-  for (const f of [`${ASSETS}/icon.png`, `${STORE}/play-icone-512.png`, `${STORE}/play-banniere-1024x500.png`]) {
+  for (const f of [`${ASSETS}/icon.png`, `${STORE}/play-icone-512.png`, `${STORE}/play-banniere-1024x500.png`, OG_IMAGE]) {
     execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-i', f, '-pix_fmt', 'rgb24', `${f}.rgb.png`]);
     require('node:fs').renameSync(`${f}.rgb.png`, f);
   }

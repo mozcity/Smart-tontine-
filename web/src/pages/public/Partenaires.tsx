@@ -1,3 +1,4 @@
+import { usePageMeta } from '../../lib/seo';
 import { Link } from 'react-router';
 import { useApi } from '../../lib/useApi';
 import { PARTNER_TYPES } from '../../lib/format';
@@ -7,6 +8,7 @@ import { Empty, Loading } from '../../components/ui';
 interface P { id: string; name: string; type: string; logo: string | null; primary_color: string; city: string | null; description: string | null; open_tontines: number; goods: number }
 
 export default function Partenaires() {
+  usePageMeta("Nos partenaires", "Associations, commerçants, entreprises et SFD qui organisent leurs tontines sur Smart Tontine.", { path: '/partenaires' });
   const { data, loading } = useApi<P[]>('/public/partners');
   return (
     <div className="container section stack">

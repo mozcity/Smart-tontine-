@@ -99,6 +99,7 @@ export function Shell({ items, tabs, fab, header, footer, accent, menuExtra, chi
   let lastGroup: string | undefined;
   return (
     <div className="shell" style={accent ? ({ '--accent': accent } as CSSProperties) : undefined}>
+      <a href="#contenu" className="skip-link">Aller au contenu</a>
       <aside className="sidebar" aria-label="Menu principal">
         <Link to="/" className="brand"><LogoMark /> Smart Tontine</Link>
         {header}
@@ -122,7 +123,7 @@ export function Shell({ items, tabs, fab, header, footer, accent, menuExtra, chi
           <Notifications />
           <AccountMenu extra={menuExtra} />
         </header>
-        <main className="main" id="contenu">{children}</main>
+        <main className="main" id="contenu" tabIndex={-1}>{children}</main>
       </div>
 
       <nav className="bottom-nav" aria-label="Navigation">

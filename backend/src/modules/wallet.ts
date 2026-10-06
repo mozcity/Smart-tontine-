@@ -100,14 +100,17 @@ router.post('/deposits', async (req, res) => {
 
 /**
  * Développement et démonstration uniquement (fournisseur simulé) : confirme un dépôt comme le ferait
- * le webhook de l'agrégateur. Désactivé en production et avec un vrai fournisseur.
+ * le webhook de l'agrégateur. En production, la route n'est même pas déclarée (et la configuration
+ * refuse de démarrer avec le fournisseur simulé) : un dépôt n'est confirmé que par l'agrégateur.
  */
-router.post('/deposits/:reference/simulate', async (req, res) => {
-  if (config.isProd || paymentProvider().name !== 'mock') throw notFound('Route');
-  const tx = await one(pool, "SELECT initiator_id FROM transactions WHERE reference = $1 AND type = 'deposit'", [req.params.reference]);
-  if (!tx || tx.initiator_id !== currentUser(req).id) throw notFound('Dépôt');
-  res.json(await settleDeposit(req.params.reference as string, true, `MOCK-${req.params.reference}`));
-});
+if (!config.isProd) {
+  router.post('/deposits/:reference/simulate', async (req, res) => {
+    if (paymentProvider().name !== 'mock') throw notFound('Route');
+    const tx = await one(pool, "SELECT initiator_id FROM transactions WHERE reference = $1 AND type = 'deposit'", [req.params.reference]);
+    if (!tx || tx.initiator_id !== currentUser(req).id) throw notFound('Dépôt');
+    res.json(await settleDeposit(req.params.reference as string, true, `MOCK-${req.params.reference}`));
+  });
+}
 
 /**
  * Décide d'un dépôt en interrogeant l'agrégateur (serveur-à-serveur) quand il le permet.

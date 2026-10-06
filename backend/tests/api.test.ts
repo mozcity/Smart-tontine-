@@ -40,10 +40,10 @@ describe('portefeuille', () => {
     const u = await signup('Awa');
     await fund(u, 50_000);
     await u.auth(request(app).post('/wallet/withdrawals')).send({ amount: 20_000, channel: 'orange_money', pin: '9999' }).expect(400);
-    const w = await u.auth(request(app).post('/wallet/withdrawals')).send({ amount: 20_000, channel: 'orange_money', pin: '1234' }).expect(201);
+    const w = await u.auth(request(app).post('/wallet/withdrawals')).send({ amount: 20_000, channel: 'orange_money', pin: '4826' }).expect(201);
     expect(w.body.fee).toBe(200);
     expect(await balance(u)).toBe(29_800);
-    const tooMuch = await u.auth(request(app).post('/wallet/withdrawals')).send({ amount: 29_700, channel: 'wave', pin: '1234' });
+    const tooMuch = await u.auth(request(app).post('/wallet/withdrawals')).send({ amount: 29_700, channel: 'wave', pin: '4826' });
     expect(tooMuch.status).toBe(409);
   });
 
@@ -51,7 +51,7 @@ describe('portefeuille', () => {
     const a = await signup('Ali');
     const b = await signup('Bintou');
     await fund(a, 5_000);
-    await a.auth(request(app).post('/wallet/transfers')).send({ toPhone: b.phone, amount: 3_000, pin: '1234' }).expect(201);
+    await a.auth(request(app).post('/wallet/transfers')).send({ toPhone: b.phone, amount: 3_000, pin: '4826' }).expect(201);
     expect(await balance(a)).toBe(2_000);
     expect(await balance(b)).toBe(3_000);
   });
@@ -79,7 +79,7 @@ describe('e-caisse', () => {
     const e = await u.auth(request(app).post('/ecaisses')).send({ name: 'Rentrée', amount: 60_000, unlockAt }).expect(201);
     expect(await balance(u)).toBe(40_000);
     await u.auth(request(app).post(`/ecaisses/${e.body.id}/release`)).expect(409);
-    const br = await u.auth(request(app).post(`/ecaisses/${e.body.id}/break`)).send({ pin: '1234' }).expect(200);
+    const br = await u.auth(request(app).post(`/ecaisses/${e.body.id}/break`)).send({ pin: '4826' }).expect(200);
     expect(br.body.penalty).toBe(1_200);
     expect(await balance(u)).toBe(98_800);
   });
@@ -171,12 +171,12 @@ describe('budget, projets, challenges, contrats', () => {
       counterpartyPhone: emprunteur.phone, title: 'Prêt commerce', kind: 'pret', myRole: 'creditor', principal: 50_000,
       echeances: [{ dueOn: '2026-11-01', amount: 25_000 }, { dueOn: '2026-12-01', amount: 25_000 }],
     }).expect(201);
-    await preteur.auth(request(app).post(`/contrats/${c.body.id}/sign`)).send({ pin: '1234' }).expect(403);
-    await emprunteur.auth(request(app).post(`/contrats/${c.body.id}/sign`)).send({ pin: '1234' }).expect(200);
+    await preteur.auth(request(app).post(`/contrats/${c.body.id}/sign`)).send({ pin: '4826' }).expect(403);
+    await emprunteur.auth(request(app).post(`/contrats/${c.body.id}/sign`)).send({ pin: '4826' }).expect(200);
     expect(await balance(emprunteur)).toBe(50_000);
     const detail = await emprunteur.auth(request(app).get(`/contrats/${c.body.id}`)).expect(200);
     for (const e of detail.body.echeances) {
-      await emprunteur.auth(request(app).post(`/contrats/${c.body.id}/echeances/${e.id}/pay`)).send({ pin: '1234' }).expect(200);
+      await emprunteur.auth(request(app).post(`/contrats/${c.body.id}/echeances/${e.id}/pay`)).send({ pin: '4826' }).expect(200);
     }
     const done = await preteur.auth(request(app).get(`/contrats/${c.body.id}`)).expect(200);
     expect(done.body.status).toBe('completed');

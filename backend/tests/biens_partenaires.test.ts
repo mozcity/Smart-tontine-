@@ -89,7 +89,7 @@ describe('espace partenaire (marque blanche)', () => {
     expect(inv.status).toBe('paid');
     expect(await partnerBalance(pid)).toBe(1_800);
 
-    await owner.auth(request(app).post(`/partners/${pid}/withdraw`)).send({ amount: 1_000, channel: 'orange_money', pin: '1234' }).expect(201);
+    await owner.auth(request(app).post(`/partners/${pid}/withdraw`)).send({ amount: 1_000, channel: 'orange_money', pin: '4826' }).expect(201);
     expect(await partnerBalance(pid)).toBe(1_800 - 1_000 - 100);
     expect(await ledgerBalanced()).toBe(true);
   });
@@ -130,7 +130,7 @@ describe('tontines de biens matériels', () => {
     expect(orders.body[0]).toMatchObject({ status: 'pending', amount: 90_000, good_name: 'Réfrigérateur 150 L' });
     await a.auth(request(app).post(`/goods/orders/${orders.body[0].id}/ship`)).send({}).expect(403);
     await commercant.auth(request(app).post(`/goods/orders/${orders.body[0].id}/ship`)).send({ note: 'Livré à Tanghin' }).expect(200);
-    const done = await a.auth(request(app).post(`/goods/orders/${orders.body[0].id}/confirm`)).send({ pin: '1234' }).expect(200);
+    const done = await a.auth(request(app).post(`/goods/orders/${orders.body[0].id}/confirm`)).send({ pin: '4826' }).expect(200);
     expect(done.body).toMatchObject({ status: 'delivered', paidToSupplier: 87_300, commission: 2_700 });
     expect(await partnerBalance(pid)).toBe(87_300);
     expect(await sys('SYS_ESCROW')).toBe(0);

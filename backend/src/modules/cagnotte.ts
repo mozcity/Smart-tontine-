@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { withMaskedPhones } from '../lib/privacy.js';
 import type pg from 'pg';
 import { z } from 'zod';
 import { csvCell } from '../lib/csv.js';
@@ -99,7 +100,7 @@ router.get('/:id/cotisations', async (req, res) => {
     `WITH p AS (
        SELECT generate_series(date_trunc($2, now()) - ($3::int - 1) * ('1 ' || $2)::interval, date_trunc($2, now()), ('1 ' || $2)::interval) AS start
      )
-     SELECT u.id AS user_id, COALESCE(u.full_name, u.phone) AS name, to_char(p.start, 'YYYY-MM-DD') AS period,
+     SELECT u.id AS user_id, COALESCE(u.full_name, 'Membre sans nom') AS name, to_char(p.start, 'YYYY-MM-DD') AS period,
             (p.start + ('1 ' || $2)::interval <= m.joined_at) AS before_join,
             COALESCE((SELECT sum(t.amount) FROM transactions t WHERE t.type = 'cagnotte_contribution' AND t.status = 'completed'
                       AND t.initiator_id = u.id AND t.meta->>'cagnotteId' = $1::text
@@ -135,7 +136,8 @@ router.get('/:id/cotisations.csv', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   const id = req.params.id as string;
-  await membership(pool, id, currentUser(req).id);
+  const viewer = currentUser(req).id;
+  const role = await membership(pool, id, viewer);
   const cagnotte = await one(pool,
     `SELECT c.*, a.balance, (SELECT ${BRANDING_SQL} FROM partners p WHERE p.id = c.partner_id) AS partner
      FROM cagnottes c JOIN accounts a ON a.id = c.account_id WHERE c.id = $1`, [id]);
@@ -148,7 +150,7 @@ router.get('/:id', async (req, res) => {
     `SELECT w.*, (SELECT json_agg(json_build_object('userId', ap.user_id, 'decision', ap.decision))
                   FROM cagnotte_approvals ap WHERE ap.withdrawal_id = w.id) AS approvals
      FROM cagnotte_withdrawals w WHERE w.cagnotte_id = $1 ORDER BY w.created_at DESC`, [id]);
-  res.json({ ...cagnotte, members, withdrawals });
+  res.json({ ...cagnotte, members: withMaskedPhones(members, viewer, role === 'admin'), withdrawals });
 });
 
 router.post('/:id/members', async (req, res) => {

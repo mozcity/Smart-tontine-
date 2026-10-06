@@ -15,8 +15,8 @@ export default function Profil() {
   // Téléphone perdu ou prêté : les autres appareils sont déconnectés, celui-ci reçoit un nouveau jeton.
   async function logoutOthers() {
     try {
-      const r = await api<{ token: string }>('/auth/logout-all', { body: {} });
-      await tokenStore.set(r.token);
+      const r = await api<{ token: string; refreshToken?: string }>('/auth/logout-all', { body: {} });
+      await tokenStore.save(r);
       notifyOk('Autres appareils déconnectés', 'Seul ce téléphone reste connecté à ton compte.');
     } catch (e) { notifyError(e); }
   }

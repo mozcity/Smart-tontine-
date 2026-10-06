@@ -1,3 +1,4 @@
+import { usePageMeta } from '../../lib/seo';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { CheckCircle2, Trash2, XCircle } from 'lucide-react';
@@ -7,6 +8,7 @@ import { Button, Notice, useAction, useUi } from '../../components/ui';
 
 /** Suppression du compte, accessible par URL (exigence Google Play) ; l'action elle-même demande d'être connecté. */
 export default function SuppressionCompte() {
+  usePageMeta("Supprimer mon compte", "Comment supprimer votre compte Smart Tontine, ce qui est effacé et ce qui est conservé.", { path: '/suppression-compte' });
   const { me, signOut } = useAuth();
   const { askPin } = useUi();
   const act = useAction();

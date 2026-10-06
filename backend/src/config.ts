@@ -9,10 +9,23 @@ function required(name: string, fallback?: string): string {
 
 const env = process.env.NODE_ENV ?? 'development';
 
+/**
+ * Configuration refusée en production. Les mécanismes de démonstration ne doivent jamais l'atteindre
+ * (audit du 05/10/2026) : paiements simulés (route /simulate), SMS dans la console (code OTP renvoyé), secret faible.
+ */
+export function productionConfigErrors(e: NodeJS.ProcessEnv): string[] {
+  const errors = ['JWT_SECRET', 'PAYMENT_WEBHOOK_SECRET', 'DATABASE_URL', 'KYC_ENCRYPTION_KEY']
+    .filter((name) => !e[name]).map((name) => `${name} est obligatoire en production`);
+  if ((e.PAYMENT_PROVIDER ?? 'mock') === 'mock') errors.push('PAYMENT_PROVIDER=mock interdit en production');
+  if ((e.SMS_PROVIDER ?? 'console').split(',').map((x) => x.trim()).includes('console')) errors.push('SMS_PROVIDER=console interdit en production');
+  if (e.JWT_SECRET && e.JWT_SECRET.length < 32) errors.push('JWT_SECRET doit faire au moins 32 caractères en production');
+  if (e.OTP_DEV_ECHO === 'true') errors.push('OTP_DEV_ECHO interdit en production');
+  return errors;
+}
+
 if (env === 'production') {
-  for (const name of ['JWT_SECRET', 'PAYMENT_WEBHOOK_SECRET', 'DATABASE_URL']) {
-    if (!process.env[name]) throw new Error(`${name} est obligatoire en production`);
-  }
+  const errors = productionConfigErrors(process.env);
+  if (errors.length) throw new Error(`Configuration de production refusée :\n- ${errors.join('\n- ')}`);
 }
 
 export const config = {
@@ -21,12 +34,16 @@ export const config = {
   port: Number(process.env.PORT ?? 4000),
   databaseUrl: required('DATABASE_URL', 'postgres://smarttontine:smarttontine@localhost:5432/smarttontine'),
   jwtSecret: required('JWT_SECRET', 'dev-secret'),
-  jwtTtl: '30d',
+  // Jeton d'accès court ; la session dure via le jeton de renouvellement (30 jours, lib/session.ts).
+  accessTtlSeconds: 30 * 60,
   paymentProvider: process.env.PAYMENT_PROVIDER ?? 'mock',
   paymentWebhookSecret: required('PAYMENT_WEBHOOK_SECRET', 'dev-webhook'),
   smsProvider: process.env.SMS_PROVIDER ?? 'console',
   otpTtlMinutes: 5,
-  otpMaxAttempts: 5,
+  otpMaxAttempts: 3,           // essais par code, puis code invalidé
+  otpMaxFailuresPerHour: 10,   // essais ratés par numéro et par heure, tous codes confondus
+  // Code OTP renvoyé dans la réponse : développement local seulement, avec le faux fournisseur SMS.
+  otpDevEcho: env !== 'production' && (process.env.SMS_PROVIDER ?? 'console') === 'console' && process.env.OTP_DEV_ECHO !== 'false',
   pinMaxAttempts: 5,
   pinLockMinutes: 30,
   // Double authentification obligatoire pour le back-office (toujours en production, sauf ADMIN_MFA_REQUIRED=false explicite).

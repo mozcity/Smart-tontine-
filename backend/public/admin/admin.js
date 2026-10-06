@@ -11,7 +11,8 @@ const LOAN_STATUS = { active: 'En cours', repaid: 'Remboursé', defaulted: 'En d
 const pct = (x) => x == null ? '—' : Math.round(x * 1000) / 10 + ' %';
 
 let token = null;
-try { token = localStorage.getItem('sf_admin_token'); } catch {}
+// sessionStorage : le jeton du back-office disparaît à la fermeture de l'onglet (audit du 05/10/2026).
+try { localStorage.removeItem('sf_admin_token'); token = sessionStorage.getItem('sf_admin_token'); } catch {}
 
 async function api(path, opts = {}) {
   const res = await fetch(path, { ...opts, headers: { 'content-type': 'application/json', ...(token ? { authorization: 'Bearer ' + token } : {}) } });
@@ -38,7 +39,7 @@ async function showMfa(kind) {
   $('#mfaBtn').onclick = async () => {
     try {
       const r = await api(setup ? '/auth/mfa/enable' : '/auth/mfa/verify', { method: 'POST', body: JSON.stringify({ code: $('#mfaCode').value.trim() }) });
-      token = r.token; try { localStorage.setItem('sf_admin_token', token); } catch {}
+      token = r.token; try { sessionStorage.setItem('sf_admin_token', token); } catch {}
       $('#mfaBox').classList.add('hidden'); $('#loginMsg').textContent = '';
       start();
     } catch (e) { $('#loginMsg').textContent = e.message; }
@@ -47,7 +48,7 @@ async function showMfa(kind) {
 async function afterLogin() {
   const me = await api('/auth/me');
   if (!['admin', 'support'].includes(me.role)) { token = null; throw new Error('Ce compte n\'a pas accès au back-office'); }
-  try { localStorage.setItem('sf_admin_token', token); } catch {}
+  try { sessionStorage.setItem('sf_admin_token', token); } catch {}
   const mfa = await api('/auth/mfa');
   if (mfa.enrolled && !mfa.verified) return showMfa('mfa_required');
   if (!mfa.enrolled && mfa.required) return showMfa('setup');
@@ -71,7 +72,7 @@ $('#verify').onclick = async () => {
     await afterLogin();
   } catch (e) { $('#loginMsg').textContent = e.message; }
 };
-function logout() { $('#phone').classList.remove('hidden'); $('#sendCode').classList.remove('hidden'); $('#mfaBox').classList.add('hidden'); token = null; try { localStorage.removeItem('sf_admin_token'); } catch {} $('#app').classList.add('hidden'); $('#login').classList.remove('hidden'); }
+function logout() { $('#phone').classList.remove('hidden'); $('#sendCode').classList.remove('hidden'); $('#mfaBox').classList.add('hidden'); token = null; try { sessionStorage.removeItem('sf_admin_token'); } catch {} $('#app').classList.add('hidden'); $('#login').classList.remove('hidden'); }
 $('#logoutBtn').onclick = logout;
 
 // ───── Navigation ─────

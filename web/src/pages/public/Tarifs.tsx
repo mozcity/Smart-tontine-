@@ -1,3 +1,4 @@
+import { usePageMeta } from '../../lib/seo';
 import { Link } from 'react-router';
 import { useApi } from '../../lib/useApi';
 import { fcfa, pct } from '../../lib/format';
@@ -5,6 +6,7 @@ import { Loading } from '../../components/ui';
 
 /** Grille tarifaire lue en direct depuis l'API : aucun prix n'est codé en dur dans le site. */
 export default function Tarifs() {
+  usePageMeta("Tarifs", "Inscription, dépôts, cotisations et rappels gratuits. 1 % sur le pot versé et sur les retraits Mobile Money. Smart Tontine+ et Organisateur Pro.", { path: '/tarifs' });
   const { data: p } = useApi<any>('/public/pricing');
   if (!p) return <Loading />;
   const rows: [string, string, string][] = [

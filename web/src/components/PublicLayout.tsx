@@ -10,6 +10,7 @@ export function PublicLayout() {
   const loc = useLocation();
   return (
     <>
+      <a href="#contenu" className="skip-link">Aller au contenu</a>
       <header className="site-header">
         <div className="container">
           <Link to="/" className="brand"><LogoMark /> Smart Tontine</Link>
@@ -29,7 +30,7 @@ export function PublicLayout() {
           <button className="icon-btn menu-btn" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X size={22} /> : <Menu size={22} />}</button>
         </div>
       </header>
-      <main><Outlet /></main>
+      <main id="contenu" tabIndex={-1}><Outlet /></main>
       <footer className="site-footer">
         <div className="container stack">
           <div className="grid">

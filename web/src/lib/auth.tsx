@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { api, setUnauthorizedHandler, tokenStore } from './api';
+import { api, logout, refreshSession, setUnauthorizedHandler, tokenStore } from './api';
 
 export interface Me {
   id: string; phone: string; full_name: string | null; email: string | null; role: 'customer' | 'support' | 'admin';
@@ -16,13 +16,14 @@ const Ctx = createContext<AuthCtx | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [me, setMe] = useState<Me | null>(null);
   const [ready, setReady] = useState(false);
-  const signOut = useCallback(() => { tokenStore.set(null); setMe(null); }, []);
+  const signOut = useCallback(() => { void logout(); setMe(null); }, []);
   const refresh = useCallback(async () => {
-    if (!tokenStore.get()) { setMe(null); return; }
-    try { setMe(await api<Me>('/auth/me')); } catch { signOut(); }
-  }, [signOut]);
+    // Au chargement, la session se rétablit grâce au cookie de renouvellement (aucun jeton n'est stocké en clair).
+    if (!tokenStore.get() && !(await refreshSession())) { setMe(null); return; }
+    try { setMe(await api<Me>('/auth/me')); } catch { setMe(null); }
+  }, []);
   const signIn = useCallback(async (token: string) => { tokenStore.set(token); await refresh(); }, [refresh]);
-  useEffect(() => { setUnauthorizedHandler(signOut); void refresh().finally(() => setReady(true)); }, [refresh, signOut]);
+  useEffect(() => { setUnauthorizedHandler(() => { tokenStore.set(null); setMe(null); }); void refresh().finally(() => setReady(true)); }, [refresh]);
   return <Ctx.Provider value={{ me, ready, signIn, signOut, refresh }}>{children}</Ctx.Provider>;
 }
 

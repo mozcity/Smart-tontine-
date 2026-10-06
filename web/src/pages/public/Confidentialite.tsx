@@ -1,3 +1,4 @@
+import { usePageMeta } from '../../lib/seo';
 import { Link } from 'react-router';
 
 /**
@@ -21,7 +22,7 @@ const SECTIONS: [string, React.ReactNode][] = [
     <li>Crédit : calcul d’un score à partir de votre régularité de cotisation, transmis au SFD seulement si vous demandez un crédit.</li>
   </ul>],
   ['Avec qui ces données sont partagées', <ul>
-    <li><b>Membres de vos groupes</b> : votre nom, votre numéro et vos cotisations dans ce groupe.</li>
+    <li><b>Membres de vos groupes</b> : votre nom et vos cotisations dans ce groupe. Votre numéro leur apparaît masqué (+226 70 •• •• 56) ; seul l’organisateur du groupe le voit en entier.</li>
     <li><b>Agrégateur de paiement</b> (CinetPay) et opérateurs Mobile Money : ce qui est nécessaire à chaque paiement.</li>
     <li><b>Fournisseurs SMS</b> (Orange, Twilio) : votre numéro et le texte du message.</li>
     <li><b>Établissement agréé et SFD partenaires</b> : pour la garde des fonds et les crédits que vous demandez.</li>
@@ -29,12 +30,13 @@ const SECTIONS: [string, React.ReactNode][] = [
     <li><b>Autorités</b> : sur réquisition légale.</li>
   </ul>],
   ['Durée de conservation', <>Données de compte : tant que le compte est ouvert. Opérations financières et dossier d’identité : <b>10 ans</b> après la fin de la relation (obligation LBC/FT). Journaux de SMS : 12 mois. Événements d’usage : 24 mois.</>],
-  ['Sécurité', <>Connexions chiffrées (HTTPS), PIN et secrets chiffrés, double authentification pour le personnel, contrôle des droits sur chaque opération, tests d’intrusion réguliers.</>],
+  ['Sécurité', <>Connexions chiffrées (HTTPS), pièces d’identité chiffrées au repos, PIN et secrets chiffrés, sessions courtes, double authentification pour le personnel, contrôle des droits sur chaque opération, tests d’intrusion réguliers.</>],
   ['Vos droits', <>Accès, rectification, opposition et suppression : depuis l’application (Profil) ou par écrit à <b>dpo@smarttontine.app</b>. Vous pouvez saisir la Commission de l’Informatique et des Libertés (CIL) du Burkina Faso.</>],
   ['Supprimer votre compte', <>Dans l’application : <b>Profil → Supprimer mon compte</b>. Sur le web : <Link to="/suppression-compte">page de suppression du compte</Link>. Les données soumises à une obligation légale de conservation sont gardées le temps requis, puis effacées.</>],
 ];
 
 export default function Confidentialite() {
+  usePageMeta("Politique de confidentialité", "Données collectées, finalités, partage, durées de conservation, sécurité et vos droits sur Smart Tontine.", { path: '/confidentialite' });
   return (
     <div className="container section stack" style={{ maxWidth: 820 }}>
       <h1>Politique de confidentialité</h1>

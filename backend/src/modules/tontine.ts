@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { withMaskedPhones } from '../lib/privacy.js';
 import type pg from 'pg';
 import { randomInt } from 'node:crypto';
 import { z } from 'zod';
@@ -28,14 +29,14 @@ function dueDate(start: string, frequency: 'weekly' | 'monthly', index: number):
   return d.toISOString().slice(0, 10);
 }
 
-async function load(db: pg.PoolClient | pg.Pool, id: string, lock = false) {
+export async function load(db: pg.PoolClient | pg.Pool, id: string, lock = false) {
   const t = await one(db, `SELECT * FROM tontines WHERE id = $1${lock ? ' FOR UPDATE' : ''}`, [id]);
   if (!t) throw notFound('Tontine');
   return t;
 }
 
 /** L'organisateur, ou toute l'équipe du partenaire pour une tontine de partenaire, gère la tontine. */
-async function canManage(db: pg.PoolClient | pg.Pool, t: any, userId: string): Promise<boolean> {
+export async function canManage(db: pg.PoolClient | pg.Pool, t: any, userId: string): Promise<boolean> {
   if (t.organizer_id === userId) return true;
   if (!t.partner_id) return false;
   return !!(await one(db, 'SELECT 1 FROM partner_staff WHERE partner_id = $1 AND user_id = $2', [t.partner_id, userId]));
@@ -269,7 +270,8 @@ router.get('/:id', async (req, res) => {
     `SELECT r.*, (SELECT json_agg(json_build_object('userId', c.user_id, 'source', c.source, 'late', c.late, 'paidAt', c.paid_at))
                   FROM tontine_contributions c WHERE c.round_id = r.id) AS contributions
      FROM tontine_rounds r WHERE r.tontine_id = $1 ORDER BY r.number`, [id]);
-  res.json({ ...t, pot: t.contribution_amount * members.length, me: me ?? null, manager, partner, orders: order, members, rounds });
+  res.json({ ...t, pot: t.contribution_amount * members.length, me: me ?? null, manager, partner, orders: order,
+    members: withMaskedPhones(members, userId, manager), rounds });
 });
 
 router.post('/:id/rounds/:number/contribute', async (req, res) => {
@@ -281,6 +283,10 @@ router.post('/:id/rounds/:number/contribute', async (req, res) => {
     const round = await one(client, 'SELECT * FROM tontine_rounds WHERE tontine_id = $1 AND number = $2 FOR UPDATE', [t.id, Number(req.params.number)]);
     if (!round) throw notFound('Tour');
     if (round.status !== 'open') throw conflict('round_closed', 'Ce tour est clôturé');
+    // Une cotisation porte toujours sur le tour en cours : un tour futur ne peut pas être complété (et versé)
+    // avant les précédents, ce qui bouleverserait l'ordre de passage et la détection des impayés.
+    const earlier = await one(client, "SELECT number FROM tontine_rounds WHERE tontine_id = $1 AND status = 'open' AND number < $2 ORDER BY number LIMIT 1", [t.id, round.number]);
+    if (earlier) throw conflict('not_current_round', `Le tour ${earlier.number} est encore en cours : cotise d'abord pour ce tour`);
     const paid = await one(client, 'SELECT 1 FROM tontine_contributions WHERE round_id = $1 AND user_id = $2', [round.id, user.id]);
     if (paid) throw conflict('already_paid', 'Cotisation déjà payée pour ce tour');
 

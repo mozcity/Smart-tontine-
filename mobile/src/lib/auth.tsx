@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { api, setUnauthorizedHandler, tokenStore } from './api';
+import { api, logout, refreshSession, setUnauthorizedHandler, tokenStore, type SessionTokens } from './api';
 
 export interface Me {
   id: string; phone: string; full_name: string | null; plan: 'free' | 'plus'; kyc_level: number;
@@ -9,7 +9,7 @@ export interface Me {
 interface AuthState {
   ready: boolean;
   me: Me | null;
-  signIn: (token: string) => Promise<void>;
+  signIn: (session: SessionTokens) => Promise<void>;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -23,16 +23,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(async () => {
     try { setMe(await api<Me>('/auth/me')); } catch { setMe(null); }
   }, []);
-  const signOut = useCallback(async () => { await tokenStore.set(null); setMe(null); }, []);
-  const signIn = useCallback(async (token: string) => { await tokenStore.set(token); await refresh(); }, [refresh]);
+  const signOut = useCallback(async () => { await logout(); setMe(null); }, []);
+  const signIn = useCallback(async (session: SessionTokens) => { await tokenStore.save(session); await refresh(); }, [refresh]);
 
   useEffect(() => {
-    setUnauthorizedHandler(() => { void signOut(); });
+    setUnauthorizedHandler(() => { void tokenStore.clear(); setMe(null); });
     (async () => {
-      if (await tokenStore.get()) await refresh();
+      // Au démarrage, la session se rétablit avec le jeton de renouvellement du trousseau.
+      if (await refreshSession()) await refresh();
       setReady(true);
     })();
-  }, [refresh, signOut]);
+  }, [refresh]);
 
   return <Ctx.Provider value={{ ready, me, signIn, signOut, refresh }}>{children}</Ctx.Provider>;
 }

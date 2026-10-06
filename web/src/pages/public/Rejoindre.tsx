@@ -1,3 +1,4 @@
+import { usePageMeta } from '../../lib/seo';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { api } from '../../lib/api';
@@ -12,6 +13,7 @@ interface CoffrePreview { partner: Brand | null; name: string; organizer: string
 
 /** Lien d'invitation (QR code, WhatsApp) : aperçu sans compte, adhésion après connexion. */
 export default function Rejoindre() {
+  usePageMeta("Invitation à une tontine", "Vous êtes invité à rejoindre une tontine sur Smart Tontine.", { noindex: true });
   const { code } = useParams();
   const { me, ready } = useAuth();
   const nav = useNavigate();

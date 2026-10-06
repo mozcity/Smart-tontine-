@@ -4,7 +4,7 @@ import { api } from '../lib/api';
 import { useApi } from '../lib/useApi';
 import { fcfa, parseAmount } from '../lib/format';
 import type { Good } from './Cards';
-import { AmountInput, Button, ErrorBox, Field, Input, Segmented, Select, Textarea } from './ui';
+import { AmountInput, Button, ErrorBox, Field, Input, Notice, Segmented, Select, Textarea } from './ui';
 
 type Kind = 'argent' | 'bien';
 
@@ -27,7 +27,11 @@ export function CreateTontineForm({ partnerId, managementFeeRate = 0, onCreated 
   const pot = contribution * members;
   const guarantee = f.guarantee ? parseAmount(f.guarantee) : contribution;
   const per = f.frequency === 'weekly' ? 'semaine' : 'mois';
-  const valid = [true, f.name.trim().length >= 2 && contribution >= 500 && members >= 2 && (kind === 'argent' || price > 0), true];
+  // Mêmes bornes que l'API (POST /tontines) : l'erreur s'affiche en direct, pas au récapitulatif.
+  const MIN_CONTRIB = 500, MAX_CONTRIB = 5_000_000;
+  const amountError = kind === 'argent' && f.amount && (contribution < MIN_CONTRIB || contribution > MAX_CONTRIB)
+    ? `La cotisation doit être comprise entre ${fcfa(MIN_CONTRIB)} et ${fcfa(MAX_CONTRIB)}.` : null;
+  const valid = [true, f.name.trim().length >= 2 && contribution >= MIN_CONTRIB && contribution <= MAX_CONTRIB && members >= 2 && members <= 50 && (kind === 'argent' || price > 0), true];
 
   async function submit() {
     setError(null);
@@ -93,6 +97,7 @@ export function CreateTontineForm({ partnerId, managementFeeRate = 0, onCreated 
             </>
           )}
           {kind === 'argent' && <AmountInput label="Cotisation par membre et par tour" value={f.amount} onChange={(amount) => setF({ ...f, amount })} chips={[5000, 10000, 25000, 50000]} />}
+          {amountError && <Notice tone="warn">{amountError}</Notice>}
           <div className="form-grid">
             <div className="field"><span>Fréquence</span><Segmented value={f.frequency} onChange={(frequency) => setF({ ...f, frequency })} options={[['weekly', 'Chaque semaine'], ['monthly', 'Chaque mois']]} /></div>
             <div className="field"><span>Nombre de membres</span>

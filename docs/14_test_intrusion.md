@@ -102,6 +102,10 @@ Le test vérifie deux choses :
 
 ---
 
+## Audit externe du 5 octobre 2026
+
+Un audit en boîte noire (QA, sécurité, test d'intrusion non destructif, SEO, UX) a confirmé l'absence de faille critique. Il a relevé deux bloquants à lever avant la production (`devCode`, `/simulate`) et l'absence de limite sur la vérification OTP. Ces constats et tous les points « court terme » sont corrigés : voir [docs/16](16_corrections_audit.md).
+
 ## Partie B — Cahier des charges du test d'intrusion externe
 
 ### B.1 Objectif

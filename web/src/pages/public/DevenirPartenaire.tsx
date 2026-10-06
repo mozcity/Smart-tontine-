@@ -1,3 +1,4 @@
+import { usePageMeta } from '../../lib/seo';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { api } from '../../lib/api';
@@ -9,6 +10,7 @@ import { Button, ErrorBox, Field, Ico, Input, Segmented, Select, Textarea } from
 type Kind = 'partenaire' | 'sfd' | 'contact';
 
 export default function DevenirPartenaire() {
+  usePageMeta("Devenir partenaire", "Organisez les tontines de votre association, entreprise ou commerce à votre nom et à votre logo. SFD : distribuez votre crédit.", { path: '/devenir-partenaire' });
   const [params] = useSearchParams();
   const { data: p } = useApi<any>('/public/pricing');
   const [kind, setKind] = useState<Kind>((params.get('type') as Kind) ?? 'partenaire');

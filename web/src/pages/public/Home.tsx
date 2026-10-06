@@ -1,3 +1,5 @@
+import { SITE_URL, usePageMeta } from '../../lib/seo';
+import { JsonLd } from '../../components/JsonLd';
 import { Link } from 'react-router';
 import { ArrowRight, BadgeCheck, Banknote, Bell, Building2, Check, HandCoins, Lock, NotebookPen, Plus, ShieldCheck, ShoppingBag, Smartphone, Sparkles, TrendingUp, Users, X, type LucideIcon } from 'lucide-react';
 import { useApi } from '../../lib/useApi';
@@ -26,6 +28,7 @@ const FAQ: [string, string][] = [
 ];
 
 export default function Home() {
+  usePageMeta("Smart Tontine — la tontine en ligne sûre", "Tontine en ligne sûre au Burkina Faso et dans l'UEMOA : cotisez par Orange Money, Moov Money ou Wave, caution anti-impayé, pot versé automatiquement, score et microcrédit.", { path: '/' });
   const stats = useApi<Stats>('/public/stats');
   const tontines = useApi<PublicTontine[]>('/public/tontines');
   const partners = useApi<{ id: string; name: string; logo: string | null; primary_color: string; type: string; city: string | null }[]>('/public/partners');
@@ -34,6 +37,15 @@ export default function Home() {
 
   return (
     <>
+      <JsonLd data={{
+        '@context': 'https://schema.org',
+        '@graph': [
+          { '@type': 'FinancialService', name: 'Smart Tontine', url: SITE_URL, logo: `${SITE_URL}/og-image.png`,
+            description: 'Tontine en ligne sûre, adossée à la microfinance : cotisations Mobile Money, caution anti-impayé, score et microcrédit.',
+            areaServed: ['BF', 'CI', 'SN', 'ML', 'TG', 'BJ', 'NE'], address: { '@type': 'PostalAddress', addressLocality: 'Ouagadougou', addressCountry: 'BF' } },
+          { '@type': 'FAQPage', mainEntity: FAQ.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+        ],
+      }} />
       <section className="hero">
         <div className="container hero-grid">
           <div>

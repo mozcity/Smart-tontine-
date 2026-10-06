@@ -1,5 +1,7 @@
+import { usePageMeta } from '../../lib/seo';
 /** Pages légales : la structure est prête, le texte définitif doit être validé par le juriste (cahier des charges F-PUB-06). */
 export default function Legal() {
+  usePageMeta("Informations légales", "Conditions générales, fonds cantonnés auprès d'un établissement agréé BCEAO, crédit par des SFD agréés, tontines de biens.", { path: '/legal' });
   const sections: [string, string][] = [
     ['Conditions générales d’utilisation', 'Objet du service, inscription et vérification d’identité (KYC), fonctionnement des tontines (caution, ordre de passage, pénalités de retard, clôture des tours échus), tarifs, responsabilités, suspension du compte, droit applicable (Burkina Faso, UEMOA).'],
     ['Fonds des membres', 'Les fonds sont cantonnés auprès d’un établissement agréé par la BCEAO. Smart Tontine agit comme prestataire technique ; les partenaires ne détiennent jamais l’argent des membres.'],

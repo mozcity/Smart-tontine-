@@ -57,7 +57,7 @@ describe('contrôle d’accès entre membres (IDOR)', () => {
     await fund(b, 10_000);
     ids.tontine = (await a.auth(request(app).post('/tontines')).send({ name: 'Privée', contributionAmount: 5_000, frequency: 'weekly', maxMembers: 5 }).expect(201)).body.id;
     ids.cagnotte = (await a.auth(request(app).post('/cagnottes')).send({ name: 'Famille', category: 'famille' }).expect(201)).body.id;
-    await a.auth(request(app).post(`/cagnottes/${ids.cagnotte}/contribute`)).send({ amount: 20_000, pin: '1234' }).expect(201);
+    await a.auth(request(app).post(`/cagnottes/${ids.cagnotte}/contribute`)).send({ amount: 20_000, pin: '4826' }).expect(201);
     const unlockAt = new Date(Date.now() + 90 * 86400_000).toISOString();
     ids.ecaisse = (await a.auth(request(app).post('/ecaisses')).send({ name: 'Rentrée', amount: 30_000, unlockAt }).expect(201)).body.id;
     ids.projet = (await a.auth(request(app).post('/projets')).send({ name: 'Voyage', category: 'voyage', targetAmount: 50_000, steps: [{ title: 'Billets' }] }).expect(201)).body.id;
@@ -79,8 +79,8 @@ describe('contrôle d’accès entre membres (IDOR)', () => {
       ['get', `/cagnottes/${ids.cagnotte}/cotisations.csv`],
       ['post', `/cagnottes/${ids.cagnotte}/join`, {}],
       ['post', `/cagnottes/${ids.cagnotte}/members`, { phone: b.phone }],
-      ['post', `/cagnottes/${ids.cagnotte}/withdrawals`, { amount: 20_000, reason: 'vol', pin: '1234' }],
-      ['post', `/ecaisses/${ids.ecaisse}/break`, { pin: '1234' }],
+      ['post', `/cagnottes/${ids.cagnotte}/withdrawals`, { amount: 20_000, reason: 'vol', pin: '4826' }],
+      ['post', `/ecaisses/${ids.ecaisse}/break`, { pin: '4826' }],
       ['post', `/ecaisses/${ids.ecaisse}/release`, {}],
       ['post', `/projets/${ids.projet}/close`, {}],
       ['delete', `/budget/entries/${ids.budget}`],
@@ -90,7 +90,7 @@ describe('contrôle d’accès entre membres (IDOR)', () => {
       ['get', `/partners/${ids.partner}/members`],
       ['patch', `/partners/${ids.partner}`, { name: 'Piraté' }],
       ['post', `/partners/${ids.partner}/staff`, { phone: b.phone, role: 'owner' }],
-      ['post', `/partners/${ids.partner}/withdraw`, { amount: 1_000, pin: '1234' }],
+      ['post', `/partners/${ids.partner}/withdraw`, { amount: 1_000, pin: '4826' }],
       ['post', `/goods/partners/${ids.partner}`, { name: 'Faux bien', price: 1_000 }],
       ['post', `/wallet/deposits/${ids.deposit}/simulate`, {}],
     ];
@@ -138,8 +138,8 @@ describe('entrées hostiles', () => {
     await fund(m, 10_000);
     for (const amount of [-5_000, 0, 10.5, '1000', 1e12, null]) {
       await m.auth(request(app).post('/wallet/deposits')).send({ amount, channel: 'wave' }).expect(400);
-      await m.auth(request(app).post('/wallet/withdrawals')).send({ amount, channel: 'wave', pin: '1234' }).expect(400);
-      await m.auth(request(app).post('/wallet/transfers')).send({ amount, toPhone: '+22670000000', pin: '1234' }).expect(400);
+      await m.auth(request(app).post('/wallet/withdrawals')).send({ amount, channel: 'wave', pin: '4826' }).expect(400);
+      await m.auth(request(app).post('/wallet/transfers')).send({ amount, toPhone: '+22670000000', pin: '4826' }).expect(400);
     }
     expect(await balance(m)).toBe(10_000);
   });
@@ -147,11 +147,11 @@ describe('entrées hostiles', () => {
   it('retrait vers le numéro d’un tiers : identité vérifiée exigée', async () => {
     const m = await signup('Tiers');
     await fund(m, 20_000);
-    const r = await m.auth(request(app).post('/wallet/withdrawals')).send({ amount: 5_000, channel: 'wave', phone: '+22670111222', pin: '1234' }).expect(403);
+    const r = await m.auth(request(app).post('/wallet/withdrawals')).send({ amount: 5_000, channel: 'wave', phone: '+22670111222', pin: '4826' }).expect(403);
     expect(r.body.error).toBe('kyc_required');
-    await m.auth(request(app).post('/wallet/withdrawals')).send({ amount: 5_000, channel: 'wave', pin: '1234' }).expect(201);
+    await m.auth(request(app).post('/wallet/withdrawals')).send({ amount: 5_000, channel: 'wave', pin: '4826' }).expect(201);
     await pool.query('UPDATE users SET kyc_level = 1 WHERE id = $1', [m.id]);
-    await m.auth(request(app).post('/wallet/withdrawals')).send({ amount: 5_000, channel: 'wave', phone: '+22670111222', pin: '1234' }).expect(201);
+    await m.auth(request(app).post('/wallet/withdrawals')).send({ amount: 5_000, channel: 'wave', phone: '+22670111222', pin: '4826' }).expect(201);
   });
 
   it('export CSV : les formules sont neutralisées', () => {
@@ -189,15 +189,15 @@ describe('suppression du compte', () => {
     await fund(m, 5_000);
     const blocked = await m.auth(request(app).get('/me/deletion')).expect(200);
     expect(blocked.body.possible).toBe(false);
-    await m.auth(request(app).post('/me/deletion')).send({ pin: '1234' }).expect(409);
+    await m.auth(request(app).post('/me/deletion')).send({ pin: '4826' }).expect(409);
 
     // Retrait de tout le solde (4 900 F + 100 F de frais) : le compte est vide.
-    await m.auth(request(app).post('/wallet/withdrawals')).send({ amount: 4_900, channel: 'wave', pin: '1234' }).expect(201);
+    await m.auth(request(app).post('/wallet/withdrawals')).send({ amount: 4_900, channel: 'wave', pin: '4826' }).expect(201);
     expect(await balance(m)).toBe(0);
     expect((await m.auth(request(app).get('/me/deletion')).expect(200)).body).toEqual({ possible: true, blockers: [] });
     const wrong = await m.auth(request(app).post('/me/deletion')).send({ pin: '0000' });
     expect(wrong.status).toBeGreaterThanOrEqual(400);
-    await m.auth(request(app).post('/me/deletion')).send({ pin: '1234' }).expect(200);
+    await m.auth(request(app).post('/me/deletion')).send({ pin: '4826' }).expect(200);
 
     await m.auth(request(app).get('/wallet')).expect(401);
     const u = await pool.query('SELECT status, full_name, email, pin_hash, phone FROM users WHERE id = $1', [m.id]);

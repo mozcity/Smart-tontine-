@@ -112,9 +112,9 @@ describe('microfinance', () => {
     offers = await c.auth(request(app).get('/credit/offers')).expect(200);
     const offer = offers.body.advances.find((o: any) => o.tontineId === id);
     expect(offer).toMatchObject({ round: 3, maxAmount: 30_000, months: 3, eligible: true });
-    await c.auth(request(app).post('/credit/advances')).send({ roundId: offer.roundId, amount: 40_000, pin: '1234' }).expect(400);
-    await c.auth(request(app).post('/credit/advances')).send({ roundId: offer.roundId, amount: 20_000, pin: '1234' }).expect(201);
-    await c.auth(request(app).post('/credit/advances')).send({ roundId: offer.roundId, amount: 5_000, pin: '1234' }).expect(400);
+    await c.auth(request(app).post('/credit/advances')).send({ roundId: offer.roundId, amount: 40_000, pin: '4826' }).expect(400);
+    await c.auth(request(app).post('/credit/advances')).send({ roundId: offer.roundId, amount: 20_000, pin: '4826' }).expect(201);
+    await c.auth(request(app).post('/credit/advances')).send({ roundId: offer.roundId, amount: 5_000, pin: '4826' }).expect(400);
     expect(await balance(c)).toBe(80_000 + 20_000);
 
     for (const round of [1, 2, 3]) for (const u of [a, b, c]) await contribute(u, id, round).expect(201);
@@ -134,7 +134,7 @@ describe('microfinance', () => {
 
     const before = await u.auth(request(app).get('/credit/offers')).expect(200);
     expect(before.body.microcredit.eligible).toBe(false);
-    await u.auth(request(app).post('/credit/loans')).send({ amount: 50_000, months: 4, purpose: 'Stock de pagnes', pin: '1234' }).expect(400);
+    await u.auth(request(app).post('/credit/loans')).send({ amount: 50_000, months: 4, purpose: 'Stock de pagnes', pin: '4826' }).expect(400);
 
     // Historique simulé : 14 cotisations de tontine payées à l'heure + identité vérifiée.
     const [x] = [await signup('Partenaire')];
@@ -151,13 +151,13 @@ describe('microfinance', () => {
     const offers = await u.auth(request(app).get('/credit/offers')).expect(200);
     expect(offers.body.score).toBe(560);
     expect(offers.body.microcredit).toMatchObject({ eligible: true, maxAmount: 110_000 });
-    await u.auth(request(app).post('/credit/loans')).send({ amount: 150_000, months: 4, purpose: 'Stock de pagnes', pin: '1234' }).expect(400);
-    await u.auth(request(app).post('/credit/loans')).send({ amount: 100_000, months: 5, purpose: 'Stock de pagnes', pin: '1234' }).expect(400);
-    const loan = await u.auth(request(app).post('/credit/loans')).send({ amount: 100_000, months: 4, purpose: 'Stock de pagnes', pin: '1234' }).expect(201);
+    await u.auth(request(app).post('/credit/loans')).send({ amount: 150_000, months: 4, purpose: 'Stock de pagnes', pin: '4826' }).expect(400);
+    await u.auth(request(app).post('/credit/loans')).send({ amount: 100_000, months: 5, purpose: 'Stock de pagnes', pin: '4826' }).expect(400);
+    const loan = await u.auth(request(app).post('/credit/loans')).send({ amount: 100_000, months: 4, purpose: 'Stock de pagnes', pin: '4826' }).expect(201);
     expect(loan.body.interest).toBe(3_777);
     const wallet0 = await balance(u);
 
-    const r1 = await u.auth(request(app).post(`/credit/loans/${loan.body.id}/repay`)).send({ pin: '1234' }).expect(200);
+    const r1 = await u.auth(request(app).post(`/credit/loans/${loan.body.id}/repay`)).send({ pin: '4826' }).expect(200);
     expect(r1.body).toMatchObject({ paid: 25_944, remaining: 3 });
 
     // Échéance 2 due aujourd'hui : prélevée automatiquement.
@@ -167,7 +167,7 @@ describe('microfinance', () => {
     expect(await balance(u)).toBe(wallet0 - 25_944 * 2);
 
     // Le client vide son portefeuille ; l'échéance 3 a 40 jours de retard → pénalité et PAR30.
-    await u.auth(request(app).post('/wallet/withdrawals')).send({ amount: Math.floor((await balance(u)) / 1.015) - 100, channel: 'wave', pin: '1234' }).expect(201);
+    await u.auth(request(app).post('/wallet/withdrawals')).send({ amount: Math.floor((await balance(u)) / 1.015) - 100, channel: 'wave', pin: '4826' }).expect(201);
     await pool.query("UPDATE loan_installments SET due_date = CURRENT_DATE - 40 WHERE loan_id = $1 AND number = 3", [loan.body.id]);
     const j2 = await runJobs();
     expect(j2.credit.penalized).toBe(1);

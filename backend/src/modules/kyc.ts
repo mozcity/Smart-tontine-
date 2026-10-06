@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { seal } from '../lib/vault.js';
 import { z } from 'zod';
 import { many, one, pool } from '../db.js';
 import { conflict, badRequest } from '../lib/errors.js';
@@ -53,7 +54,9 @@ router.post('/', async (req, res) => {
     const s = await one(pool,
       `INSERT INTO kyc_submissions (user_id, level, id_type, id_number, full_name, birth_date, id_front, id_back, selfie, proof_of_address)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id, level, status, created_at`,
-      [userId, body.level, body.idType, body.idNumber, body.fullName, body.birthDate ?? null, body.idFront, body.idBack ?? null, body.selfie, body.proofOfAddress ?? null]);
+      // Numéro de pièce et photos chiffrés au repos (AES-256-GCM, lib/vault.ts).
+      [userId, body.level, body.idType, seal(body.idNumber), body.fullName, body.birthDate ?? null,
+        seal(body.idFront), seal(body.idBack), seal(body.selfie), seal(body.proofOfAddress)]);
     await track(pool, userId, 'kyc_submitted', { level: body.level });
     res.status(201).json(s);
   } catch (e: any) {
