@@ -1,5 +1,7 @@
 # Environnement complet : PostgreSQL + API (et back-office) + worker des tâches planifiées + plateforme web.
-#   docker compose up -d --build        → site web http://localhost:8080 · API http://localhost:4000 · back-office /admin
+#   docker compose up -d --build        → site web http://localhost:8080 · app mobile (version web) http://localhost:8081
+#                                         API http://localhost:4000 · back-office http://localhost:4000/admin
+#   ou, sans reconstruire : docker compose pull && docker compose up -d   (images publiées par .github/workflows/docker.yml)
 #   docker compose exec api node dist/src/seed.js   (données de démonstration)
 services:
   db:
@@ -16,6 +18,7 @@ services:
       retries: 10
 
   api:
+    image: ghcr.io/mozcity/smart-tontine-api:latest
     build: ./backend
     depends_on: { db: { condition: service_healthy } }
     environment: &api-env
@@ -33,6 +36,7 @@ services:
 
   # Une seule instance exécute les tâches planifiées, quel que soit le nombre d'API.
   worker:
+    image: ghcr.io/mozcity/smart-tontine-api:latest
     build: ./backend
     depends_on: { api: { condition: service_healthy } }
     environment:
@@ -41,9 +45,17 @@ services:
       PORT: "4001"
 
   web:
+    image: ghcr.io/mozcity/smart-tontine-web:latest
     build: ./web
     depends_on: [api]
     ports: ["8080:80"]
+
+  # Application mobile, version web : mêmes écrans que l'app Android / iPhone, dans le navigateur d'un téléphone.
+  app:
+    image: ghcr.io/mozcity/smart-tontine-app:latest
+    build: { context: ., dockerfile: mobile/Dockerfile }
+    depends_on: [api]
+    ports: ["8081:80"]
 
 volumes:
   pgdata:

@@ -87,7 +87,7 @@ cd backend && cp .env.example .env && npm install && npm run seed && npm run dev
 # API : http://localhost:4000   ·   back-office : http://localhost:4000/admin  (admin de démo : +22670000000)
 cd ../web && npm install && npm run dev   # plateforme web : http://localhost:5173
 cd ../mobile && npm install && npx expo start
-# ou tout en conteneurs : docker compose up -d --build   → http://localhost:8080
+# ou tout en conteneurs : docker compose up -d --build   → site http://localhost:8080 · app mobile (version web) http://localhost:8081
 ```
 
 Détails : [docs/10_architecture_technique.md](docs/10_architecture_technique.md#106-démarrer-la-plateforme-complète-en-local).

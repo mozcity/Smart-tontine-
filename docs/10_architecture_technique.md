@@ -134,7 +134,9 @@ Choix de conception :
 **Conteneurs**
 - `backend/Dockerfile` : image de l'API, également utilisée pour le worker (`RUN_JOBS=true`).
 - `web/Dockerfile` : build Vite puis nginx (`web/nginx.conf`), qui relaie les routes de l'API. En variante sans nginx, l'API sert elle-même `web/dist` (variable `WEB_DIST`) avec repli sur `index.html`.
-- `docker-compose.yml` : `db`, `api`, `worker`, `web`. Démarrage avec `docker compose up -d --build`, puis ouvrir http://localhost:8080.
+- `docker-compose.yml` : `db`, `api`, `worker`, `web` et `app`. Démarrage avec `docker compose up -d --build`, puis ouvrir http://localhost:8080 (plateforme web) ou http://localhost:8081 (application mobile en version web, à ouvrir dans le navigateur d'un téléphone).
+- `app` (`mobile/Dockerfile`) : l'application Expo exportée pour le web (mêmes écrans que l'app Android / iPhone), servie par nginx. L'API est relayée sur le même domaine (`mobile/nginx.conf`) : une navigation reçoit l'app, un appel de l'app reçoit l'API.
+- Images publiées automatiquement à chaque envoi sur `main` (`.github/workflows/docker.yml`) : `ghcr.io/mozcity/smart-tontine-api`, `-web` et `-app`. Sur un serveur, `docker login ghcr.io` (dépôt privé) puis `docker compose pull && docker compose up -d` suffisent pour la mise à jour.
 
 **Application mobile** (`mobile/eas.json`)
 
