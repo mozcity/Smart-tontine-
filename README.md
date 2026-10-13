@@ -35,6 +35,7 @@ Références : **Maman Tontine** (expérience tontine au Sénégal) et **MaTonti
 14. [**Test d'intrusion**](docs/14_test_intrusion.md) — rapport interne (13 constats corrigés) et cahier des charges du test externe
 15. [**Publication sur les stores**](docs/15_publication_stores.md) — fiches, formulaires de données, compte de revue, builds EAS, liste de contrôle
 16. [**Corrections de l'audit du 05/10/2026**](docs/16_corrections_audit.md) — bloquants levés (OTP, `/simulate`, force brute), sessions courtes, PIN, confidentialité, SEO
+17. [**Sauvegarde de la base**](docs/17_sauvegardes.md) — chaque nuit, chiffrée, vérifiée, copiée hors serveur ; restauration
 
 **Vidéo de présentation** : [`motion/smart-tontine-presentation.mp4`](motion/smart-tontine-presentation.mp4) (65 s, motion design, musique originale) — sources dans [`motion/`](motion/).
 

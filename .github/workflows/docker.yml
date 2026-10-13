@@ -20,6 +20,7 @@ jobs:
           - { name: api, context: backend, dockerfile: backend/Dockerfile }
           - { name: web, context: web, dockerfile: web/Dockerfile }
           - { name: app, context: ., dockerfile: mobile/Dockerfile }
+          - { name: backup, context: ops/backup, dockerfile: ops/backup/Dockerfile }
     steps:
       - uses: actions/checkout@v4
       - uses: docker/login-action@v3

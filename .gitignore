@@ -7,3 +7,6 @@ motion/.frames
 motion/.still-*
 motion/*.wav
 motion/*-sans-son.mp4
+
+# Sauvegardes de la base (jamais dans Git)
+backups/
