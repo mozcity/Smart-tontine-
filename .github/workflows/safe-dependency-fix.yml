@@ -27,7 +27,10 @@ jobs:
           set -euo pipefail
           for module in backend web mobile; do
             echo "::group::Fix $module"
-            (cd "$module" && npm audit fix --package-lock-only --no-fund --no-audit)
+            # npm audit fix can exit 1 when unresolved advisories remain.
+            # Continue only to validation; npm ci and tests below still gate publication.
+            (cd "$module" && npm audit fix --package-lock-only --no-fund --no-audit) || echo "Remaining advisories in $module; validating compatible changes."
+            (cd "$module" && npm audit --json > audit-after-fix.json) || true
             echo "::endgroup::"
           done
       - name: Install and validate updated lockfiles
