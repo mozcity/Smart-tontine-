@@ -4,14 +4,14 @@
    Tous les composants lisent ces jetons : le mode sombre ne fait que les redéfinir.
    ════════════════════════════════════════════════════════════════════════════ */
 :root {
-  --brand-50: #F1F0FD; --brand-100: #E3E1FA; --brand-200: #C9C6F3; --brand-500: #4A46C4; --brand-600: #2F2C8F; --brand-700: #262379; --brand-800: #1C1A5C; --brand-900: #12103D;
-  --green-50: #ECF8EC; --green-100: #D5F0D4; --green-500: #3AA935; --green-600: #278326; --green-700: #23721F;
+  --brand-50: #F0EFFF; --brand-100: #DDD9FF; --brand-200: #C9C6F3; --brand-500: #4A44E0; --brand-600: #3029D1; --brand-700: #262379; --brand-800: #1C1A5C; --brand-900: #12103D;
+  --green-50: #ECF8EC; --green-100: #D5F0D4; --green-500: #59DE17; --green-600: #278326; --green-700: #23721F;
   --gold-50: #FEF6E4; --gold-500: #F0A92B; --gold-700: #9A6406;
   --red-50: #FDEEEE; --red-500: #D63B3B; --red-700: #C53030;
   --blue-50: #EAF1FE; --blue-600: #2563EB;
 
-  --bg: #F6F7FB; --surface: #FFFFFF; --surface-2: #FAFAFD; --surface-3: #F1F2F8;
-  --ink: #15162C; --ink-2: #4E5272; --muted: #686C8A; --line: #E8E9F1; --line-strong: #D5D7E3;
+  --bg: #F5F7FA; --surface: #FFFFFF; --surface-2: #FAFAFD; --surface-3: #F1F2F8;
+  --ink: #121729; --ink-2: #4E5272; --muted: #686C8A; --line: #E8E9F1; --line-strong: #D5D7E3;
   --brand: var(--brand-600); --brand-soft: var(--brand-50); --brand-ink: var(--brand-600);
   --green: var(--green-500); --green-dark: var(--green-700); --green-soft: var(--green-50);
   --danger: var(--red-700); --danger-soft: var(--red-50); --warn: var(--gold-700); --warn-soft: var(--gold-50);
