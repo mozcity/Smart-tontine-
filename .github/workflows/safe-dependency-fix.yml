@@ -1,0 +1,50 @@
+name: Safe dependency remediation
+
+on:
+  push:
+    branches:
+      - chore/smart-tontine-validation-20261017
+    paths:
+      - .github/workflows/safe-dependency-fix.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  safe-lockfile-fix:
+    if: github.repository == 'mozcity/Smart-tontine-' && github.ref == 'refs/heads/chore/smart-tontine-validation-20261017'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Apply only non-forced npm audit fixes
+        run: |
+          set -euo pipefail
+          for module in backend web mobile; do
+            echo "::group::Fix $module"
+            (cd "$module" && npm audit fix --package-lock-only --no-fund --no-audit)
+            echo "::endgroup::"
+          done
+      - name: Install and validate updated lockfiles
+        run: |
+          set -euo pipefail
+          (cd backend && npm ci && npm run typecheck && npm test)
+          (cd web && npm ci && npm test && npm run build)
+          (cd mobile && npm ci && npm run typecheck)
+      - name: Commit safe lockfile updates to review branch
+        run: |
+          set -euo pipefail
+          git add backend/package-lock.json web/package-lock.json mobile/package-lock.json
+          if git diff --cached --quiet; then
+            echo "No compatible lockfile updates available."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "fix(deps): apply compatible audited lockfile updates"
+          git push origin HEAD:chore/smart-tontine-validation-20261017
