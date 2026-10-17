@@ -1,0 +1,47 @@
+{
+  "version": "2026-10-17",
+  "source": "Figma Smart Tontine — reference values; not yet automatically applied to all screens",
+  "colors": {
+    "indigo": "#3029D1",
+    "green": "#59DE17",
+    "white": "#FFFFFF",
+    "background": "#F5F7FA",
+    "text": "#121729",
+    "textSecondary": "#596273",
+    "border": "#DCE2EA",
+    "success": "#167342",
+    "warning": "#855400",
+    "error": "#B42337",
+    "positiveSurface": "#E6F7E8",
+    "negativeSurface": "#FFF0F2"
+  },
+  "spacing": {
+    "xs": 4,
+    "sm": 8,
+    "md": 16,
+    "lg": 24,
+    "xl": 32
+  },
+  "typography": {
+    "display": {
+      "size": 32,
+      "lineHeight": 45
+    },
+    "heading": {
+      "size": 24,
+      "lineHeight": 34
+    },
+    "title": {
+      "size": 20,
+      "lineHeight": 28
+    },
+    "body": {
+      "size": 16,
+      "lineHeight": 22
+    },
+    "caption": {
+      "size": 12,
+      "lineHeight": 17
+    }
+  }
+}
