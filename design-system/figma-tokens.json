@@ -15,7 +15,8 @@
     "warning": "#9A6406",
     "error": "#C53030",
     "positiveSurface": "#ECF8EC",
-    "negativeSurface": "#FDEEEE"
+    "negativeSurface": "#FDEEEE",
+    "green": "#278326"
   },
   "spacing": {
     "xs": 4,
