@@ -1,0 +1,50 @@
+{
+  "version": "2026-10-18",
+  "source": "Référence visuelle prioritaire : capture accueil mobile Smart Tontine fournie par le propriétaire du projet. Couleurs relevées sur les aplats de l'image.",
+  "colors": {
+    "indigo": "#2F2C8F",
+    "indigoLight": "#4A46C4",
+    "greenAction": "#278326",
+    "greenDecorative": "#3AA935",
+    "white": "#FFFFFF",
+    "background": "#F6F7FB",
+    "text": "#15162C",
+    "textSecondary": "#686C8A",
+    "border": "#E8E9F1",
+    "success": "#278326",
+    "warning": "#9A6406",
+    "error": "#C53030",
+    "positiveSurface": "#ECF8EC",
+    "negativeSurface": "#FDEEEE",
+    "green": "#278326"
+  },
+  "spacing": {
+    "xs": 4,
+    "sm": 8,
+    "md": 16,
+    "lg": 24,
+    "xl": 32
+  },
+  "typography": {
+    "display": {
+      "size": 36,
+      "lineHeight": 45
+    },
+    "heading": {
+      "size": 24,
+      "lineHeight": 34
+    },
+    "title": {
+      "size": 20,
+      "lineHeight": 28
+    },
+    "body": {
+      "size": 16,
+      "lineHeight": 22
+    },
+    "caption": {
+      "size": 12,
+      "lineHeight": 17
+    }
+  }
+}

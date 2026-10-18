@@ -5,6 +5,37 @@ on:
   pull_request:
 
 jobs:
+  design-handoff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - run: node scripts/check-design-handoff.mjs
+
+  security-audit:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [backend, web, mobile]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - name: Audit dependencies
+        working-directory: ${{ matrix.module }}
+        run: |
+          npm audit --json > audit-report.json || true
+          node -e 'const a=require("./audit-report.json"); console.log("Summary",a.metadata?.vulnerabilities); for(const [name,v] of Object.entries(a.vulnerabilities||{})) console.log(name, v.severity, "fix:",JSON.stringify(v.fixAvailable));'
+          node -e 'const a=require("./audit-report.json"); if((a.metadata?.vulnerabilities?.high||0)+(a.metadata?.vulnerabilities?.critical||0)>0) process.exit(1)'
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-${{ matrix.module }}
+          path: ${{ matrix.module }}/audit-report.json
+
   backend:
     runs-on: ubuntu-latest
     services:
@@ -21,7 +52,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm, cache-dependency-path: backend/package-lock.json }
+        with: { node-version: 24, cache: npm, cache-dependency-path: backend/package-lock.json }
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
@@ -32,7 +63,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm, cache-dependency-path: web/package-lock.json }
+        with: { node-version: 24, cache: npm, cache-dependency-path: web/package-lock.json }
       - run: npm ci
       - run: npm test
       - run: npm run build
@@ -43,6 +74,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm, cache-dependency-path: mobile/package-lock.json }
+        with: { node-version: 24, cache: npm, cache-dependency-path: mobile/package-lock.json }
       - run: npm ci
       - run: npx tsc --noEmit
