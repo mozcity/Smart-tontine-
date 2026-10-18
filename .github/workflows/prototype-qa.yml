@@ -1,0 +1,32 @@
+name: Prototype browser and accessibility QA
+on:
+  push:
+    branches: [chore/smart-tontine-validation-20261017]
+    paths:
+      - 'prototypes/**'
+      - 'scripts/test-prototype-browser.mjs'
+      - '.github/workflows/prototype-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  prototype-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install browser test dependencies
+        run: npm install --no-save --no-package-lock playwright axe-core
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Validate all prototype routes, viewport sizes and WCAG
+        run: node scripts/test-prototype-browser.mjs
+      - name: Upload review screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smart-tontine-prototype-screenshots
+          path: artifacts/prototype-qa/
