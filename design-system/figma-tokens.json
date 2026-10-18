@@ -1,19 +1,21 @@
 {
-  "version": "2026-10-17",
-  "source": "Figma Smart Tontine — reference values; not yet automatically applied to all screens",
+  "version": "2026-10-18",
+  "source": "Référence visuelle prioritaire : capture accueil mobile Smart Tontine fournie par le propriétaire du projet. Couleurs relevées sur les aplats de l'image.",
   "colors": {
-    "indigo": "#3029D1",
-    "green": "#59DE17",
+    "indigo": "#2F2C8F",
+    "indigoLight": "#4A46C4",
+    "greenAction": "#278326",
+    "greenDecorative": "#3AA935",
     "white": "#FFFFFF",
-    "background": "#F5F7FA",
-    "text": "#121729",
-    "textSecondary": "#596273",
-    "border": "#DCE2EA",
-    "success": "#167342",
-    "warning": "#855400",
-    "error": "#B42337",
-    "positiveSurface": "#E6F7E8",
-    "negativeSurface": "#FFF0F2"
+    "background": "#F6F7FB",
+    "text": "#15162C",
+    "textSecondary": "#686C8A",
+    "border": "#E8E9F1",
+    "success": "#278326",
+    "warning": "#9A6406",
+    "error": "#C53030",
+    "positiveSurface": "#ECF8EC",
+    "negativeSurface": "#FDEEEE"
   },
   "spacing": {
     "xs": 4,
@@ -24,7 +26,7 @@
   },
   "typography": {
     "display": {
-      "size": 32,
+      "size": 36,
       "lineHeight": 45
     },
     "heading": {
