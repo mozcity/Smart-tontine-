@@ -9,23 +9,23 @@ import { Delete, Inbox, Lock } from 'lucide-react-native';
 
 // Charte Smart Tontine (reprise de l'affiche) : indigo profond (confiance) + vert « argent » (gain).
 export const colors = {
-  brand: '#3029D1',
-  brandDark: '#201B92',
-  brand500: '#4A44E0',
-  brandSoft: '#F0EFFF',
-  brandLine: '#DDD9FF',
+  brand: '#2F2C8F',
+  brandDark: '#1C1A5C',
+  brand500: '#4A46C4',
+  brandSoft: '#F1F0FD',
+  brandLine: '#E3E1FA',
   green: '#278326', // vert des boutons et textes : contraste 4,8:1 avec le blanc (AA)
-  greenBright: '#59DE17', // vert vif de la marque, décoratif (anneaux, icônes)
+  greenBright: '#3AA935', // vert vif de la marque, décoratif (anneaux, icônes)
   greenDark: '#23721F',
   greenSoft: '#ECF8EC',
   gold: '#9A6406',
   goldSoft: '#FEF6E4',
   info: '#2563EB',
   infoSoft: '#EAF1FE',
-  bg: '#F5F7FA',
+  bg: '#F6F7FB',
   card: '#FFFFFF',
   surface2: '#F1F2F8',
-  ink: '#121729',
+  ink: '#15162C',
   ink2: '#4E5272',
   muted: '#686C8A',
   line: '#E8E9F1',
